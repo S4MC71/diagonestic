@@ -1098,6 +1098,14 @@ textarea.form-control {
 }
 
 /* Mobile & Tablet Responsiveness */
+.mobile-menu-btn {
+  display: none;
+}
+
+.sidebar-mobile-backdrop {
+  display: none;
+}
+
 @media (max-width: 960px) {
   .settings-profile-layout {
     grid-template-columns: 1fr !important;
@@ -1105,6 +1113,66 @@ textarea.form-control {
 }
 
 @media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  .sidebar-mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 95;
+  }
+
+  .sidebar {
+    transform: translateX(0);
+    z-index: 100 !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    transition: transform var(--transition-normal);
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%) !important;
+    width: 260px !important;
+  }
+
+  .main-wrapper,
+  .main-wrapper.collapsed {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .topbar {
+    padding: 0 12px !important;
+    height: 56px !important;
+    gap: 8px !important;
+  }
+
+  .search-hint-pill {
+    display: none !important;
+  }
+
+  .page-title-crumb {
+    display: none !important;
+  }
+
+  .user-meta {
+    display: none !important;
+  }
+
+  .tenant-title {
+    max-width: 135px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .content-body {
+    padding: 16px 12px 64px !important;
+  }
+
   .settings-pill-nav {
     width: 100%;
     display: flex;
@@ -1150,4 +1218,5 @@ textarea.form-control {
     width: 100%;
   }
 }
+
 

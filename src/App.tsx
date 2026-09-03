@@ -30,7 +30,7 @@ import { AccountingView } from './views/AccountingView';
 import { UsersView, RolesView, SubscriptionView, SupportView, SettingsView } from './views/AdminViews';
 
 export const App: React.FC = () => {
-  const { currentView, setCurrentView, isSidebarCollapsed, currentUser } = useApp();
+  const { currentView, setCurrentView, isSidebarCollapsed, toggleSidebar, currentUser } = useApp();
 
   // Keyboard shortcut: Pressing / focuses billing search
   useEffect(() => {
@@ -123,6 +123,11 @@ export const App: React.FC = () => {
     <div className="app-container">
       {/* Sidebar Navigation */}
       <Sidebar />
+
+      {/* Mobile Backdrop Overlay */}
+      {!isSidebarCollapsed && (
+        <div className="sidebar-mobile-backdrop" onClick={toggleSidebar} />
+      )}
 
       {/* Main Content Shell */}
       <div className={`main-wrapper ${isSidebarCollapsed ? 'collapsed' : ''}`}>

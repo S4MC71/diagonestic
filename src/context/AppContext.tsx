@@ -125,7 +125,12 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(initialUsers[0]);
   const [currentView, setCurrentView] = useState<ActiveView>('dashboard');
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 768;
+    }
+    return false;
+  });
   const [activePrintInvoice, setActivePrintInvoice] = useState<Invoice | null>(null);
   const [activePrintFormat, setActivePrintFormat] = useState<'thermal' | 'a4' | 'a5'>('a4');
   const [activePrintColor, setActivePrintColor] = useState<'Color' | 'B&W'>('Color');

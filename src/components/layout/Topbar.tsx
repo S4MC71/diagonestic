@@ -8,7 +8,8 @@ import {
   LogOut,
   Building2,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  Menu
 } from 'lucide-react';
 
 const VIEW_TITLES: Record<string, string> = {
@@ -47,7 +48,7 @@ const VIEW_TITLES: Record<string, string> = {
 };
 
 export const Topbar: React.FC = () => {
-  const { currentView, setCurrentView, tenantSettings, currentUser, setCurrentUser, showToast } = useApp();
+  const { currentView, setCurrentView, tenantSettings, currentUser, setCurrentUser, showToast, toggleSidebar } = useApp();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
@@ -77,6 +78,15 @@ export const Topbar: React.FC = () => {
     <header className="topbar">
       {/* Left side */}
       <div className="topbar-left">
+        <button
+          className="mobile-menu-btn icon-btn"
+          onClick={toggleSidebar}
+          title="Toggle Navigation Menu"
+          aria-label="Toggle Navigation Menu"
+        >
+          <Menu size={20} />
+        </button>
+
         <div className="tenant-badge" onClick={() => setCurrentView('settings')}>
           <div className="tenant-avatar">JD</div>
           <span className="tenant-title">{tenantSettings.name}</span>
