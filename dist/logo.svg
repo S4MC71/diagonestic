@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 42" fill="none">
+  <!-- SihatSuite Leaf / Health Cross Emblem -->
+  <g transform="translate(4, 4)">
+    <circle cx="17" cy="17" r="16" fill="url(#brandGrad)" opacity="0.12"/>
+    <!-- Overlapping medical leaf petals -->
+    <path d="M17 3 C17 3 27 7 27 17 C27 24 21 28 17 28 C13 28 7 24 7 17 C7 7 17 3 17 3 Z" fill="url(#brandGrad)" />
+    <path d="M17 8 C22 12 25 18 20 25 C16 29 11 27 8 23 C5 19 8 13 17 8 Z" fill="#10b9b3" opacity="0.85" />
+    <circle cx="17" cy="17" r="4" fill="#ffffff" />
+    <circle cx="17" cy="17" r="2" fill="#073f8f" />
+  </g>
+  <!-- Text Logo -->
+  <text x="44" y="27" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="21" font-weight="800" letter-spacing="-0.5">
+    <tspan fill="#0f172a">Sihat</tspan><tspan fill="#073f8f">Suite</tspan>
+  </text>
+  <defs>
+    <linearGradient id="brandGrad" x1="7" y1="3" x2="27" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#073f8f" />
+      <stop offset="0.5" stop-color="#10b9b3" />
+      <stop offset="1" stop-color="#fbb040" />
+    </linearGradient>
+  </defs>
+</svg>
