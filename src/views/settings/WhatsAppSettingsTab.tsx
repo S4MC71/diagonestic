@@ -70,7 +70,7 @@ export const WhatsAppSettingsTab: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Top Alert Banner matching SihatSuite live */}
+      {/* Top Alert Banner */}
       <div className="settings-alert-banner">
         <span>
           WhatsApp messaging is currently switched off for your account by the system administrator. Contact support to enable it.
@@ -91,7 +91,7 @@ export const WhatsAppSettingsTab: React.FC = () => {
           </span>
           <span
             style={{
-              background: '#06b6d4',
+              background: '#059669',
               color: '#ffffff',
               fontSize: '11px',
               fontWeight: 700,
@@ -208,7 +208,7 @@ export const WhatsAppSettingsTab: React.FC = () => {
           <h2 className="settings-card-title" style={{ margin: 0 }}>Message Credits</h2>
           <span
             style={{
-              background: '#06b6d4',
+              background: '#059669',
               color: '#ffffff',
               fontSize: '11.5px',
               fontWeight: 700,
@@ -221,7 +221,7 @@ export const WhatsAppSettingsTab: React.FC = () => {
         </div>
 
         <p className="settings-card-sub">
-          Every account starts with 100 free messages. To buy more, make the payment and submit the transaction details below — credits are added after the SihatSuite team verifies the payment.
+          Every account starts with 100 free messages. To buy more, make the payment and submit the transaction details below — credits are added after the CarePulse team verifies the payment.
         </p>
 
         <form onSubmit={handleSubmitClaim} style={{ marginBottom: '24px' }}>
@@ -307,7 +307,7 @@ export const WhatsAppSettingsTab: React.FC = () => {
           </button>
         </form>
 
-        {/* Claims History Table matching SihatSuite live */}
+        {/* Claims History Table */}
         <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '18px' }}>
           <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '12px' }}>
             Purchase Claims History

@@ -244,23 +244,11 @@ export const ReportFooterSettingsTab: React.FC = () => {
                       </td>
                     </tr>
 
-                    {/* Expandable Row Editor matching SihatSuite live */}
+                    {/* Expandable Row Editor */}
                     {isExpanded && (
                       <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                         <td colSpan={4} style={{ padding: '0 24px 24px 24px' }}>
-                          <div
-                            className="settings-footer-accordion"
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr 1fr',
-                              gap: '20px',
-                              background: '#ffffff',
-                              border: '1px solid #e2e8f0',
-                              borderRadius: '10px',
-                              padding: '20px',
-                              marginBottom: '14px'
-                            }}
-                          >
+                          <div className="settings-footer-accordion">
                             {/* Technician Side */}
                             <div>
                               <div style={{ marginBottom: '12px' }}>

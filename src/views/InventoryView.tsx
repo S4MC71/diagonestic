@@ -4,7 +4,7 @@ import { Requisition } from '../types';
 import { Package, Search, Plus, ClipboardList, History, Trash2, X, CheckCircle } from 'lucide-react';
 
 export const InventoryView: React.FC = () => {
-  const { inventoryItems, requisitions, createRequisition, updateRequisitionStatus, showToast } = useApp();
+  const { currentUser, inventoryItems, requisitions, createRequisition, updateRequisitionStatus, showToast } = useApp();
   const [tab, setTab] = useState<'catalog' | 'requisitions' | 'history'>('catalog');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -39,7 +39,7 @@ export const InventoryView: React.FC = () => {
     if (reqItems.length === 0) return;
     createRequisition({
       department: reqNotes || 'General Lab Store',
-      requestedBy: 'jhalakathid_admin',
+      requestedBy: currentUser?.username || 'lifecare_admin',
       items: reqItems,
       status,
       notes: reqNotes
@@ -146,7 +146,7 @@ export const InventoryView: React.FC = () => {
         </div>
       )}
 
-      {/* 2. REQUISITIONS TAB matching SihatSuite live audit */}
+      {/* 2. REQUISITIONS TAB */}
       {tab === 'requisitions' && (
         <div>
           {/* Status Filter Pills */}
@@ -179,7 +179,7 @@ export const InventoryView: React.FC = () => {
               <tbody>
                 {filteredRequisitions.map(r => (
                   <tr key={r.id}>
-                    <td><strong style={{ color: '#073f8f' }}>{r.reqNo}</strong></td>
+                    <td><strong style={{ color: '#059669' }}>{r.reqNo}</strong></td>
                     <td>{r.department}</td>
                     <td>{r.requestedBy}</td>
                     <td>{r.date}</td>
@@ -238,7 +238,7 @@ export const InventoryView: React.FC = () => {
                 <td>CBC 3-Part Diluent Reagent (20L)</td>
                 <td><span className="badge badge-paid">+ Stock In</span></td>
                 <td>+2 Canisters</td>
-                <td>jhalakathid_admin</td>
+                <td>lifecare_admin</td>
               </tr>
               <tr>
                 <td>2026-09-01 04:15 PM</td>
@@ -252,7 +252,7 @@ export const InventoryView: React.FC = () => {
         </div>
       )}
 
-      {/* New Requisition Modal matching SihatSuite live audit */}
+      {/* New Requisition Modal */}
       {showReqModal && (
         <div className="modal-backdrop" onClick={() => setShowReqModal(false)}>
           <div className="modal-content" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>

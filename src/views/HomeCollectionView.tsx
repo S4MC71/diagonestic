@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Truck, MapPin, Globe, Phone, UserCheck, CheckCircle2, Clock, Plus, X } from 'lucide-react';
 
 export const HomeCollectionView: React.FC = () => {
-  const { showToast } = useApp();
+  const { tenantSettings, showToast } = useApp();
   const [activeTab, setActiveTab] = useState<'queue' | 'areas' | 'storefront' | 'collector'>('queue');
 
   // Bookings queue
@@ -13,8 +13,8 @@ export const HomeCollectionView: React.FC = () => {
       bookingNo: 'HC-2026-042',
       patientName: 'Mrs. Salma Begum',
       phone: '01712-445566',
-      address: 'House 14, College Road, Jhalakathi Sadar',
-      area: 'Jhalakathi Sadar',
+      address: 'House 14, Central College Road',
+      area: 'Central Zone',
       date: '2026-09-03',
       preferredTime: '08:30 AM',
       tests: ['Fasting Blood Sugar (FBS)', 'Lipid Profile'],
@@ -28,8 +28,8 @@ export const HomeCollectionView: React.FC = () => {
       bookingNo: 'HC-2026-043',
       patientName: 'Haji Nurul Haque',
       phone: '01819-112233',
-      address: 'Station Road, Nalchity',
-      area: 'Nalchity Upazila',
+      address: 'Station Road, Sector 4',
+      area: 'North Zone',
       date: '2026-09-03',
       preferredTime: '09:15 AM',
       tests: ['Serum Creatinine', 'Serum Electrolytes', 'Complete Blood Count (CBC)'],
@@ -42,9 +42,9 @@ export const HomeCollectionView: React.FC = () => {
 
   // Service Areas
   const [areas, setAreas] = useState([
-    { id: 'a-1', name: 'Jhalakathi Sadar Town', distanceKm: 5, charge: 150, minFreeAmount: 2000, active: true },
-    { id: 'a-2', name: 'Nalchity Upazila', distanceKm: 14, charge: 300, minFreeAmount: 3000, active: true },
-    { id: 'a-3', name: 'Rajapur Bazar', distanceKm: 18, charge: 400, minFreeAmount: 4000, active: true }
+    { id: 'a-1', name: 'Central Town (0-5 km)', distanceKm: 5, charge: 150, minFreeAmount: 2000, active: true },
+    { id: 'a-2', name: 'Metro Perimeter (5-15 km)', distanceKm: 14, charge: 300, minFreeAmount: 3000, active: true },
+    { id: 'a-3', name: 'Outer Suburbs (15-25 km)', distanceKm: 18, charge: 400, minFreeAmount: 4000, active: true }
   ]);
 
   const handleUpdateStatus = (id: string, status: any) => {
@@ -115,7 +115,7 @@ export const HomeCollectionView: React.FC = () => {
             <tbody>
               {bookings.map(b => (
                 <tr key={b.id}>
-                  <td><strong style={{ color: '#073f8f' }}>{b.bookingNo}</strong></td>
+                  <td><strong style={{ color: '#059669' }}>{b.bookingNo}</strong></td>
                   <td>
                     <strong>{b.patientName}</strong>
                     <div style={{ fontSize: '11px', color: '#64748b' }}>{b.phone}</div>
@@ -123,7 +123,7 @@ export const HomeCollectionView: React.FC = () => {
                   </td>
                   <td>
                     <div>{b.date}</div>
-                    <div style={{ fontSize: '11px', color: '#0284c7', fontWeight: 600 }}>{b.preferredTime}</div>
+                    <div style={{ fontSize: '11px', color: '#059669', fontWeight: 600 }}>{b.preferredTime}</div>
                   </td>
                   <td>{b.tests.join(', ')}</td>
                   <td>{b.technicianName}</td>
@@ -196,8 +196,8 @@ export const HomeCollectionView: React.FC = () => {
               type="text"
               readOnly
               className="form-control"
-              value="https://jhalakathid.sihatsuite.com/home-collection"
-              style={{ background: '#f8fafc', fontWeight: 600, color: '#073f8f' }}
+              value={`https://${tenantSettings?.slug || 'lifecared'}.carepulse.health/home-collection`}
+              style={{ background: '#f8fafc', fontWeight: 600, color: '#059669' }}
             />
           </div>
           <div className="form-group">
@@ -205,7 +205,7 @@ export const HomeCollectionView: React.FC = () => {
             <input
               type="text"
               className="form-control"
-              defaultValue="Book Lab Tests at Home in Jhalakathi — Fast & Reliable Reports"
+              defaultValue={`Book Lab Tests at Home with ${tenantSettings?.name || 'LifeCare Diagnostic Center'} — Fast & Reliable Reports`}
             />
           </div>
           <button className="btn btn-primary" onClick={() => showToast('Storefront configuration saved!')}>
@@ -215,8 +215,8 @@ export const HomeCollectionView: React.FC = () => {
       )}
 
       {activeTab === 'collector' && (
-        <div className="card" style={{ maxWidth: '500px', background: '#051c40', color: '#ffffff' }}>
-          <div style={{ fontSize: '11px', color: '#10b9b3', fontWeight: 'bold', textTransform: 'uppercase' }}>
+        <div className="card" style={{ maxWidth: '500px', background: '#064e3b', color: '#ffffff' }}>
+          <div style={{ fontSize: '11px', color: '#34d399', fontWeight: 'bold', textTransform: 'uppercase' }}>
             PHLEBOTOMIST MOBILE VIEW
           </div>
           <h3 style={{ fontSize: '18px', fontWeight: '800', marginTop: '2px', marginBottom: '16px' }}>
@@ -227,7 +227,7 @@ export const HomeCollectionView: React.FC = () => {
               <div key={b.id} style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '10px', padding: '14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <strong>Stop #{i + 1}: {b.patientName}</strong>
-                  <span style={{ color: '#5de8e2' }}>{b.preferredTime}</span>
+                  <span style={{ color: '#a7f3d0' }}>{b.preferredTime}</span>
                 </div>
                 <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '4px' }}>{b.address}</div>
                 <div style={{ fontSize: '12px', color: '#fbb040', marginTop: '2px' }}>Call: {b.phone}</div>

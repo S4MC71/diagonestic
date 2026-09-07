@@ -61,10 +61,10 @@ export const ChambersView: React.FC = () => {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#073f8f' }}>{ch.name}</h3>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#059669' }}>{ch.name}</h3>
                   <div style={{ fontSize: '12px', color: '#64748b' }}>Room: <strong>#{ch.roomNo}</strong></div>
                 </div>
-                <span style={{ background: '#e0f7f6', color: '#0d7671', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '700' }}>
+                <span style={{ background: '#ecfdf5', color: '#047857', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '700' }}>
                   ACTIVE
                 </span>
               </div>
@@ -75,15 +75,15 @@ export const ChambersView: React.FC = () => {
 
               <div style={{ fontSize: '12px', color: '#475569', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Calendar size={15} color="#073f8f" />
+                  <Calendar size={15} color="#059669" />
                   <span>Days: <strong>{ch.visitingDays.join(', ')}</strong></span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Clock size={15} color="#073f8f" />
+                  <Clock size={15} color="#059669" />
                   <span>Time: <strong>{ch.startTime} – {ch.endTime}</strong></span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <DollarSign size={15} color="#073f8f" />
+                  <DollarSign size={15} color="#059669" />
                   <span>New Fee: <strong>৳{ch.consultationFee}</strong> | Follow-up: <strong>৳{ch.followUpFee}</strong></span>
                 </div>
               </div>

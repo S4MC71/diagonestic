@@ -15,6 +15,7 @@ import {
 
 export const NewInvoiceView: React.FC = () => {
   const {
+    currentUser,
     patients,
     addPatient,
     tests,
@@ -191,7 +192,7 @@ export const NewInvoiceView: React.FC = () => {
       dueAmount,
       paymentMethod,
       paymentStatus,
-      createdBy: 'jhalakathid_admin'
+      createdBy: currentUser?.username || 'lifecare_admin'
     });
 
     // Navigate to invoices list
@@ -219,7 +220,7 @@ export const NewInvoiceView: React.FC = () => {
               borderRadius: '8px',
               fontSize: '12px',
               fontWeight: 700,
-              background: '#073f8f',
+              background: '#059669',
               color: '#ffffff'
             }}
           >
@@ -268,7 +269,7 @@ export const NewInvoiceView: React.FC = () => {
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowAddPatientDrawer(true)}
-                  style={{ color: '#073f8f', borderColor: '#073f8f' }}
+                  style={{ color: '#059669', borderColor: '#059669' }}
                 >
                   <UserPlus size={16} /> + Add new patient
                 </button>
@@ -314,7 +315,7 @@ export const NewInvoiceView: React.FC = () => {
                         <strong>{p.name}</strong> ({p.code}) — {p.age} {p.ageUnit}, {p.gender}
                         <div style={{ fontSize: '11px', color: '#64748b' }}>Phone: {p.phone} | {p.address}</div>
                       </div>
-                      <span style={{ fontSize: '12px', color: '#0284c7', fontWeight: 600 }}>Select →</span>
+                      <span style={{ fontSize: '12px', color: '#059669', fontWeight: 600 }}>Select →</span>
                     </div>
                   ))}
                 </div>
@@ -422,8 +423,8 @@ export const NewInvoiceView: React.FC = () => {
                       <span className={`badge ${t.vendorType === 'In-house' ? 'badge-inhouse' : 'badge-sendout'}`}>
                         {t.vendorType}
                       </span>
-                      <strong style={{ fontSize: '14px', color: '#073f8f' }}>৳{t.price}</strong>
-                      <span style={{ color: '#0284c7', fontWeight: 600 }}>+ Add</span>
+                      <strong style={{ fontSize: '14px', color: '#059669' }}>৳{t.price}</strong>
+                      <span style={{ color: '#059669', fontWeight: 600 }}>+ Add</span>
                     </div>
                   </div>
                 ))}
@@ -512,7 +513,7 @@ export const NewInvoiceView: React.FC = () => {
             3 · Discount & Payment Settlement
           </h3>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '28px' }}>
+          <div className="invoice-settlement-grid">
             {/* Left Controls */}
             <div>
               {/* Discount Selector */}
@@ -551,9 +552,9 @@ export const NewInvoiceView: React.FC = () => {
                       style={{
                         padding: '10px',
                         borderRadius: '10px',
-                        border: paymentMethod === method ? '2px solid #073f8f' : '1px solid var(--slate-200)',
-                        background: paymentMethod === method ? '#e0f7f6' : '#ffffff',
-                        color: paymentMethod === method ? '#073f8f' : '#475569',
+                        border: paymentMethod === method ? '2px solid #059669' : '1px solid var(--slate-200)',
+                        background: paymentMethod === method ? '#ecfdf5' : '#ffffff',
+                        color: paymentMethod === method ? '#059669' : '#475569',
                         fontWeight: 600,
                         fontSize: '12px',
                         transition: 'all 0.15s'
@@ -611,7 +612,7 @@ export const NewInvoiceView: React.FC = () => {
                   type="number"
                   min="0"
                   className="form-control"
-                  style={{ fontSize: '16px', fontWeight: '700', color: '#073f8f' }}
+                  style={{ fontSize: '16px', fontWeight: '700', color: '#059669' }}
                   value={paidNow}
                   onChange={e => {
                     setUserEditedPaidNow(true);
@@ -652,7 +653,7 @@ export const NewInvoiceView: React.FC = () => {
                 padding: '14px 28px',
                 fontSize: '15px',
                 borderRadius: '12px',
-                background: 'linear-gradient(135deg, #073f8f, #10b9b3)'
+                background: 'linear-gradient(135deg, #059669, #10b981)'
               }}
             >
               <Printer size={18} /> Create Invoice & Open Print Preview

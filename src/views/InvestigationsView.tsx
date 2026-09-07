@@ -99,7 +99,7 @@ export const InvestigationsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Subtabs Bar matching SihatSuite */}
+      {/* Subtabs Bar */}
       <div className="subtabs-bar">
         <button
           className={`subtab-btn ${activeTab === 'catalog' ? 'active' : ''}`}
@@ -203,7 +203,7 @@ export const InvestigationsView: React.FC = () => {
                         onChange={e => setNewPrice(Number(e.target.value) || 0)}
                       />
                     ) : (
-                      <strong style={{ color: '#073f8f' }}>৳{test.price.toFixed(2)}</strong>
+                      <strong style={{ color: '#059669' }}>৳{test.price.toFixed(2)}</strong>
                     )}
                   </td>
                   <td>
@@ -257,7 +257,7 @@ export const InvestigationsView: React.FC = () => {
             <tbody>
               {groups.map(g => (
                 <tr key={g.id}>
-                  <td><strong style={{ color: '#073f8f' }}>{g.name}</strong></td>
+                  <td><strong style={{ color: '#059669' }}>{g.name}</strong></td>
                   <td><span className="badge badge-inhouse">{g.category}</span></td>
                   <td style={{ fontSize: '12px', color: '#475569' }}>{g.description}</td>
                   <td><strong>{g.testsCount}</strong> tests bundle</td>

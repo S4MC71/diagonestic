@@ -12,21 +12,24 @@ import {
   SendOutVendor,
   InventoryItem,
   User,
-  AccountingTransaction
+  AccountingTransaction,
+  SupportTicket,
+  SubscriptionPayment,
+  ActiveSubscription
 } from '../types';
 
 export const INITIAL_TENANT_SETTINGS: TenantSettings = {
-  name: 'Jhalakathi Diagnostic Center',
-  bengaliName: 'ঝালকাঠি ডায়াগনস্টিক সেন্টার',
-  slug: 'jhalakathid',
-  established: '2019',
+  name: 'LifeCare Diagnostic Center',
+  bengaliName: 'লাইফকেয়ার ডায়াগনস্টিক সেন্টার',
+  slug: 'lifecared',
+  established: '2020',
   phone: '01711-234567',
   phone2: '01812-987654',
   hotline: '09612-888999',
-  email: 'info@jhalakathid.com',
-  address: 'Hospital Road, Sadar',
-  thana: 'Jhalakathi Sadar',
-  district: 'Jhalakathi',
+  email: 'info@lifecarediagnostic.com',
+  address: 'Medical College Road, Central Square',
+  thana: 'Central Sadar',
+  district: 'Dhaka',
   currency: '৳',
   invoicePrefix: 'INV-2026-',
   samplePrefix: 'SMP-',
@@ -136,7 +139,7 @@ export const INITIAL_DOCTORS: Doctor[] = [
     degrees: 'MBBS, DGO, MCPS (Obs & Gynae)',
     specialty: 'Gynecologist & Obstetrician',
     designation: 'Associate Professor',
-    hospital: 'Jhalakathi District Hospital',
+    hospital: 'LifeCare Hospital & Medical College',
     phone: '01819-445566',
     email: 'dr.nusrat@yahoo.com',
     commissionType: 'percentage',
@@ -752,7 +755,7 @@ export const INITIAL_PATIENTS: Patient[] = [
     ageUnit: 'yrs',
     gender: 'Male',
     bloodGroup: 'B+',
-    address: 'Kathalia Road, Jhalakathi Sadar',
+    address: 'Medical College Road, Central Square',
     nid: '19784912839281',
     createdAt: '2026-08-28',
     visitCount: 3,
@@ -769,7 +772,7 @@ export const INITIAL_PATIENTS: Patient[] = [
     ageUnit: 'yrs',
     gender: 'Female',
     bloodGroup: 'O+',
-    address: 'Rajapur Bazar, Jhalakathi',
+    address: 'Dhanmondi, Central Zone',
     createdAt: '2026-08-30',
     visitCount: 2,
     totalBilled: 1850,
@@ -785,7 +788,7 @@ export const INITIAL_PATIENTS: Patient[] = [
     ageUnit: 'yrs',
     gender: 'Male',
     bloodGroup: 'A+',
-    address: 'Nalchity, Jhalakathi',
+    address: 'Green Road, Central Zone',
     createdAt: '2026-09-01',
     visitCount: 1,
     totalBilled: 1200,
@@ -856,7 +859,7 @@ export const INITIAL_INVOICES: Invoice[] = [
     dueAmount: 0,
     paymentMethod: 'Cash',
     paymentStatus: 'PAID',
-    createdBy: 'jhalakathid_admin'
+    createdBy: 'lifecare_admin'
   },
   {
     id: 'inv-2',
@@ -908,7 +911,7 @@ export const INITIAL_INVOICES: Invoice[] = [
     dueAmount: 450,
     paymentMethod: 'Mobile Banking',
     paymentStatus: 'PARTIAL',
-    createdBy: 'jhalakathid_admin'
+    createdBy: 'lifecare_admin'
   }
 ];
 
@@ -1156,33 +1159,144 @@ export const INITIAL_INVENTORY_ITEMS: InventoryItem[] = [
 export const INITIAL_USERS: User[] = [
   {
     id: 'usr-1',
-    name: 'System Administrator',
-    username: 'jhalakathid_admin',
-    email: 'admin@jhalakathid.com',
-    phone: '01711-234567',
+    name: 'lifecare_admin',
+    username: 'lifecare_admin',
+    email: 'samubincoc1@gmail.com',
+    phone: '01894422170',
     role: 'Global Tenant Admin',
+    roles: ['Global Tenant Admin'],
+    status: 'ACTIVE',
     isActive: true,
-    active: true
+    active: true,
+    joinedDate: '9/1/2026',
+    signatureUrl: ''
   },
   {
     id: 'usr-2',
     name: 'Kamrul Hasan',
     username: 'kamrul_reception',
-    email: 'kamrul@jhalakathid.com',
+    email: 'kamrul@lifecarediagnostic.com',
     phone: '01811-345678',
-    role: 'Receptionist / Billing Clerk',
+    role: 'Global Reception',
+    roles: ['Global Reception'],
+    status: 'ACTIVE',
     isActive: true,
-    active: true
+    active: true,
+    joinedDate: '9/2/2026',
+    signatureUrl: ''
   },
   {
     id: 'usr-3',
     name: 'Farzana Parvin',
     username: 'farzana_lab',
-    email: 'farzana@jhalakathid.com',
+    email: 'farzana@lifecarediagnostic.com',
     phone: '01912-456789',
-    role: 'Medical Technologist / Pathologist',
+    role: 'Global Lab Technologist',
+    roles: ['Global Lab Technologist'],
+    status: 'ACTIVE',
     isActive: true,
-    active: true
+    active: true,
+    joinedDate: '9/2/2026',
+    signatureUrl: ''
+  },
+  {
+    id: 'usr-4',
+    name: 'Dr. Tariqul Islam',
+    username: 'dr_tariqul',
+    email: 'tariqul@lifecarediagnostic.com',
+    phone: '01715-998877',
+    role: 'Doctor',
+    roles: ['Doctor', 'Global Doctor'],
+    status: 'ACTIVE',
+    isActive: true,
+    active: true,
+    joinedDate: '9/3/2026',
+    signatureUrl: ''
+  }
+];
+
+export const INITIAL_SUPPORT_TICKETS: SupportTicket[] = [
+  {
+    id: 't-1042',
+    ticketNo: 'ISS-1042',
+    type: 'Improvement',
+    title: 'Barcode scanner fast auto-focus on sample vials',
+    details: 'The camera barcode scanner takes a couple of seconds to focus on small 3ml EDTA blood tubes under phlebotomy room lighting. Can we increase the contrast threshold or enable torch automatically?',
+    status: 'Under Review',
+    createdAt: '2026-09-03 11:30 AM',
+    updatedAt: '2026-09-04 03:15 PM',
+    latestUpdate: 'Our engineering team is testing optimized camera autofocus and torch toggles for low-light lab environments. Scheduled for next release.',
+    submittedBy: 'lifecare_admin',
+    replies: [
+      {
+        id: 'rep-1',
+        author: 'CarePulse Engineering',
+        isStaff: true,
+        message: 'Thank you for reporting! We have reproduced this on lower-spec mobile webcams and added auto-torch triggers.',
+        createdAt: '2026-09-04 03:15 PM'
+      }
+    ]
+  },
+  {
+    id: 't-1038',
+    ticketNo: 'ISS-1038',
+    type: 'Feedback',
+    title: 'Bangla thermal receipt print layout looks very crisp',
+    details: 'Doctors and patients are loving the Bengali department titles and clean 80mm thermal receipt layout. Very smooth workflow.',
+    status: 'Resolved',
+    createdAt: '2026-09-02 02:45 PM',
+    updatedAt: '2026-09-02 05:00 PM',
+    latestUpdate: 'Thank you for the wonderful feedback! Glad the Bengali typography is working nicely.',
+    submittedBy: 'lifecare_admin',
+    replies: [
+      {
+        id: 'rep-2',
+        author: 'CarePulse Support',
+        isStaff: true,
+        message: 'Thank you for trusting CarePulse for LifeCare Diagnostic Center!',
+        createdAt: '2026-09-02 05:00 PM'
+      }
+    ]
+  }
+];
+
+export const INITIAL_ACTIVE_SUBSCRIPTION: ActiveSubscription = {
+  planName: 'Diagnostic Management (DMS) + PRESCRIPTION + PHARMACY',
+  planSubtitle: 'Diagnostic Management System + Prescription Module + Pharmacy Module',
+  status: 'Active',
+  modules: ['Diagnostic Management', 'Prescription', 'Pharmacy POS'],
+  price: 0,
+  billingPeriodText: 'per 1 months',
+  discountNote: '-10,000 BDT discount applied (15-day trial)',
+  startDate: '1 September 2026',
+  expiryDate: '16 September 2026',
+  daysRemaining: 11
+};
+
+export const INITIAL_SUBSCRIPTION_PAYMENTS: SubscriptionPayment[] = [
+  {
+    id: 'sp-1',
+    receiptNo: 'CP-INV-2026-0901',
+    date: '1 Sep 2026',
+    planName: 'Complete Suite: DMS + Rx + Pharmacy (15-Day Free Trial)',
+    billingCycle: 'Monthly',
+    amount: 0,
+    currency: 'BDT',
+    method: 'Trial Activation (100% Promo)',
+    accountInfo: 'Auto-Provisioned',
+    status: 'Paid'
+  },
+  {
+    id: 'sp-2',
+    receiptNo: 'CP-INV-2026-0815',
+    date: '15 Aug 2026',
+    planName: 'Onboarding Assistance & Cloud Migration Package',
+    billingCycle: 'Monthly',
+    amount: 2500,
+    currency: 'BDT',
+    method: 'bKash Merchant (01894422170)',
+    accountInfo: 'TrxID: 9HJ87K2M19',
+    status: 'Paid'
   }
 ];
 
@@ -1234,4 +1348,8 @@ export const initialSendOutVendors = INITIAL_SENDOUT_VENDORS;
 export const initialInventory = INITIAL_INVENTORY_ITEMS;
 export const initialTransactions = INITIAL_TRANSACTIONS;
 export const initialSettings = INITIAL_TENANT_SETTINGS;
+export const initialSupportTickets = INITIAL_SUPPORT_TICKETS;
+export const initialActiveSubscription = INITIAL_ACTIVE_SUBSCRIPTION;
+export const initialSubscriptionPayments = INITIAL_SUBSCRIPTION_PAYMENTS;
+
 

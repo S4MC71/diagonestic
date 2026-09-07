@@ -1,9 +1,10 @@
-// Core TypeScript types matching SihatSuite Diagnostic Center
+// Core TypeScript types for CarePulse Diagnostic Operations Platform
 
 export type ActiveView =
   | 'login'
   | 'dashboard'
   | 'patients'
+  | 'recall'
   | 'prescriptions'
   | 'new-prescription'
   | 'chambers'
@@ -43,10 +44,26 @@ export type ActiveView =
   | 'users'
   | 'roles'
   | 'subscription'
+  | 'tutorials'
   | 'support'
   | 'settings';
 
+export type LiveUserRole =
+  | 'Doctor'
+  | 'Global Account Manager'
+  | 'Global Auditor'
+  | 'Global Corporate Coordinator'
+  | 'Global Doctor'
+  | 'Global Field Agent'
+  | 'Global Lab Technologist'
+  | 'Global Pharmacy Counter'
+  | 'Global Pharmacy Manager'
+  | 'Global Reception'
+  | 'Global Storekeeper'
+  | 'Global Tenant Admin';
+
 export type UserRole =
+  | LiveUserRole
   | 'Global Tenant Admin'
   | 'Center Manager'
   | 'Receptionist / Billing Clerk'
@@ -62,9 +79,12 @@ export interface User {
   username: string;
   email: string;
   phone: string;
-  role: UserRole;
+  role: string;
+  roles?: string[];
   isActive?: boolean;
   active?: boolean;
+  status?: 'ACTIVE' | 'INACTIVE';
+  joinedDate?: string;
   signatureUrl?: string;
   avatarUrl?: string;
 }
@@ -518,3 +538,70 @@ export interface TenantSettings {
     doctorShow: boolean;
   }[];
 }
+
+export interface RecallRule {
+  id: string;
+  testId: string;
+  testName: string;
+  intervalDays: number;
+  createdAt: string;
+}
+
+export interface RecallPatient {
+  id: string;
+  patientName: string;
+  phone: string;
+  testName: string;
+  lastDoneDate: string;
+  overdueDays: number;
+  lastRemindedDate?: string;
+}
+
+export interface SupportTicket {
+  id: string;
+  ticketNo: string;
+  type: 'Bug' | 'Improvement' | 'Feedback' | 'Issue';
+  title: string;
+  details: string;
+  attachments?: string[];
+  status: 'Open' | 'Under Review' | 'In Progress' | 'Resolved' | 'Closed';
+  createdAt: string;
+  updatedAt: string;
+  latestUpdate?: string;
+  submittedBy: string;
+  replies?: {
+    id: string;
+    author: string;
+    isStaff: boolean;
+    message: string;
+    createdAt: string;
+  }[];
+}
+
+export interface SubscriptionPayment {
+  id: string;
+  receiptNo: string;
+  date: string;
+  planName: string;
+  billingCycle: 'Monthly' | 'Annual';
+  amount: number;
+  currency: string;
+  method: string;
+  accountInfo?: string;
+  status: 'Paid' | 'Completed' | 'Pending';
+  invoiceUrl?: string;
+}
+
+export interface ActiveSubscription {
+  planName: string;
+  planSubtitle: string;
+  status: 'Active' | 'Expiring' | 'Expired';
+  modules: string[];
+  price: number;
+  billingPeriodText: string;
+  discountNote?: string;
+  startDate: string;
+  expiryDate: string;
+  daysRemaining: number;
+}
+

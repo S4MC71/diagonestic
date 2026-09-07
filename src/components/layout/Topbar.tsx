@@ -15,6 +15,7 @@ import {
 const VIEW_TITLES: Record<string, string> = {
   dashboard: 'Dashboard',
   patients: 'Patients',
+  recall: 'Patient Recall',
   prescriptions: 'Prescriptions',
   'new-prescription': 'New Prescription',
   chambers: 'Doctor Chambers',
@@ -27,9 +28,9 @@ const VIEW_TITLES: Record<string, string> = {
   inventory: 'Clinical Inventory',
   drugs: 'Drugs Directory',
   'report-templates': 'Report Templates',
-  'lab-reports': 'Lab Reports',
+  'lab-reports': 'Reports',
   'pharmacy-overview': 'Pharmacy Overview',
-  'pharmacy-pos': 'Pharmacy Counter (POS)',
+  'pharmacy-pos': 'Counter',
   'pharmacy-sales': 'Pharmacy Sales',
   'pharmacy-products': 'Pharmacy Products',
   'pharmacy-purchases': 'Pharmacy Purchases',
@@ -40,10 +41,11 @@ const VIEW_TITLES: Record<string, string> = {
   payments: 'Payments Received',
   commissions: 'Doctor Referral Commissions',
   accounting: 'Accounting & Expenses',
-  users: 'Users Management',
+  users: 'Users',
   roles: 'Roles & Permissions',
-  subscription: 'Subscription & License',
-  support: 'Support & Feedback',
+  subscription: 'Subscription',
+  tutorials: 'Tutorials',
+  support: 'Support',
   settings: 'Center Settings'
 };
 
@@ -88,9 +90,9 @@ export const Topbar: React.FC = () => {
         </button>
 
         <div className="tenant-badge" onClick={() => setCurrentView('settings')}>
-          <div className="tenant-avatar">JD</div>
+          <div className="tenant-avatar">LC</div>
           <span className="tenant-title">{tenantSettings.name}</span>
-          <ChevronDown size={14} color="#64748b" />
+          <ChevronDown size={14} color="#64748b" style={{ flexShrink: 0 }} />
         </div>
 
         <div className="page-title-crumb">
@@ -138,13 +140,13 @@ export const Topbar: React.FC = () => {
             onClick={() => setShowProfileMenu(!showProfileMenu)}
           >
             <div className="user-avatar">
-              {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : 'JH'}
+              {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : 'LC'}
             </div>
             <div className="user-meta">
-              <div className="user-name">{currentUser?.username || 'jhalakathid_admin'}</div>
+              <div className="user-name">{currentUser?.username || 'lifecare_admin'}</div>
               <div className="user-role">{currentUser?.role || 'Global Tenant Admin'}</div>
             </div>
-            <ChevronDown size={14} color="#64748b" />
+            <ChevronDown size={14} color="#64748b" style={{ flexShrink: 0 }} />
           </div>
 
           {/* Profile Dropdown Menu */}
@@ -173,7 +175,7 @@ export const Topbar: React.FC = () => {
               >
                 Signed in as{' '}
                 <strong style={{ color: 'var(--slate-800)', display: 'block' }}>
-                  {currentUser?.username || 'jhalakathid_admin'}
+                  {currentUser?.username || 'lifecare_admin'}
                 </strong>
               </div>
 

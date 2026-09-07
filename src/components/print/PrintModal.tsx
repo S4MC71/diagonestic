@@ -44,7 +44,7 @@ export const PrintModal: React.FC = () => {
           overflow: 'hidden'
         }}
       >
-        {/* Top Control Bar matching SihatSuite live preview */}
+        {/* Top Control Bar */}
         <div
           className="no-print"
           style={{
@@ -113,7 +113,7 @@ export const PrintModal: React.FC = () => {
             <button
               className="btn btn-primary btn-sm"
               onClick={handlePrint}
-              style={{ marginLeft: '10px', background: '#0284c7' }}
+              style={{ marginLeft: '10px', background: '#059669' }}
             >
               <Printer size={15} /> Print
             </button>

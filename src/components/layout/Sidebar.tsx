@@ -4,32 +4,23 @@ import { ActiveView } from '../../types';
 import {
   LayoutDashboard,
   Users,
+  Calendar,
   FileText,
   Building,
-  Calendar,
   FlaskConical,
   UserCheck,
   TestTube,
+  Globe,
   Truck,
-  Building2,
-  Package,
-  Pill,
-  BookOpen,
-  ClipboardCheck,
-  Store,
+  Briefcase,
+  FolderPlus,
+  Activity,
   CreditCard,
-  TrendingUp,
-  Boxes,
-  ShoppingCart,
-  TruckIcon,
-  BarChart3,
-  Receipt,
-  Wallet,
-  Percent,
+  Home,
+  DollarSign,
   Calculator,
   ShieldCheck,
-  KeyRound,
-  Award,
+  PlaySquare,
   HelpCircle,
   Settings,
   ChevronLeft,
@@ -54,52 +45,54 @@ const NAVIGATION_GROUPS: NavCategory[] = [
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { id: 'patients', label: 'Patients', icon: Users },
+      { id: 'recall', label: 'Recall', icon: Calendar },
       { id: 'prescriptions', label: 'Prescriptions', icon: FileText },
       { id: 'chambers', label: 'Chambers', icon: Building },
       { id: 'appointments', label: 'Appointments', icon: Calendar },
       { id: 'investigations', label: 'Investigations', icon: FlaskConical },
       { id: 'doctors', label: 'Doctors', icon: UserCheck },
       { id: 'samples', label: 'Samples', icon: TestTube },
-      { id: 'home-collection', label: 'Home Collection', icon: Truck },
-      { id: 'sendout-vendors', label: 'Send-Out Vendors', icon: Building2 },
-      { id: 'inventory', label: 'Inventory', icon: Package },
-      { id: 'drugs', label: 'Drugs', icon: Pill },
-      { id: 'report-templates', label: 'Report Templates', icon: BookOpen }
+      { id: 'home-collection', label: 'Home Collection', icon: Globe },
+      { id: 'sendout-vendors', label: 'Send-Out Vendors', icon: Truck },
+      { id: 'inventory', label: 'Inventory', icon: Briefcase },
+      { id: 'drugs', label: 'Drugs', icon: FolderPlus },
+      { id: 'report-templates', label: 'Report Templates', icon: FileText }
     ]
   },
   {
     category: 'LAB',
     items: [
-      { id: 'lab-reports', label: 'Reports', icon: ClipboardCheck }
+      { id: 'lab-reports', label: 'Reports', icon: Activity }
     ]
   },
   {
     category: 'PHARMACY',
     items: [
-      { id: 'pharmacy-overview', label: 'Overview', icon: Store },
+      { id: 'pharmacy-overview', label: 'Overview', icon: FolderPlus },
       { id: 'pharmacy-pos', label: 'Counter', icon: CreditCard },
-      { id: 'pharmacy-sales', label: 'Sales', icon: TrendingUp },
-      { id: 'pharmacy-products', label: 'Products', icon: Boxes },
-      { id: 'pharmacy-purchases', label: 'Purchases', icon: ShoppingCart },
-      { id: 'pharmacy-suppliers', label: 'Suppliers', icon: TruckIcon },
-      { id: 'pharmacy-reports', label: 'Reports', icon: BarChart3 }
+      { id: 'pharmacy-sales', label: 'Sales', icon: Activity },
+      { id: 'pharmacy-products', label: 'Products', icon: Briefcase },
+      { id: 'pharmacy-purchases', label: 'Purchases', icon: FileText },
+      { id: 'pharmacy-suppliers', label: 'Suppliers', icon: Home },
+      { id: 'pharmacy-reports', label: 'Pharmacy Reports', icon: Activity }
     ]
   },
   {
     category: 'FINANCE',
     items: [
-      { id: 'invoices', label: 'Invoices', icon: Receipt },
-      { id: 'payments', label: 'Payments', icon: Wallet },
-      { id: 'commissions', label: 'Commissions', icon: Percent },
+      { id: 'invoices', label: 'Invoices', icon: FileText },
+      { id: 'payments', label: 'Payments', icon: CreditCard },
+      { id: 'commissions', label: 'Commissions', icon: DollarSign },
       { id: 'accounting', label: 'Accounting', icon: Calculator }
     ]
   },
   {
-    category: 'SETTINGS',
+    category: 'ADMIN',
     items: [
-      { id: 'users', label: 'Users', icon: ShieldCheck },
-      { id: 'roles', label: 'Roles', icon: KeyRound },
-      { id: 'subscription', label: 'Subscription', icon: Award },
+      { id: 'users', label: 'Users', icon: Users },
+      { id: 'roles', label: 'Roles & Permissions', icon: ShieldCheck },
+      { id: 'subscription', label: 'Subscription', icon: CreditCard },
+      { id: 'tutorials', label: 'Tutorials', icon: PlaySquare },
       { id: 'support', label: 'Support', icon: HelpCircle },
       { id: 'settings', label: 'Settings', icon: Settings }
     ]
@@ -118,7 +111,7 @@ export const Sidebar: React.FC = () => {
           onClick={() => setCurrentView('dashboard')}
           style={{ cursor: 'pointer' }}
         >
-          <img src="/logo.svg" alt="SihatSuite" style={{ height: '32px', width: 'auto' }} />
+          <img src="/logo.svg" alt="CarePulse" style={{ height: '32px', width: 'auto' }} />
         </div>
       </div>
 

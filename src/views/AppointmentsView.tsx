@@ -98,7 +98,7 @@ export const AppointmentsView: React.FC = () => {
 
   return (
     <div>
-      {/* Top Header matching SihatSuite live */}
+      {/* Top Header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Appointments</h1>
@@ -114,7 +114,7 @@ export const AppointmentsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Action Buttons Toolbar matching SihatSuite */}
+      {/* Action Buttons Toolbar */}
       <div
         style={{
           display: 'flex',
@@ -204,8 +204,8 @@ export const AppointmentsView: React.FC = () => {
                         width: '32px',
                         height: '32px',
                         borderRadius: '50%',
-                        background: '#e0f2fe',
-                        color: '#0369a1',
+                        background: '#ecfdf5',
+                        color: '#047857',
                         fontWeight: 800,
                         fontSize: '13px'
                       }}
@@ -221,7 +221,7 @@ export const AppointmentsView: React.FC = () => {
                   </td>
                   <td>
                     <strong>{app.doctorName}</strong>
-                    <div style={{ fontSize: '11px', color: '#073f8f' }}>{app.chamberRoom}</div>
+                    <div style={{ fontSize: '11px', color: '#059669' }}>{app.chamberRoom}</div>
                   </td>
                   <td>{app.timeSlot}</td>
                   <td style={{ textAlign: 'right', fontWeight: 700 }}>৳{app.fee}</td>
@@ -289,10 +289,10 @@ export const AppointmentsView: React.FC = () => {
               const waitingList = docApps.filter(a => a.status === 'Waiting');
 
               return (
-                <div key={doc.id} className="card" style={{ borderTop: '4px solid #073f8f' }}>
+                <div key={doc.id} className="card" style={{ borderTop: '4px solid #059669' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                     <div>
-                      <strong style={{ fontSize: '15px', color: '#073f8f' }}>{doc.name}</strong>
+                      <strong style={{ fontSize: '15px', color: '#059669' }}>{doc.name}</strong>
                       <div style={{ fontSize: '11px', color: '#64748b' }}>{doc.specialty} · {doc.chamberRoom}</div>
                     </div>
                     <span className="badge badge-inhouse">{waitingList.length} Waiting</span>

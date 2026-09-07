@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 export const NewPrescriptionView: React.FC = () => {
-  const { doctors, chambers, patients, tests, setCurrentView, showToast } = useApp();
+  const { tenantSettings, doctors, chambers, patients, tests, setCurrentView, showToast } = useApp();
 
   // Selected Header Info
   const [selectedDoctorId, setSelectedDoctorId] = useState(doctors[0]?.id || '');
@@ -148,7 +148,7 @@ export const NewPrescriptionView: React.FC = () => {
         {/* Doctor Header Banner */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #051c40 0%, #073f8f 100%)',
+            background: 'linear-gradient(135deg, #064e3b 0%, #059669 100%)',
             color: '#ffffff',
             padding: '24px 32px',
             display: 'flex',
@@ -157,19 +157,19 @@ export const NewPrescriptionView: React.FC = () => {
           }}
         >
           <div>
-            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#10b9b3', fontWeight: 'bold' }}>
+            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#34d399', fontWeight: 'bold' }}>
               CONSULTANT SPECIALIST
             </div>
             <h2 style={{ fontSize: '20px', fontWeight: '800', marginTop: '2px' }}>{selectedDoctor.name}</h2>
             <div style={{ fontSize: '13px', opacity: 0.9 }}>{selectedDoctor.degrees}</div>
-            <div style={{ fontSize: '12px', color: '#5de8e2', marginTop: '3px' }}>{selectedDoctor.specialty}</div>
+            <div style={{ fontSize: '12px', color: '#a7f3d0', marginTop: '3px' }}>{selectedDoctor.specialty}</div>
             <div style={{ fontSize: '11px', opacity: 0.7 }}>{selectedDoctor.hospital}</div>
           </div>
 
           <div style={{ textAlign: 'right', fontSize: '12px', opacity: 0.85 }}>
-            <div style={{ fontWeight: '700', fontSize: '14px', color: '#ffffff' }}>Jhalakathi Diagnostic Center</div>
-            <div>Hospital Road, Jhalakathi Sadar</div>
-            <div>Chamber: Room 101 | Serial: 01711-234567</div>
+            <div style={{ fontWeight: '700', fontSize: '14px', color: '#ffffff' }}>{tenantSettings?.name || 'LifeCare Diagnostic Center'}</div>
+            <div>{tenantSettings?.address || 'Medical College Road, Central Square'}</div>
+            <div>Chamber: Room 101 | Serial: {tenantSettings?.hotline || '01711-234567'}</div>
           </div>
         </div>
 
@@ -193,8 +193,7 @@ export const NewPrescriptionView: React.FC = () => {
           <div>Weight: <strong>{weight} kg</strong> | BP: <strong>{bp} mmHg</strong></div>
         </div>
 
-        {/* 2-Column Clinical Body */}
-        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', minHeight: '520px' }}>
+        <div className="prescription-editor-grid">
           {/* Left Column: Complaints, Vitals, Findings & Tests */}
           <div style={{ borderRight: '1px solid var(--slate-200)', padding: '20px', background: '#fafbfc' }}>
             {/* Vitals */}
@@ -248,7 +247,7 @@ export const NewPrescriptionView: React.FC = () => {
               <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>
                 INVESTIGATIONS
               </div>
-              <ul style={{ paddingLeft: '16px', fontSize: '12px', color: '#073f8f', marginBottom: '8px' }}>
+              <ul style={{ paddingLeft: '16px', fontSize: '12px', color: '#059669', marginBottom: '8px' }}>
                 {advisedTests.map((t, i) => <li key={i}><strong>{t}</strong></li>)}
               </ul>
               <div style={{ display: 'flex', gap: '4px' }}>
@@ -268,7 +267,7 @@ export const NewPrescriptionView: React.FC = () => {
           <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                <span style={{ fontSize: '28px', fontWeight: '900', fontStyle: 'italic', fontFamily: 'serif', color: '#073f8f' }}>
+                <span style={{ fontSize: '28px', fontWeight: '900', fontStyle: 'italic', fontFamily: 'serif', color: '#059669' }}>
                   ℞
                 </span>
                 <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Prescribed Medicines</span>
@@ -285,7 +284,7 @@ export const NewPrescriptionView: React.FC = () => {
                           ({drug.genericName})
                         </span>
                       </div>
-                      <div style={{ fontSize: '13px', color: '#073f8f', fontWeight: '600', marginTop: '2px', paddingLeft: '16px' }}>
+                      <div style={{ fontSize: '13px', color: '#059669', fontWeight: '600', marginTop: '2px', paddingLeft: '16px' }}>
                         {drug.dose} — {drug.duration} — ({drug.instructions})
                       </div>
                     </div>
@@ -348,7 +347,7 @@ export const NewPrescriptionView: React.FC = () => {
                     className="form-control"
                     style={{ fontSize: '12px' }}
                   />
-                  <div style={{ fontSize: '12px', color: '#073f8f', fontWeight: '600', marginTop: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#059669', fontWeight: '600', marginTop: '6px' }}>
                     Next Visit: <input type="text" value={nextVisit} onChange={e => setNextVisit(e.target.value)} style={{ border: '1px solid #cbd5e1', padding: '2px 6px', borderRadius: '4px' }} />
                   </div>
                 </div>

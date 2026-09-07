@@ -19,7 +19,7 @@ export const CommissionsView: React.FC = () => {
   const [disburseDocId, setDisburseDocId] = useState(doctors[0]?.id || '');
   const [disburseAmount, setDisburseAmount] = useState<number>(5000);
 
-  // Add Rule Form State matching SihatSuite
+  // Add Rule Form State
   const [ruleAgentId, setRuleAgentId] = useState(doctors[0]?.id || '');
   const [ruleScope, setRuleScope] = useState<'General' | 'Specific Test' | 'Category'>('General');
   const [ruleType, setRuleType] = useState<'Percentage' | 'Fixed Amount'>('Percentage');
@@ -73,7 +73,7 @@ export const CommissionsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Subtabs Bar matching SihatSuite live */}
+      {/* Subtabs Bar */}
       <div className="subtabs-bar">
         <button
           className={`subtab-btn ${activeTab === 'agents' ? 'active' : ''}`}
@@ -142,7 +142,7 @@ export const CommissionsView: React.FC = () => {
         </div>
       )}
 
-      {/* 2. RULES TAB matching SihatSuite live */}
+      {/* 2. RULES TAB */}
       {activeTab === 'rules' && (
         <div className="table-container">
           <table className="custom-table">
@@ -163,7 +163,7 @@ export const CommissionsView: React.FC = () => {
                   <td>{r.scope}</td>
                   <td>{r.calculationType}</td>
                   <td>
-                    <strong style={{ color: '#073f8f' }}>
+                    <strong style={{ color: '#059669' }}>
                       {r.calculationType === 'Percentage' ? `${r.value}%` : `৳${r.value}`}
                     </strong>
                   </td>
@@ -182,18 +182,17 @@ export const CommissionsView: React.FC = () => {
         </div>
       )}
 
-      {/* 3. ENTRIES TAB matching SihatSuite live */}
       {activeTab === 'entries' && (
         <div className="table-container">
           <table className="custom-table">
             <thead>
               <tr>
-                <th>Agent</th>
-                <th>Invoice #</th>
-                <th>Date Created</th>
-                <th style={{ textAlign: 'right' }}>Billed Amount</th>
-                <th>Rate Applied</th>
-                <th style={{ textAlign: 'right' }}>Commission (৳)</th>
+                <th>Doctor</th>
+                <th>Invoice</th>
+                <th>Date</th>
+                <th style={{ textAlign: 'right' }}>Billed</th>
+                <th>Rate</th>
+                <th style={{ textAlign: 'right' }}>Commission</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -201,11 +200,11 @@ export const CommissionsView: React.FC = () => {
               {commissionEntries.map(e => (
                 <tr key={e.id}>
                   <td><strong>{e.doctorName}</strong></td>
-                  <td><span style={{ color: '#0284c7', fontWeight: 600 }}>{e.invoiceNo}</span></td>
+                  <td><span style={{ color: '#059669', fontWeight: 600 }}>{e.invoiceNo}</span></td>
                   <td>{e.date}</td>
                   <td style={{ textAlign: 'right' }}>৳{e.billedAmount.toFixed(2)}</td>
                   <td>{e.commissionRate}</td>
-                  <td style={{ textAlign: 'right', fontWeight: 700, color: '#073f8f' }}>
+                  <td style={{ textAlign: 'right', fontWeight: 700, color: '#059669' }}>
                     ৳{e.commissionAmount.toFixed(2)}
                   </td>
                   <td>
@@ -229,7 +228,7 @@ export const CommissionsView: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
             <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
               <div style={{ fontSize: '11px', color: '#64748b' }}>TOTAL ACCRUED COMMISSIONS</div>
-              <div style={{ fontSize: '24px', fontWeight: 800, color: '#073f8f', marginTop: '4px' }}>৳96,900</div>
+              <div style={{ fontSize: '24px', fontWeight: 800, color: '#059669', marginTop: '4px' }}>৳96,900</div>
             </div>
             <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
               <div style={{ fontSize: '11px', color: '#64748b' }}>TOTAL PAID COMMISSIONS</div>
@@ -243,7 +242,7 @@ export const CommissionsView: React.FC = () => {
         </div>
       )}
 
-      {/* Add Rule Modal matching SihatSuite live audit */}
+      {/* Add Rule Modal */}
       {showAddRuleModal && (
         <div className="modal-backdrop" onClick={() => setShowAddRuleModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>

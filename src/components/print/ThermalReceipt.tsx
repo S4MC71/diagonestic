@@ -95,7 +95,7 @@ export const ThermalReceipt: React.FC<Props> = ({ invoice, settings }) => {
         <div style={{ marginTop: '4px' }}>Reports delivery: 5:00 PM onwards</div>
         <div style={{ fontStyle: 'italic', marginTop: '2px' }}>Please bring this receipt for report collection.</div>
         <div style={{ marginTop: '8px', fontSize: '9px', opacity: 0.8 }}>
-          Served by: {invoice.createdBy} | SihatSuite
+          Served by: {invoice.createdBy} | CarePulse
         </div>
       </div>
     </div>

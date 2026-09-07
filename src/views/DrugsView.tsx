@@ -85,7 +85,7 @@ export const DrugsView: React.FC = () => {
           <tbody>
             {filtered.map(d => (
               <tr key={d.id}>
-                <td><strong style={{ color: '#073f8f', fontSize: '14px' }}>{d.brand}</strong></td>
+                <td><strong style={{ color: '#059669', fontSize: '14px' }}>{d.brand}</strong></td>
                 <td>
                   <span style={{ padding: '2px 8px', borderRadius: '4px', background: '#f1f5f9', fontWeight: 600, fontSize: '12px' }}>
                     {d.form} {d.strength}

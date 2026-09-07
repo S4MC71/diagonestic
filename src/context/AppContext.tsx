@@ -18,7 +18,11 @@ import {
   CommissionRule,
   Requisition,
   LabReport,
-  InventoryItem
+  InventoryItem,
+  RecallRule,
+  SupportTicket,
+  SubscriptionPayment,
+  ActiveSubscription
 } from '../types';
 import {
   initialUsers,
@@ -33,7 +37,10 @@ import {
   initialSendOutVendors,
   initialSettings,
   initialInventory,
-  initialTransactions
+  initialTransactions,
+  initialSupportTickets,
+  initialActiveSubscription,
+  initialSubscriptionPayments
 } from '../data/mockData';
 
 interface AppContextType {
@@ -116,6 +123,28 @@ interface AppContextType {
   // Pharmacy
   createPharmacySale: (sale: PharmacySale) => void;
 
+  // Recall
+  recallRules: RecallRule[];
+  addRecallRule: (rule: Omit<RecallRule, 'id' | 'createdAt'>) => void;
+  deleteRecallRule: (id: string) => void;
+  addCommonRecallRules: () => void;
+
+  // Support
+  supportTickets: SupportTicket[];
+  addSupportTicket: (ticket: Omit<SupportTicket, 'id' | 'ticketNo' | 'createdAt' | 'updatedAt' | 'status'>) => void;
+  updateTicketStatus: (id: string, status: SupportTicket['status'], updateNote?: string) => void;
+
+  // Subscription
+  activeSubscription: ActiveSubscription;
+  updateActiveSubscription: (sub: Partial<ActiveSubscription>) => void;
+  subscriptionPayments: SubscriptionPayment[];
+  recordSubscriptionPayment: (payment: Omit<SubscriptionPayment, 'id' | 'receiptNo' | 'date'>) => void;
+
+  // User Management
+  addUser: (user: Omit<User, 'id'>) => void;
+  updateUser: (id: string, updates: Partial<User>) => void;
+  deleteUser: (id: string) => void;
+
   // Settings
   updateTenantSettings: (settings: Partial<TenantSettings>) => void;
 }
@@ -127,7 +156,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentView, setCurrentView] = useState<ActiveView>('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth <= 768;
+      return window.innerWidth <= 1024;
     }
     return false;
   });
@@ -160,11 +189,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       time: '10:35 AM',
       amount: 900,
       method: 'Cash',
-      receivedBy: 'jhalakathid_admin'
+      receivedBy: 'lifecare_admin'
     }
   ]);
   const [transactions, setTransactions] = useState<AccountingTransaction[]>(initialTransactions);
   const [tenantSettings, setTenantSettings] = useState<TenantSettings>(initialSettings);
+  const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(initialSupportTickets);
+  const [activeSubscription, setActiveSubscription] = useState<ActiveSubscription>(initialActiveSubscription);
+  const [subscriptionPayments, setSubscriptionPayments] = useState<SubscriptionPayment[]>(initialSubscriptionPayments);
 
   // Secondary Data
   const [weeklySittings, setWeeklySittings] = useState<WeeklySitting[]>([
@@ -309,10 +341,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const login = (username: string, password?: string) => {
     const user = users.find(u => u.username === username);
-    if (user || username === 'jhalakathid_admin') {
+    if (user || username === 'lifecare_admin') {
       setCurrentUser(user || users[0]);
       setCurrentView('dashboard');
-      showToast('Successfully signed in to Jhalakathi Diagnostic Center');
+      showToast(`Successfully signed in to ${tenantSettings.name || 'LifeCare Diagnostic Center'}`);
       return true;
     }
     return false;
@@ -321,7 +353,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logout = () => {
     setCurrentUser(null);
     setCurrentView('login');
-    showToast('Signed out');
+    showToast('Signed out safely');
   };
 
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -345,13 +377,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       invoiceNo: invInput.invoiceNo || `INV-2026-${String(invoices.length + 1).padStart(4, '0')}`,
       date: invInput.date || today,
       time: invInput.time || nowTime,
-      patientId: invInput.patientId || '',
-      patientCode: invInput.patientCode || '',
-      patientName: invInput.patientName || '',
+      patientId: invInput.patientId || 'pat-walkin',
+      patientCode: invInput.patientCode || 'PAT-WALKIN',
+      patientName: invInput.patientName || 'Walk-in Patient',
       patientPhone: invInput.patientPhone || '',
       patientAge: invInput.patientAge || 30,
       patientGender: invInput.patientGender || 'Male',
-      patientAddress: invInput.patientAddress || 'Jhalakathi Sadar',
+      patientAddress: invInput.patientAddress || 'Central Square',
       referredById: invInput.referredById || invInput.referralDoctorId,
       referredByName: invInput.referredByName || invInput.referralDoctorName || 'Self / Direct',
       referralDoctorId: invInput.referralDoctorId || invInput.referredById,
@@ -359,7 +391,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       items: invInput.items || [],
       subtotal: invInput.subtotal || invInput.grossTotal || 0,
       grossTotal: invInput.grossTotal || invInput.subtotal || 0,
-      discountType: invInput.discountType || 'fixed',
+      discountType: invInput.discountType || 'percentage',
       discountValue: invInput.discountValue || 0,
       discountAmount: invInput.discountAmount || 0,
       vatRate: invInput.vatRate || 0,
@@ -369,7 +401,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       dueAmount: invInput.dueAmount || 0,
       paymentMethod: invInput.paymentMethod || 'Cash',
       paymentStatus: invInput.paymentStatus || 'PAID',
-      createdBy: invInput.createdBy || 'jhalakathid_admin',
+      createdBy: invInput.createdBy || currentUser?.username || 'lifecare_admin',
       referralCommissionAmount: invInput.referralCommissionAmount,
       reportStatus: invInput.reportStatus || 'PENDING_SAMPLE'
     };
@@ -740,6 +772,62 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(`Pharmacy sale ${sale.saleNo} completed`);
   };
 
+  const [recallRules, setRecallRules] = useState<RecallRule[]>([
+    {
+      id: 'rc-1',
+      testId: 't-1',
+      testName: 'HbA1c (Glycated Hemoglobin)',
+      intervalDays: 90,
+      createdAt: '2026-08-01'
+    },
+    {
+      id: 'rc-2',
+      testId: 't-2',
+      testName: 'Lipid Profile',
+      intervalDays: 180,
+      createdAt: '2026-08-01'
+    }
+  ]);
+
+  const addRecallRule = (rule: Omit<RecallRule, 'id' | 'createdAt'>) => {
+    const newRule: RecallRule = {
+      id: `rc-${Date.now()}`,
+      ...rule,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    setRecallRules(prev => [...prev, newRule]);
+    showToast(`Recall rule added for "${rule.testName}" (${rule.intervalDays} days)`);
+  };
+
+  const deleteRecallRule = (id: string) => {
+    setRecallRules(prev => prev.filter(r => r.id !== id));
+    showToast('Recall rule removed');
+  };
+
+  const addCommonRecallRules = () => {
+    const common = [
+      { testId: 't-1', testName: 'HbA1c (Glycated Hemoglobin)', intervalDays: 90 },
+      { testId: 't-2', testName: 'Lipid Profile', intervalDays: 180 },
+      { testId: 't-3', testName: 'Thyroid Stimulating Hormone (TSH)', intervalDays: 90 },
+      { testId: 't-4', testName: 'Complete Blood Count (CBC) with ESR', intervalDays: 60 },
+      { testId: 't-5', testName: 'Serum Creatinine with eGFR', intervalDays: 90 }
+    ];
+    setRecallRules(prev => {
+      const existingNames = new Set(prev.map(r => r.testName));
+      const toAdd = common
+        .filter(c => !existingNames.has(c.testName))
+        .map((c, idx) => ({
+          id: `rc-${Date.now()}-${idx}`,
+          testId: c.testId,
+          testName: c.testName,
+          intervalDays: c.intervalDays,
+          createdAt: new Date().toISOString().split('T')[0]
+        }));
+      return [...prev, ...toAdd];
+    });
+    showToast('Common clinical recall rules added successfully!');
+  };
+
   const addChamber = (c: any) => {
     setChambers(prev => [...prev, { ...c, id: `ch-${Date.now()}` }]);
     showToast(`Chamber ${c.name || c.roomNo} added`);
@@ -758,6 +846,80 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateTenantSettings = (updates: Partial<TenantSettings>) => {
     setTenantSettings(prev => ({ ...prev, ...updates }));
     showToast('Settings saved successfully');
+  };
+
+  const addUser = (userData: Omit<User, 'id'>) => {
+    const newUser: User = {
+      ...userData,
+      id: `usr-${Date.now()}`,
+      status: userData.status || 'ACTIVE',
+      isActive: true,
+      active: true,
+      joinedDate: userData.joinedDate || new Date().toLocaleDateString('en-US')
+    };
+    setUsers(prev => [newUser, ...prev]);
+    showToast(`User ${newUser.name} created successfully`);
+  };
+
+  const updateUser = (id: string, updates: Partial<User>) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
+    showToast('User profile updated successfully');
+  };
+
+  const deleteUser = (id: string) => {
+    setUsers(prev => prev.filter(u => u.id !== id));
+    showToast('User removed');
+  };
+
+  const addSupportTicket = (ticketData: Omit<SupportTicket, 'id' | 'ticketNo' | 'createdAt' | 'updatedAt' | 'status'>) => {
+    const num = Math.floor(1000 + Math.random() * 9000);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const newTicket: SupportTicket = {
+      ...ticketData,
+      id: `t-${Date.now()}`,
+      ticketNo: `ISS-${num}`,
+      status: 'Open',
+      createdAt: dateStr,
+      updatedAt: dateStr,
+      latestUpdate: 'Ticket received. Assigned to CarePulse Support Queue.'
+    };
+    setSupportTickets(prev => [newTicket, ...prev]);
+    showToast(`Support issue #${newTicket.ticketNo} submitted successfully!`);
+  };
+
+  const updateTicketStatus = (id: string, status: SupportTicket['status'], updateNote?: string) => {
+    setSupportTickets(prev => prev.map(t => {
+      if (t.id === id) {
+        return {
+          ...t,
+          status,
+          updatedAt: new Date().toLocaleString(),
+          latestUpdate: updateNote || t.latestUpdate
+        };
+      }
+      return t;
+    }));
+  };
+
+  const updateActiveSubscription = (sub: Partial<ActiveSubscription>) => {
+    setActiveSubscription(prev => ({ ...prev, ...sub }));
+    showToast('Subscription tier updated successfully');
+  };
+
+  const recordSubscriptionPayment = (paymentData: Omit<SubscriptionPayment, 'id' | 'receiptNo' | 'date'>) => {
+    const now = new Date();
+    const receiptNo = `CP-INV-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}${String(Math.floor(100 + Math.random() * 900))}`;
+    const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const newPayment: SubscriptionPayment = {
+      ...paymentData,
+      id: `sp-${Date.now()}`,
+      receiptNo,
+      date: dateStr,
+      status: 'Paid'
+    };
+    setSubscriptionPayments(prev => [newPayment, ...prev]);
+    showToast(`Payment of ${newPayment.amount} BDT recorded! Subscription updated.`);
   };
 
   return (
@@ -824,7 +986,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addCommissionRule,
         disburseCommission,
         createPharmacySale,
-        updateTenantSettings
+        recallRules,
+        addRecallRule,
+        deleteRecallRule,
+        addCommonRecallRules,
+        updateTenantSettings,
+        addUser,
+        updateUser,
+        deleteUser,
+        supportTickets,
+        addSupportTicket,
+        updateTicketStatus,
+        activeSubscription,
+        updateActiveSubscription,
+        subscriptionPayments,
+        recordSubscriptionPayment
       }}
     >
       {children}

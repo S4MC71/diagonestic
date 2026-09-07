@@ -55,7 +55,7 @@ export const DashboardView: React.FC = () => {
                     borderRadius: '8px',
                     fontSize: '12px',
                     fontWeight: 600,
-                    background: isActive ? '#0284c7' : 'transparent',
+                    background: isActive ? '#059669' : 'transparent',
                     color: isActive ? '#ffffff' : 'var(--slate-600)',
                     transition: 'all 0.15s'
                   }}
@@ -76,10 +76,10 @@ export const DashboardView: React.FC = () => {
         </div>
       </div>
 
-      {/* 3 High-Impact KPI Cards matching SihatSuite exact design */}
+      {/* 3 High-Impact KPI Cards */}
       <div className="kpi-grid">
         {/* Total Collected */}
-        <div className="kpi-card kpi-cyan">
+        <div className="kpi-card kpi-green">
           <div>
             <div className="kpi-label">TOTAL COLLECTED</div>
             <div className="kpi-value">৳{totalCollected.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
@@ -127,11 +127,11 @@ export const DashboardView: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', color: 'var(--slate-600)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#93c5fd' }} />
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#6ee7b7' }} />
               <span>Billed</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#0284c7' }} />
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#059669' }} />
               <span>Collected</span>
             </div>
           </div>
@@ -164,14 +164,14 @@ export const DashboardView: React.FC = () => {
             <path
               d="M 60,190 L 175,185 L 290,160 L 405,170 L 520,130 L 635,90 L 750,110"
               fill="none"
-              stroke="#93c5fd"
+              stroke="#6ee7b7"
               strokeWidth="2.5"
             />
             {/* Collected line */}
             <path
               d="M 60,195 L 175,190 L 290,170 L 405,175 L 520,140 L 635,95 L 750,115"
               fill="none"
-              stroke="#0284c7"
+              stroke="#059669"
               strokeWidth="3"
             />
 
@@ -190,7 +190,7 @@ export const DashboardView: React.FC = () => {
                 cx={pt.x}
                 cy={pt.y}
                 r="4.5"
-                fill="#0284c7"
+                fill="#059669"
                 stroke="#ffffff"
                 strokeWidth="2"
                 style={{ cursor: 'pointer' }}
@@ -201,7 +201,7 @@ export const DashboardView: React.FC = () => {
       </div>
 
       {/* Two Column Bottom Widgets: Payment Breakdown & Recent Invoices */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '24px' }}>
+      <div className="dashboard-bottom-grid">
         {/* Payment Methods */}
         <div className="card">
           <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--slate-900)', marginBottom: '14px' }}>
@@ -214,7 +214,7 @@ export const DashboardView: React.FC = () => {
                 <span style={{ fontWeight: 700 }}>৳900.00 (54%)</span>
               </div>
               <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden' }}>
-                <div style={{ width: '54%', height: '100%', background: '#0284c7' }} />
+                <div style={{ width: '54%', height: '100%', background: '#059669' }} />
               </div>
             </div>
 

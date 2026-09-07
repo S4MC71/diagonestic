@@ -16,7 +16,7 @@ export const PaymentsView: React.FC = () => {
       time: '10:35 AM',
       amount: 900,
       method: 'Cash',
-      receivedBy: 'jhalakathid_admin'
+      receivedBy: 'lifecare_admin'
     },
     {
       id: 'p-2',
@@ -27,7 +27,7 @@ export const PaymentsView: React.FC = () => {
       time: '02:20 PM',
       amount: 750,
       method: 'Mobile Banking (bKash)',
-      receivedBy: 'jhalakathid_admin'
+      receivedBy: 'lifecare_admin'
     }
   ];
 
@@ -69,9 +69,9 @@ export const PaymentsView: React.FC = () => {
           <tbody>
             {samplePayments.map(p => (
               <tr key={p.id}>
-                <td><strong style={{ color: '#073f8f' }}>{p.receiptNo}</strong></td>
+                <td><strong style={{ color: '#059669' }}>{p.receiptNo}</strong></td>
                 <td>{p.date} {p.time}</td>
-                <td><strong style={{ color: '#0284c7' }}>{p.invoiceNo}</strong></td>
+                <td><strong style={{ color: '#059669' }}>{p.invoiceNo}</strong></td>
                 <td>{p.patientName}</td>
                 <td><span className="badge badge-inhouse">{p.method}</span></td>
                 <td style={{ textAlign: 'right', fontWeight: 700, color: '#16a34a' }}>

@@ -1,44 +1,53 @@
 @charset "UTF-8";
 
 /* ==========================================================================
-   SihatSuite Modern Clinical Design System
-   Tailored for Diagnostic Centers in Bangladesh
+   CarePulse Modern Light Green Clinical Design System
+   Tailored for Diagnostic Centers and Healthcare Institutions
    ========================================================================== */
 
 :root {
-  /* Brand Colors */
-  --brand-navy-dark: #051c40;
-  --brand-navy: #073f8f;
-  --brand-navy-light: #0d54b8;
-  --brand-teal: #10b9b3;
-  --brand-teal-hover: #0d9c97;
-  --brand-teal-light: #e6f7f6;
-  --brand-amber: #fbb040;
-  --brand-orange: #f06030;
+  /* Brand Colors - CarePulse Light Green Theme */
+  --brand-primary: #059669;
+  --brand-primary-hover: #047857;
+  --brand-primary-dark: #064e3b;
+  --brand-primary-light: #10b981;
+  --brand-mint: #34d399;
+  --brand-mint-light: #ecfdf5;
+  --brand-mint-subtle: #f0fdf4;
+
+  /* Legacy color aliases mapped to the fresh green palette */
+  --brand-navy-dark: #064e3b;
+  --brand-navy: #059669;
+  --brand-navy-light: #10b981;
+  --brand-teal: #059669;
+  --brand-teal-hover: #047857;
+  --brand-teal-light: #ecfdf5;
+  --brand-amber: #f59e0b;
+  --brand-orange: #f97316;
   --brand-purple: #8b5cf6;
   --brand-green: #10b981;
 
-  /* Neutrals */
-  --slate-50: #f8fafc;
-  --slate-100: #f1f5f9;
-  --slate-200: #e2e8f0;
-  --slate-300: #cbd5e1;
-  --slate-400: #94a3b8;
-  --slate-500: #64748b;
-  --slate-600: #475569;
-  --slate-700: #334155;
-  --slate-800: #1e293b;
-  --slate-900: #0f172a;
+  /* Neutrals - Fresh Soft Sage & Mint Tints */
+  --slate-50: #f6faf8;
+  --slate-100: #eef6f2;
+  --slate-200: #e1ece7;
+  --slate-300: #cbdcd5;
+  --slate-400: #8ea89f;
+  --slate-500: #5c786f;
+  --slate-600: #445e56;
+  --slate-700: #2d463e;
+  --slate-800: #1a332c;
+  --slate-900: #0f2922;
 
   /* Functional Status */
   --status-paid-bg: #ecfdf5;
-  --status-paid-text: #065f46;
+  --status-paid-text: #047857;
   --status-paid-border: #a7f3d0;
   --status-due-bg: #fef2f2;
-  --status-due-text: #991b1b;
+  --status-due-text: #b91c1c;
   --status-due-border: #fecaca;
   --status-partial-bg: #fffbeb;
-  --status-partial-text: #92400e;
+  --status-partial-text: #b45309;
   --status-partial-border: #fde68a;
 
   /* Typography */
@@ -46,11 +55,11 @@
   --font-bangla: 'Hind Siliguri', 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  /* Shadows with ambient sage-green tint */
+  --shadow-sm: 0 1px 2px 0 rgb(6 95 70 / 0.04);
+  --shadow-md: 0 4px 6px -1px rgb(6 95 70 / 0.06), 0 2px 4px -2px rgb(6 95 70 / 0.04);
+  --shadow-lg: 0 10px 15px -3px rgb(6 95 70 / 0.07), 0 4px 6px -4px rgb(6 95 70 / 0.04);
+  --shadow-xl: 0 20px 25px -5px rgb(6 95 70 / 0.08), 0 8px 10px -6px rgb(6 95 70 / 0.05);
 
   /* Transitions */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -67,7 +76,7 @@
 html {
   font-family: var(--font-sans);
   color: var(--slate-800);
-  background-color: #f4f6f9;
+  background-color: #f6faf8;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -116,7 +125,7 @@ a {
 .app-container {
   display: flex;
   min-height: 100vh;
-  background-color: #f4f7fa;
+  background-color: #f6faf8;
 }
 
 .main-wrapper {
@@ -150,72 +159,102 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
+  padding: 0 clamp(12px, 2.5vw, 28px);
   position: sticky;
   top: 0;
   z-index: 40;
   backdrop-filter: blur(8px);
+  gap: 12px;
+  min-width: 0;
 }
 
 .topbar-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .tenant-badge {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: var(--slate-100);
-  border: 1px solid var(--slate-200);
-  padding: 6px 14px 6px 8px;
+  gap: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 5px 12px 5px 6px;
   border-radius: 9999px;
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  max-width: 250px;
+  white-space: nowrap;
 }
 
 .tenant-badge:hover {
-  background: var(--slate-200);
+  background: #d1fae5;
+  border-color: #6ee7b7;
 }
 
 .tenant-avatar {
   width: 26px;
   height: 26px;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--brand-navy), var(--brand-teal));
+  background: linear-gradient(135deg, #059669, #10b981);
   color: #fff;
   font-weight: 700;
   font-size: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .tenant-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--slate-800);
+  color: #064e3b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: clamp(100px, 14vw, 190px);
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .page-title-crumb {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--slate-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .page-title-crumb::before {
   content: "—";
   color: var(--slate-300);
+  flex-shrink: 0;
+}
+
+.page-title-crumb span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .search-hint-pill {
@@ -229,6 +268,14 @@ a {
   font-size: 12px;
   color: var(--slate-500);
   cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.search-hint-pill:hover {
+  background: var(--slate-200);
+  color: var(--slate-700);
 }
 
 .search-hint-pill kbd {
@@ -251,6 +298,7 @@ a {
   color: var(--slate-600);
   border: 1px solid transparent;
   transition: all var(--transition-fast);
+  flex-shrink: 0;
 }
 
 .icon-btn:hover {
@@ -261,13 +309,15 @@ a {
 .user-profile-pill {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: #fff;
   border: 1px solid var(--slate-200);
-  padding: 4px 12px 4px 4px;
+  padding: 4px 10px 4px 4px;
   border-radius: 9999px;
   cursor: pointer;
   transition: all var(--transition-fast);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .user-profile-pill:hover {
@@ -276,33 +326,35 @@ a {
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  background: linear-gradient(135deg, #059669, #10b981);
   color: #fff;
   font-weight: 700;
   font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .user-meta {
   text-align: left;
+  line-height: 1.2;
 }
 
 .user-name {
   font-size: 12px;
   font-weight: 600;
   color: var(--slate-900);
-  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .user-role {
   font-size: 10px;
   color: var(--slate-500);
-  line-height: 1.2;
+  white-space: nowrap;
 }
 
 /* --------------------------------------------------------------------------
@@ -395,8 +447,8 @@ a {
 }
 
 .sidebar-nav-item.active {
-  background: var(--brand-teal-light);
-  color: #0d7671;
+  background: #ecfdf5;
+  color: #047857;
   font-weight: 600;
 }
 
@@ -404,7 +456,7 @@ a {
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: var(--brand-teal);
+  background: #10b981;
   margin-left: auto;
 }
 
@@ -498,10 +550,10 @@ a {
 }
 
 .subtab-btn.active {
-  background: var(--brand-navy);
+  background: #059669;
   color: #ffffff;
   font-weight: 600;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
 }
 
 /* --------------------------------------------------------------------------
@@ -522,14 +574,14 @@ a {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--brand-navy), var(--brand-teal));
+  background: #059669;
   color: #ffffff;
-  box-shadow: 0 2px 4px rgba(7, 63, 143, 0.2);
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
 }
 
 .btn-primary:hover {
-  filter: brightness(1.08);
-  box-shadow: 0 4px 10px rgba(7, 63, 143, 0.3);
+  background: #047857;
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
   transform: translateY(-1px);
 }
 
@@ -545,12 +597,12 @@ a {
 }
 
 .btn-teal {
-  background: var(--brand-teal);
+  background: #059669;
   color: #fff;
 }
 
 .btn-teal:hover {
-  background: var(--brand-teal-hover);
+  background: #047857;
 }
 
 .btn-outline-danger {
@@ -655,7 +707,9 @@ a {
   background: #ffffff;
   border: 1px solid var(--slate-200);
   border-radius: 14px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
   box-shadow: var(--shadow-sm);
 }
 
@@ -747,9 +801,9 @@ a {
 }
 
 .badge-inhouse {
-  background: #eff6ff;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
 }
 
 .badge-sendout {
@@ -787,8 +841,8 @@ a {
 }
 
 .form-control:focus {
-  border-color: var(--brand-navy);
-  box-shadow: 0 0 0 3px rgba(7, 63, 143, 0.1);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
 }
 
 textarea.form-control {
@@ -918,7 +972,7 @@ textarea.form-control {
 }
 
 /* ==========================================================================
-   SIHATSUITE SETTINGS STYLING & FULL RESPONSIVENESS
+   CAREPULSE SETTINGS STYLING & FULL RESPONSIVENESS
    ========================================================================== */
 
 .settings-container {
@@ -944,10 +998,13 @@ textarea.form-control {
   margin: 0;
 }
 
-/* Pill Navigation Bar matching SihatSuite live */
+/* Pill Navigation Bar */
 .settings-pill-nav {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
   gap: 4px;
   background: #ffffff;
   padding: 6px;
@@ -955,6 +1012,11 @@ textarea.form-control {
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   margin-bottom: 24px;
+  scrollbar-width: none;
+}
+
+.settings-pill-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .settings-pill-btn {
@@ -971,18 +1033,19 @@ textarea.form-control {
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .settings-pill-btn:hover {
-  color: #0f172a;
-  background: #f1f5f9;
+  color: #0f2922;
+  background: #ecfdf5;
 }
 
 .settings-pill-btn.active {
-  background: #06b6d4; /* cyan-500 matching SihatSuite */
+  background: var(--brand-primary);
   color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(6, 182, 212, 0.25);
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
 }
 
 /* Settings Cards */
@@ -1035,13 +1098,56 @@ textarea.form-control {
   gap: 14px;
 }
 
-/* Primary Dark Buttons matching SihatSuite */
+.settings-profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.settings-footer-accordion {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 14px;
+}
+
+/* Responsive View Grids across the application */
+.dashboard-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 24px;
+}
+
+.invoice-settlement-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 28px;
+}
+
+.pharmacy-pos-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+}
+
+.prescription-editor-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 520px;
+}
+
+/* Primary Action Buttons */
 .settings-btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #0f172a;
+  background: var(--brand-primary);
   color: #ffffff;
   border: none;
   padding: 9px 20px;
@@ -1054,7 +1160,8 @@ textarea.form-control {
 }
 
 .settings-btn-primary:hover {
-  background: #1e293b;
+  background: var(--brand-primary-hover);
+  transform: translateY(-1px);
 }
 
 .settings-btn-primary:active {
@@ -1106,13 +1213,31 @@ textarea.form-control {
   display: none;
 }
 
-@media (max-width: 960px) {
-  .settings-profile-layout {
-    grid-template-columns: 1fr !important;
+/* Tiered Breakpoints for Clean Zoom-In/Zoom-Out Stability */
+
+@media (max-width: 1240px) {
+  .settings-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1140px) {
+  .page-title-crumb {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1080px) {
+  .search-hint-pill {
+    display: none !important;
+  }
+
+  .settings-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
   .mobile-menu-btn {
     display: flex !important;
   }
@@ -1145,47 +1270,55 @@ textarea.form-control {
   }
 
   .topbar {
-    padding: 0 12px !important;
-    height: 56px !important;
-    gap: 8px !important;
-  }
-
-  .search-hint-pill {
-    display: none !important;
-  }
-
-  .page-title-crumb {
-    display: none !important;
+    padding: 0 16px !important;
+    height: 60px !important;
+    gap: 10px !important;
   }
 
   .user-meta {
     display: none !important;
   }
 
+  .settings-profile-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-bottom-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .invoice-settlement-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pharmacy-pos-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .prescription-editor-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .settings-footer-accordion {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 0 12px !important;
+    height: 56px !important;
+    gap: 8px !important;
+  }
+
   .tenant-title {
-    max-width: 135px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    max-width: 130px;
   }
 
   .content-body {
     padding: 16px 12px 64px !important;
-  }
-
-  .settings-pill-nav {
-    width: 100%;
-    display: flex;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 4px;
-    gap: 4px;
-  }
-
-  .settings-pill-btn {
-    padding: 7px 14px;
-    font-size: 12px;
-    flex-shrink: 0;
   }
 
   .settings-card {
@@ -1197,10 +1330,6 @@ textarea.form-control {
   .settings-grid-2 {
     grid-template-columns: 1fr !important;
     gap: 12px;
-  }
-
-  .settings-footer-accordion {
-    grid-template-columns: 1fr !important;
   }
 }
 
@@ -1218,5 +1347,6 @@ textarea.form-control {
     width: 100%;
   }
 }
+
 
 

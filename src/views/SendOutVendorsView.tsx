@@ -26,7 +26,7 @@ export const SendOutVendorsView: React.FC = () => {
           <div key={v.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#073f8f' }}>{v.name}</h3>
+                <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#059669' }}>{v.name}</h3>
                 <span className="badge badge-inhouse">Active Partner</span>
               </div>
 

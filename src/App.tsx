@@ -28,6 +28,8 @@ import { PaymentsView } from './views/PaymentsView';
 import { CommissionsView } from './views/CommissionsView';
 import { AccountingView } from './views/AccountingView';
 import { UsersView, RolesView, SubscriptionView, SupportView, SettingsView } from './views/AdminViews';
+import { RecallView } from './views/RecallView';
+import { TutorialsView } from './views/TutorialsView';
 
 export const App: React.FC = () => {
   const { currentView, setCurrentView, isSidebarCollapsed, toggleSidebar, currentUser } = useApp();
@@ -60,6 +62,8 @@ export const App: React.FC = () => {
         return <DashboardView />;
       case 'patients':
         return <PatientsView />;
+      case 'recall':
+        return <RecallView />;
       case 'prescriptions':
         return <PrescriptionsView />;
       case 'new-prescription':
@@ -110,6 +114,8 @@ export const App: React.FC = () => {
         return <RolesView />;
       case 'subscription':
         return <SubscriptionView />;
+      case 'tutorials':
+        return <TutorialsView />;
       case 'support':
         return <SupportView />;
       case 'settings':

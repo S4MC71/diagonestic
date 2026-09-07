@@ -4,7 +4,7 @@ import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
   const { setCurrentView, setCurrentUser, users, showToast } = useApp();
-  const [username, setUsername] = useState('jhalakathid_admin');
+  const [username, setUsername] = useState('lifecare_admin');
   const [password, setPassword] = useState('B8hAz3zRkyBr');
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +16,7 @@ export const LoginView: React.FC = () => {
       setIsLoading(false);
       setCurrentUser(users[0]);
       setCurrentView('dashboard');
-      showToast('Welcome back, Jhalakathi Diagnostic Admin!');
+      showToast('Welcome back, LifeCare Diagnostic Admin!');
     }, 400);
   };
 
@@ -37,7 +37,7 @@ export const LoginView: React.FC = () => {
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          background: '#051c40'
+          background: '#064e3b'
         }}
         className="login-left-banner"
       >
@@ -46,7 +46,7 @@ export const LoginView: React.FC = () => {
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(135deg, #062d6e 0%, #073f8f 50%, #0a7a75 100%)'
+            background: 'linear-gradient(135deg, #064e3b 0%, #059669 50%, #10b981 100%)'
           }}
         />
         <div
@@ -57,7 +57,7 @@ export const LoginView: React.FC = () => {
             width: '460px',
             height: '460px',
             borderRadius: '50%',
-            background: 'rgba(16, 185, 179, 0.3)',
+            background: 'rgba(52, 211, 153, 0.3)',
             filter: 'blur(80px)'
           }}
         />
@@ -69,7 +69,7 @@ export const LoginView: React.FC = () => {
             width: '380px',
             height: '380px',
             borderRadius: '50%',
-            background: 'rgba(240, 96, 48, 0.25)',
+            background: 'rgba(16, 185, 129, 0.25)',
             filter: 'blur(80px)'
           }}
         />
@@ -90,7 +90,7 @@ export const LoginView: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <img
                 src="/logo.svg"
-                alt="SihatSuite"
+                alt="CarePulse"
                 style={{ height: '38px', width: 'auto', filter: 'brightness(0) invert(1)' }}
               />
             </div>
@@ -292,8 +292,8 @@ export const LoginView: React.FC = () => {
           </div>
 
           {/* Footer copyright */}
-          <p style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.3)' }}>
-            © 2026 SihatSuite. Empowering Better Healthcare across Bangladesh.
+          <p style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
+            © 2026 CarePulse Health Cloud. Empowering Modern Diagnostic Operations.
           </p>
         </div>
       </div>
@@ -358,7 +358,7 @@ export const LoginView: React.FC = () => {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={e => setRememberMe(e.target.checked)}
-                  style={{ accentColor: '#073f8f' }}
+                  style={{ accentColor: '#059669' }}
                 />
                 Remember me
               </label>
@@ -366,9 +366,9 @@ export const LoginView: React.FC = () => {
                 href="#forgot"
                 onClick={e => {
                   e.preventDefault();
-                  alert('For password reset, please contact system admin: support@sihatsuite.com');
+                  alert('For password reset, please contact system admin: support@carepulse.health');
                 }}
-                style={{ color: '#073f8f', fontWeight: '600' }}
+                style={{ color: '#059669', fontWeight: '600' }}
               >
                 Forgot password?
               </a>
@@ -382,7 +382,7 @@ export const LoginView: React.FC = () => {
                 borderRadius: '12px',
                 fontSize: '14px',
                 marginTop: '6px',
-                background: 'linear-gradient(135deg, #073f8f, #10b9b3)'
+                background: 'linear-gradient(135deg, #059669, #10b981)'
               }}
               disabled={isLoading}
             >
@@ -398,20 +398,20 @@ export const LoginView: React.FC = () => {
                   width: '100%',
                   height: '44px',
                   borderRadius: '12px',
-                  border: '1px dashed #0fa3a3',
-                  color: '#0d7671',
-                  background: '#f0fdfa',
+                  border: '1px dashed #10b981',
+                  color: '#047857',
+                  background: '#ecfdf5',
                   fontWeight: 600
                 }}
                 onClick={handleQuickDemo}
               >
-                <ShieldCheck size={16} /> ⚡ 1-Click Demo Login (Jhalakathi Admin)
+                <ShieldCheck size={16} /> ⚡ 1-Click Demo Login (LifeCare Admin)
               </button>
             </div>
           </form>
 
           <p style={{ marginTop: '40px', textAlign: 'center', fontSize: '11px', color: '#94a3b8' }}>
-            © 2026 SihatSuite. All rights reserved.
+            © 2026 CarePulse. All rights reserved.
           </p>
         </div>
       </div>

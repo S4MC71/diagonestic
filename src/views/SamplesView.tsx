@@ -68,7 +68,7 @@ export const SamplesView: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: '#073f8f', marginBottom: '8px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: '#059669', marginBottom: '8px' }}>
               Pending Tests for Specimen Draw:
             </div>
             <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#334155', marginBottom: '16px' }}>
@@ -136,7 +136,7 @@ export const SamplesView: React.FC = () => {
               {samples.map(s => (
                 <tr key={s.id}>
                   <td>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#073f8f' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#059669' }}>
                       {s.barcode}
                     </div>
                     <div style={{ fontSize: '10px', color: '#64748b' }}>ID: {s.sampleId}</div>

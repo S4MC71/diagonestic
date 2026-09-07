@@ -112,7 +112,7 @@ export const PharmacyViews: React.FC = () => {
         </div>
       </div>
 
-      {/* Sub-tabs bar matching SihatSuite exact subnavigation */}
+      {/* Sub-tabs bar */}
       <div className="subtabs-bar">
         <button
           className={`subtab-btn ${currentView === 'pharmacy-overview' ? 'active' : ''}`}
@@ -203,7 +203,7 @@ export const PharmacyViews: React.FC = () => {
 
       {/* 2. COUNTER (POS) */}
       {currentView === 'pharmacy-pos' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '24px' }}>
+        <div className="pharmacy-pos-grid">
           {/* Left: Product Search & Cart Table */}
           <div className="card">
             <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '14px' }}>
@@ -251,7 +251,7 @@ export const PharmacyViews: React.FC = () => {
                           <strong>{p.brandName}</strong> ({p.genericName})
                           <div style={{ fontSize: '11px', color: '#64748b' }}>Stock: {p.stockUnits} units | Exp: {p.expiryDate}</div>
                         </div>
-                        <div style={{ fontWeight: 700, color: '#073f8f' }}>৳{p.mrp}</div>
+                        <div style={{ fontWeight: 700, color: '#059669' }}>৳{p.mrp}</div>
                       </div>
                     ))}
                 </div>
@@ -352,7 +352,7 @@ export const PharmacyViews: React.FC = () => {
                     min="0"
                     value={posPaid}
                     onChange={e => setPosPaid(Number(e.target.value) || 0)}
-                    style={{ width: '90px', padding: '4px 6px', textAlign: 'right', fontWeight: 700, border: '1px solid #073f8f', borderRadius: '4px' }}
+                    style={{ width: '90px', padding: '4px 6px', textAlign: 'right', fontWeight: 700, border: '1px solid #059669', borderRadius: '4px' }}
                   />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: cartDue > 0 ? '#dc2626' : '#16a34a' }}>
@@ -427,7 +427,7 @@ export const PharmacyViews: React.FC = () => {
             </thead>
             <tbody>
               <tr>
-                <td><strong style={{ color: '#073f8f' }}>PS-2026-0001</strong></td>
+                <td><strong style={{ color: '#059669' }}>PS-2026-0001</strong></td>
                 <td>2026-09-02 11:30 AM</td>
                 <td>Md. Mizanur Rahman</td>
                 <td>Napa Extra x 10</td>

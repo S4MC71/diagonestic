@@ -105,7 +105,7 @@ Single live intrauterine pregnancy of approximately 28 weeks gestation in cephal
             <div key={tmpl.id} className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <BookOpen size={18} color="#073f8f" />
+                  <BookOpen size={18} color="#059669" />
                   <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{tmpl.title}</h3>
                   <span className="badge badge-inhouse">{tmpl.category}</span>
                 </div>

@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Search, ClipboardCheck, CheckCircle2, MessageCircle, Printer, AlertTriangle } from 'lucide-react';
 
 export const LabReportsView: React.FC = () => {
-  const { invoices, labReports, updateLabReportResults, verifyLabReport, showToast } = useApp();
+  const { tenantSettings, invoices, labReports, updateLabReportResults, verifyLabReport, showToast } = useApp();
   const [selectedInvoiceId, setSelectedInvoiceId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [fromDate, setFromDate] = useState('');
@@ -71,8 +71,10 @@ export const LabReportsView: React.FC = () => {
   };
 
   const handleWhatsApp = (invNo: string, patientName: string, phone: string) => {
+    const centerTitle = tenantSettings?.bengaliName || tenantSettings?.name || 'লাইফকেয়ার ডায়াগনস্টিক সেন্টার';
+    const slug = tenantSettings?.slug || 'lifecared';
     const text = encodeURIComponent(
-      `ঝালকাঠি ডায়াগনস্টিক সেন্টার\nশ্রদ্ধেয় ${patientName},\nআপনার ইনভয়েস (${invNo}) এর ডায়াগনস্টিক রিপোর্ট প্রস্তুত ও ভেরিফাই হয়েছে। ল্যাব কাউন্টার থেকে রিপোর্ট সংগ্রহ করুন অথবা অনলাইনে দেখুন: https://jhalakathid.sihatsuite.com/reports/${invNo}`
+      `${centerTitle}\nশ্রদ্ধেয় ${patientName},\nআপনার ইনভয়েস (${invNo}) এর ডায়াগনস্টিক রিপোর্ট প্রস্তুত ও ভেরিফাই হয়েছে। ল্যাব কাউন্টার থেকে রিপোর্ট সংগ্রহ করুন অথবা অনলাইনে দেখুন: https://${slug}.carepulse.health/reports/${invNo}`
     );
     window.open(`https://wa.me/88${phone.replace(/[^0-9]/g, '')}?text=${text}`, '_blank');
     showToast(`WhatsApp report notification sent to ${patientName}`);
@@ -82,12 +84,12 @@ export const LabReportsView: React.FC = () => {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Lab Reports</h1>
+          <h1 className="page-title">Reports</h1>
           <p className="page-subtitle">Pick an invoice to enter results, or search the report history below.</p>
         </div>
       </div>
 
-      {/* Filter / Invoice Selection Toolbar matching SihatSuite */}
+      {/* Filter / Invoice Selection Toolbar */}
       <div className="card" style={{ marginBottom: '20px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.2fr 1fr 1fr auto', gap: '12px', alignItems: 'flex-end' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
@@ -145,10 +147,10 @@ export const LabReportsView: React.FC = () => {
 
       {/* Result Entry Canvas when Invoice is Selected */}
       {selectedReport && selectedInvoiceId && (
-        <div className="card" style={{ marginBottom: '24px', border: '1.5px solid #0284c7' }}>
+        <div className="card" style={{ marginBottom: '24px', border: '1.5px solid #059669' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
             <div>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#073f8f', margin: 0 }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#059669', margin: 0 }}>
                 Clinical Pathology & Biochemistry Findings: {selectedReport.invoiceNo}
               </h3>
               <div style={{ fontSize: '12px', color: '#475569', marginTop: '4px' }}>
@@ -261,7 +263,7 @@ export const LabReportsView: React.FC = () => {
           <tbody>
             {labReports.map(rep => (
               <tr key={rep.id}>
-                <td><strong style={{ color: '#073f8f' }}>{rep.invoiceNo}</strong></td>
+                <td><strong style={{ color: '#059669' }}>{rep.invoiceNo}</strong></td>
                 <td>
                   <strong>{rep.patientName}</strong>
                   <div style={{ fontSize: '11px', color: '#64748b' }}>{rep.patientAge}Y, {rep.patientGender} · {rep.patientPhone}</div>

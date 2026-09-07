@@ -121,7 +121,7 @@ export const DoctorsView: React.FC = () => {
               return (
                 <tr key={d.id}>
                   <td>
-                    <div style={{ fontWeight: 700, color: '#073f8f' }}>{d.name}</div>
+                    <div style={{ fontWeight: 700, color: '#059669' }}>{d.name}</div>
                     <div style={{ fontSize: '11px', color: '#64748b' }}>{d.degrees}</div>
                   </td>
                   <td>
@@ -130,7 +130,7 @@ export const DoctorsView: React.FC = () => {
                   </td>
                   <td>{d.phone}</td>
                   <td>
-                    <span style={{ padding: '2px 8px', borderRadius: '6px', background: '#e0f7f6', color: '#0d7671', fontWeight: 600, fontSize: '12px' }}>
+                    <span style={{ padding: '2px 8px', borderRadius: '6px', background: '#ecfdf5', color: '#047857', fontWeight: 600, fontSize: '12px' }}>
                       {d.commissionType === 'percentage' ? `${d.commissionValue}% of Net` : `৳${d.commissionValue} / Test`}
                     </span>
                   </td>
@@ -266,7 +266,7 @@ export const DoctorsView: React.FC = () => {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="e.g. Jhalakathi District Hospital"
+                    placeholder="e.g. LifeCare Hospital & Medical College"
                     value={hospital}
                     onChange={e => setHospital(e.target.value)}
                   />

@@ -8,7 +8,7 @@ export const AccountingView: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState('September 2026');
   const [showExpenseModal, setShowExpenseModal] = useState(false);
 
-  // Expense modal fields matching SihatSuite live audit
+  // Expense modal fields
   const [expDate, setExpDate] = useState(new Date().toISOString().split('T')[0]);
   const [expCategory, setExpCategory] = useState('Electricity Utility');
   const [expAmount, setExpAmount] = useState<number>(1500);
@@ -78,7 +78,7 @@ export const AccountingView: React.FC = () => {
         </div>
       </div>
 
-      {/* Subtabs Bar matching SihatSuite */}
+      {/* Subtabs Bar */}
       <div className="subtabs-bar">
         <button className={`subtab-btn ${tab === 'cashbook' ? 'active' : ''}`} onClick={() => setTab('cashbook')}>
           Cash Book
@@ -168,7 +168,7 @@ export const AccountingView: React.FC = () => {
         </div>
       )}
 
-      {/* 2. EXPENSES TAB matching SihatSuite live audit */}
+      {/* 2. EXPENSES TAB */}
       {tab === 'expenses' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -216,10 +216,10 @@ export const AccountingView: React.FC = () => {
         </div>
       )}
 
-      {/* 3. PROFIT & LOSS TAB matching SihatSuite live audit */}
+      {/* 3. PROFIT & LOSS TAB */}
       {tab === 'pnl' && (
         <div style={{ maxWidth: '840px' }}>
-          <div style={{ fontSize: '11px', color: '#073f8f', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>
+          <div style={{ fontSize: '11px', color: '#059669', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>
             Cash basis — collections as received
           </div>
 
@@ -260,10 +260,10 @@ export const AccountingView: React.FC = () => {
           </div>
 
           {/* NET PROFIT CARD */}
-          <div className="card" style={{ background: '#051c40', color: '#ffffff', borderRadius: '12px' }}>
+          <div className="card" style={{ background: '#064e3b', color: '#ffffff', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: '11px', color: '#10b9b3', fontWeight: 800, textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '11px', color: '#34d399', fontWeight: 800, textTransform: 'uppercase' }}>
                   NET PROFIT — {selectedMonth.toUpperCase()}
                 </div>
                 <div style={{ fontSize: '13px', color: '#cbd5e1', marginTop: '2px' }}>
@@ -271,7 +271,7 @@ export const AccountingView: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ fontSize: '28px', fontWeight: 900, color: netProfit >= 0 ? '#5de8e2' : '#f87171' }}>
+              <div style={{ fontSize: '28px', fontWeight: 900, color: netProfit >= 0 ? '#34d399' : '#f87171' }}>
                 ৳{netProfit.toLocaleString()}.00
               </div>
             </div>
@@ -291,7 +291,7 @@ export const AccountingView: React.FC = () => {
         </div>
       )}
 
-      {/* Add Expense Modal matching SihatSuite live audit */}
+      {/* Add Expense Modal */}
       {showExpenseModal && (
         <div className="modal-backdrop" onClick={() => setShowExpenseModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>

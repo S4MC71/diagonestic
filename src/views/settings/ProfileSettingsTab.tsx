@@ -7,16 +7,16 @@ export const ProfileSettingsTab: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form State initialized from TenantSettings
-  const [displayName, setDisplayName] = useState(tenantSettings.name || 'Jhalakathi Diagnostic Center');
-  const [slug] = useState(tenantSettings.slug || 'jhalakathi-diagnostic-center');
-  const [establishedYear, setEstablishedYear] = useState(tenantSettings.established || tenantSettings.establishedYear || '2019');
-  const [website, setWebsite] = useState(tenantSettings.website || 'https://jhalakathidiagnostic.com.bd');
+  const [displayName, setDisplayName] = useState(tenantSettings.name || 'LifeCare Diagnostic Center');
+  const [slug] = useState(tenantSettings.slug || 'lifecare-diagnostic-center');
+  const [establishedYear, setEstablishedYear] = useState(tenantSettings.established || tenantSettings.establishedYear || '2020');
+  const [website, setWebsite] = useState(tenantSettings.website || 'https://lifecarediagnostic.com.bd');
 
-  const [address, setAddress] = useState(tenantSettings.address || 'College Road, Sadar');
-  const [thana, setThana] = useState(tenantSettings.thana || 'Jhalakathi Sadar');
-  const [district, setDistrict] = useState(tenantSettings.district || 'Jhalakathi');
-  const [division, setDivision] = useState(tenantSettings.division || 'Barishal');
-  const [postCode, setPostCode] = useState(tenantSettings.postCode || '8400');
+  const [address, setAddress] = useState(tenantSettings.address || 'Medical College Road, Central Square');
+  const [thana, setThana] = useState(tenantSettings.thana || 'Central Sadar');
+  const [district, setDistrict] = useState(tenantSettings.district || 'Dhaka');
+  const [division, setDivision] = useState(tenantSettings.division || 'Dhaka');
+  const [postCode, setPostCode] = useState(tenantSettings.postCode || '1205');
 
   const [phone, setPhone] = useState(tenantSettings.phone || '01834259899');
   const [phone2, setPhone2] = useState(tenantSettings.phone2 || '01894422170');
@@ -25,12 +25,12 @@ export const ProfileSettingsTab: React.FC = () => {
 
   const [enableHomeCollection, setEnableHomeCollection] = useState(tenantSettings.enableHomeCollection ?? true);
   const [emailYesterdaySummary, setEmailYesterdaySummary] = useState(true);
-  const [alsoSendTo, setAlsoSendTo] = useState('accounts@jhalakathid.com, manager@jhalakathid.com');
+  const [alsoSendTo, setAlsoSendTo] = useState('accounts@lifecarediagnostic.com, manager@lifecarediagnostic.com');
 
-  const [tradeLicense, setTradeLicense] = useState(tenantSettings.tradeLicenseNo || 'TRAD/JHA/2024/0481');
+  const [tradeLicense, setTradeLicense] = useState(tenantSettings.tradeLicenseNo || 'TRAD/DHK/2024/0982');
   const [bin, setBin] = useState(tenantSettings.binNo || '002938471-0402');
   const [tin, setTin] = useState(tenantSettings.tinNo || '592817402819');
-  const [drugLicense, setDrugLicense] = useState(tenantSettings.drugLicenseNo || 'DL-JHA-8921');
+  const [drugLicense, setDrugLicense] = useState(tenantSettings.drugLicenseNo || 'DL-DHK-8921');
 
   const [logoPreview, setLogoPreview] = useState<string | null>(tenantSettings.logoUrl || null);
 
@@ -72,10 +72,7 @@ export const ProfileSettingsTab: React.FC = () => {
   };
 
   return (
-    <div
-      className="settings-profile-layout"
-      style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: '24px', alignItems: 'start' }}
-    >
+    <div className="settings-profile-layout">
       {/* Left Column: Form Cards */}
       <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {/* 1. Identity Card */}

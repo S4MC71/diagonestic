@@ -30,11 +30,11 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ invoice }) => {
     >
       {/* 1. Hospital Header */}
       <div style={{ textAlign: 'center', marginBottom: '16px', position: 'relative' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: '800', margin: 0, color: isBW ? '#000000' : '#051c40' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: '800', margin: 0, color: isBW ? '#000000' : '#064e3b' }}>
           {tenantSettings.name}
         </h1>
         {tenantSettings.bengaliName && (
-          <div style={{ fontFamily: 'var(--font-bangla)', fontSize: '15px', color: isBW ? '#333333' : '#073f8f', fontWeight: 600, marginTop: '2px' }}>
+          <div style={{ fontFamily: 'var(--font-bangla)', fontSize: '15px', color: isBW ? '#333333' : '#059669', fontWeight: 600, marginTop: '2px' }}>
             {tenantSettings.bengaliName}
           </div>
         )}
@@ -94,7 +94,7 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ invoice }) => {
 
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', fontWeight: 700 }}>INVOICE DETAILS</div>
-          <div style={{ fontWeight: 800, fontSize: '14px', color: isBW ? '#000000' : '#073f8f' }}>{invoice.invoiceNo}</div>
+          <div style={{ fontWeight: 800, fontSize: '14px', color: isBW ? '#000000' : '#059669' }}>{invoice.invoiceNo}</div>
           <div style={{ fontSize: '11px', color: '#475569' }}>{invoice.date} {invoice.time}</div>
 
           {/* Barcode representation */}
@@ -146,7 +146,7 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ invoice }) => {
             <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
               <td style={{ padding: '8px 4px' }}>{idx + 1}</td>
               <td style={{ padding: '8px 4px' }}>
-                <strong style={{ color: isBW ? '#000' : '#073f8f' }}>{item.testName}</strong>
+                <strong style={{ color: isBW ? '#000' : '#059669' }}>{item.testName}</strong>
                 {item.isSendOut && (
                   <span style={{ fontSize: '10px', color: '#64748b', marginLeft: '6px' }}>(Send-Out)</span>
                 )}
@@ -248,7 +248,7 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ invoice }) => {
             }}
           >
             <span>Total</span>
-            <span style={{ color: isBW ? '#000' : '#073f8f' }}>{invoice.netTotal.toFixed(2)} ৳</span>
+            <span style={{ color: isBW ? '#000' : '#059669' }}>{invoice.netTotal.toFixed(2)} ৳</span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
@@ -297,7 +297,7 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ invoice }) => {
 
         <div>
           <div style={{ borderTop: '1px solid #94a3b8', width: '140px', margin: '0 auto', paddingTop: '4px' }}>
-            <div style={{ fontWeight: 600, color: '#073f8f' }}>{invoice.createdBy || 'jhalakathid_admin'}</div>
+            <div style={{ fontWeight: 600, color: '#059669' }}>{invoice.createdBy || 'lifecare_admin'}</div>
             Prepared By
           </div>
         </div>

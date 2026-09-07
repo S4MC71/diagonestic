@@ -113,7 +113,7 @@ export const PatientsView: React.FC = () => {
           <tbody>
             {filtered.map(p => (
               <tr key={p.id}>
-                <td><strong style={{ color: '#073f8f' }}>{p.code}</strong></td>
+                <td><strong style={{ color: '#059669' }}>{p.code}</strong></td>
                 <td>
                   <div style={{ fontWeight: 600, color: '#0f172a' }}>{p.name}</div>
                   <div style={{ fontSize: '11px', color: '#94a3b8' }}>Reg: {p.createdAt}</div>

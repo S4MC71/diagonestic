@@ -106,7 +106,7 @@ export const InvoicesView: React.FC = () => {
             {filteredInvoices.map(inv => (
               <tr key={inv.id}>
                 <td>
-                  <strong style={{ color: '#073f8f' }}>{inv.invoiceNo}</strong>
+                  <strong style={{ color: '#059669' }}>{inv.invoiceNo}</strong>
                 </td>
                 <td>
                   <div>{inv.date}</div>

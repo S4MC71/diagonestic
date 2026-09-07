@@ -20,7 +20,7 @@ export const SettingsView: React.FC = () => {
         </p>
       </div>
 
-      {/* Pill Navigation Bar matching SihatSuite live */}
+      {/* Pill Navigation Bar */}
       <div className="settings-pill-nav">
         <button
           type="button"

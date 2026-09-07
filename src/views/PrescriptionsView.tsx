@@ -75,7 +75,7 @@ export const PrescriptionsView: React.FC = () => {
           <tbody>
             {prescriptions.map(rx => (
               <tr key={rx.id}>
-                <td><strong style={{ color: '#073f8f' }}>{rx.rxNo}</strong></td>
+                <td><strong style={{ color: '#059669' }}>{rx.rxNo}</strong></td>
                 <td>{rx.date}</td>
                 <td>
                   <strong>{rx.patientName}</strong>
