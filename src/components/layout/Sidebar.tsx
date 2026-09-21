@@ -23,6 +23,8 @@ import {
   PlaySquare,
   HelpCircle,
   Settings,
+  GraduationCap,
+  Inbox,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -92,6 +94,8 @@ const NAVIGATION_GROUPS: NavCategory[] = [
       { id: 'users', label: 'Users', icon: Users },
       { id: 'roles', label: 'Roles & Permissions', icon: ShieldCheck },
       { id: 'subscription', label: 'Subscription', icon: CreditCard },
+      { id: 'practice', label: 'Staff Practice', icon: GraduationCap },
+      { id: 'action-inbox', label: 'Action Inbox', icon: Inbox },
       { id: 'tutorials', label: 'Tutorials', icon: PlaySquare },
       { id: 'support', label: 'Support', icon: HelpCircle },
       { id: 'settings', label: 'Settings', icon: Settings }
@@ -109,9 +113,29 @@ export const Sidebar: React.FC = () => {
         <div
           className="brand-logo-wrap"
           onClick={() => setCurrentView('dashboard')}
-          style={{ cursor: 'pointer' }}
+          title="CarePulse Diagnostic Platform"
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
+            width: '100%',
+            overflow: 'hidden'
+          }}
         >
-          <img src="/logo.svg" alt="CarePulse" style={{ height: '32px', width: 'auto' }} />
+          {isSidebarCollapsed ? (
+            <img
+              src="/logo-icon.svg"
+              alt="CarePulse"
+              style={{ height: '34px', width: '34px', objectFit: 'contain', flexShrink: 0 }}
+            />
+          ) : (
+            <img
+              src="/logo.svg"
+              alt="CarePulse"
+              style={{ height: '32px', width: 'auto', flexShrink: 0 }}
+            />
+          )}
         </div>
       </div>
 
@@ -129,7 +153,11 @@ export const Sidebar: React.FC = () => {
               const isActive =
                 currentView === item.id ||
                 (item.id === 'prescriptions' && currentView === 'new-prescription') ||
-                (item.id === 'invoices' && currentView === 'new-invoice');
+                (item.id === 'invoices' && currentView === 'new-invoice') ||
+                (item.id === 'appointments' && currentView.startsWith('appointments')) ||
+                (item.id === 'investigations' && currentView.startsWith('investigations')) ||
+                (item.id === 'commissions' && currentView.startsWith('commissions')) ||
+                (item.id === 'accounting' && currentView.startsWith('accounting'));
 
               return (
                 <div

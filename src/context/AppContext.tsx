@@ -24,6 +24,7 @@ import {
   SubscriptionPayment,
   ActiveSubscription
 } from '../types';
+import { getViewFromPath, getPathFromView } from '../utils/navigation';
 import {
   initialUsers,
   initialPatients,
@@ -82,7 +83,7 @@ interface AppContextType {
   setCurrentUser: (user: User | null) => void;
   login: (username: string, password?: string) => boolean;
   logout: () => void;
-  setCurrentView: (view: ActiveView) => void;
+  setCurrentView: (view: ActiveView, replace?: boolean) => void;
   toggleSidebar: () => void;
   showToast: (msg: string) => void;
   addChamber: (chamber: any) => void;
@@ -97,8 +98,9 @@ interface AppContextType {
   setActivePrintFormat: (format: 'thermal' | 'a4' | 'a5') => void;
   setActivePrintColor: (color: 'Color' | 'B&W') => void;
 
-  // Clinical & Lab Operations
   addPatient: (patient: Omit<Patient, 'id' | 'patientId' | 'totalVisits' | 'totalSpent' | 'outstandingDue' | 'lastVisit' | 'createdAt'>) => Patient;
+  updatePatient: (id: string, updates: Partial<Patient>) => void;
+  deletePatient: (id: string) => void;
   updateTestPrice: (id: string, price: number) => void;
   updateTestStockCapacity: (id: string, trackStock: boolean, alertThreshold?: number) => void;
   collectSample: (sampleId: string, collectorName: string) => void;
@@ -153,7 +155,47 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(initialUsers[0]);
-  const [currentView, setCurrentView] = useState<ActiveView>('dashboard');
+  const [currentView, setCurrentViewState] = useState<ActiveView>(() => {
+    if (typeof window !== 'undefined') {
+      return getViewFromPath(window.location.pathname);
+    }
+    return 'dashboard';
+  });
+
+  const setCurrentView = (view: ActiveView, replace = false) => {
+    setCurrentViewState(view);
+    if (typeof window !== 'undefined') {
+      const targetPath = getPathFromView(view);
+      if (window.location.pathname !== targetPath) {
+        if (replace) {
+          window.history.replaceState({ view }, '', targetPath);
+        } else {
+          window.history.pushState({ view }, '', targetPath);
+        }
+      }
+    }
+  };
+
+  // Listen to browser Back/Forward (popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      const view = getViewFromPath(window.location.pathname);
+      setCurrentViewState(view);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Ensure initial URL reflects canonical path
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const canonical = getPathFromView(currentView);
+      if (window.location.pathname !== canonical) {
+        window.history.replaceState({ view: currentView }, '', canonical);
+      }
+    }
+  }, []);
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth <= 1024;
@@ -583,6 +625,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newPatient;
   };
 
+  const updatePatient = (id: string, updates: Partial<Patient>) => {
+    setPatients(prev => prev.map(p => (p.id === id ? { ...p, ...updates } : p)));
+    showToast('Patient updated');
+  };
+
+  const deletePatient = (id: string) => {
+    setPatients(prev => prev.filter(p => p.id !== id));
+    showToast('Patient deleted');
+  };
+
   const updateTestPrice = (id: string, price: number) => {
     setDiagnosticTests(prev => prev.map(t => (t.id === id ? { ...t, price } : t)));
     showToast('Test price updated');
@@ -968,6 +1020,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setActivePrintFormat,
         setActivePrintColor,
         addPatient,
+        updatePatient,
+        deletePatient,
         addDoctor,
         addChamber,
         recordPayment,

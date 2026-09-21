@@ -44,6 +44,8 @@ export type ActiveView =
   | 'users'
   | 'roles'
   | 'subscription'
+  | 'practice'
+  | 'action-inbox'
   | 'tutorials'
   | 'support'
   | 'settings';
@@ -285,6 +287,9 @@ export interface Doctor {
   phone: string;
   email?: string;
   bmdcRegNo?: string;
+  bmdcReg?: string;
+  hasLogin?: boolean;
+  loginUsername?: string;
   isConsultant?: boolean;
   isReferralAgent?: boolean;
   chamberRoom?: string;

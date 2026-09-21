@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 42 42" fill="none">
+  <!-- CarePulse Vital Emblem (Light Green Medical Cross & Heartbeat Pulse) -->
+  <g transform="translate(4, 4)">
+    <!-- Soft ambient glow -->
+    <rect width="34" height="34" rx="10" fill="url(#pulseGlow)" opacity="0.16" />
+    <!-- Main squircle badge -->
+    <rect x="1" y="1" width="32" height="32" rx="9" fill="url(#pulseGrad)" />
+    <!-- Inner subtle glass border -->
+    <rect x="1.5" y="1.5" width="31" height="31" rx="8.5" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1" />
+    <!-- White Clinical Vital Pulse Wave & Medical Cross -->
+    <path d="M7 17 L12 17 L14 12 L17 23 L20 14 L22 19 L23 17 L27 17" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Small vitality orb -->
+    <circle cx="27" cy="17" r="1.8" fill="#ffffff" />
+  </g>
+
+  <defs>
+    <!-- Light Green Gradient -->
+    <linearGradient id="pulseGrad" x1="1" y1="1" x2="33" y2="33" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="60%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#34d399" />
+    </linearGradient>
+    <linearGradient id="pulseGlow" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+</svg>

@@ -44,6 +44,8 @@ const VIEW_TITLES: Record<string, string> = {
   users: 'Users',
   roles: 'Roles & Permissions',
   subscription: 'Subscription',
+  practice: 'Staff Practice Room',
+  'action-inbox': "Owner's Action Inbox",
   tutorials: 'Tutorials',
   support: 'Support',
   settings: 'Center Settings'

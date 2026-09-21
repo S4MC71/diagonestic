@@ -30,25 +30,51 @@ import { AccountingView } from './views/AccountingView';
 import { UsersView, RolesView, SubscriptionView, SupportView, SettingsView } from './views/AdminViews';
 import { RecallView } from './views/RecallView';
 import { TutorialsView } from './views/TutorialsView';
+import { PracticeView } from './views/PracticeView';
+import { ActionInboxView } from './views/ActionInboxView';
 
 export const App: React.FC = () => {
-  const { currentView, setCurrentView, isSidebarCollapsed, toggleSidebar, currentUser } = useApp();
+  const { currentView, setCurrentView, isSidebarCollapsed, toggleSidebar, currentUser, closePrintModal, showPrintModal } = useApp();
 
-  // Keyboard shortcut: Pressing / focuses billing search
+  // Global Clinical & POS Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.key === '/' &&
-        document.activeElement?.tagName !== 'INPUT' &&
-        document.activeElement?.tagName !== 'TEXTAREA'
-      ) {
+      // Escape closes print modal
+      if (e.key === 'Escape' && showPrintModal) {
+        e.preventDefault();
+        closePrintModal();
+        return;
+      }
+
+      // If active inside an input, only handle F-keys
+      const isInputFocused =
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA' ||
+        document.activeElement?.tagName === 'SELECT';
+
+      if (!isInputFocused && e.key === '/') {
         e.preventDefault();
         setCurrentView('new-invoice');
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        setCurrentView('pharmacy-pos');
+      } else if (e.key === 'F3') {
+        e.preventDefault();
+        setCurrentView('new-prescription');
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        setCurrentView('new-invoice');
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        setCurrentView('patients');
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        setCurrentView('invoices');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setCurrentView]);
+  }, [setCurrentView, showPrintModal, closePrintModal]);
 
   // If on login view, render clean full-screen login layout
   if (currentView === 'login' || !currentUser) {
@@ -114,6 +140,10 @@ export const App: React.FC = () => {
         return <RolesView />;
       case 'subscription':
         return <SubscriptionView />;
+      case 'practice':
+        return <PracticeView />;
+      case 'action-inbox':
+        return <ActionInboxView />;
       case 'tutorials':
         return <TutorialsView />;
       case 'support':

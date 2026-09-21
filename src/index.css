@@ -378,6 +378,31 @@ a {
   width: 74px;
 }
 
+.sidebar.collapsed .sidebar-header {
+  padding: 0 10px;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.sidebar.collapsed .brand-logo-wrap {
+  justify-content: center;
+  width: 100%;
+}
+
+.sidebar.collapsed .sidebar-nav-item {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.sidebar.collapsed .sidebar-footer {
+  padding: 12px 8px;
+}
+
+.sidebar.collapsed .collapse-btn {
+  justify-content: center;
+  padding: 8px 0;
+}
+
 .sidebar-header {
   height: 64px;
   display: flex;

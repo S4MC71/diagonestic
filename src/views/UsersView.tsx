@@ -10,13 +10,11 @@ import {
   Trash2,
   Edit2,
   Shield,
-  Phone,
-  Mail,
-  Calendar,
-  AlertCircle,
   FileSignature,
   X,
-  Lock
+  Power,
+  Lock,
+  Plus
 } from 'lucide-react';
 
 const LIVE_ROLES: LiveUserRole[] = [
@@ -37,7 +35,8 @@ const LIVE_ROLES: LiveUserRole[] = [
 export const UsersView: React.FC = () => {
   const { tenantSettings, users, currentUser, addUser, updateUser, deleteUser, showToast } = useApp();
 
-  // Create Form State
+  // Add User Modal State
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -50,17 +49,25 @@ export const UsersView: React.FC = () => {
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   // Edit User Modal State
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editFullName, setEditFullName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
-  const [editRoles, setEditRoles] = useState<string[]>([]);
+
+  // Change Roles Modal State
+  const [roleModalUser, setRoleModalUser] = useState<User | null>(null);
+  const [userAssignedRoles, setUserAssignedRoles] = useState<string[]>([]);
 
   // Password Reset Modal State
   const [resettingUser, setResettingUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
+  // Digital Signature Modal State
+  const [signatureModalUser, setSignatureModalUser] = useState<User | null>(null);
 
   // Signature Uploading
   const handleSignatureUpload = (userId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,12 +76,24 @@ export const UsersView: React.FC = () => {
       const reader = new FileReader();
       reader.onload = event => {
         if (event.target?.result) {
-          updateUser(userId, { signatureUrl: event.target.result as string });
+          const sigData = event.target.result as string;
+          updateUser(userId, { signatureUrl: sigData });
+          if (signatureModalUser && signatureModalUser.id === userId) {
+            setSignatureModalUser({ ...signatureModalUser, signatureUrl: sigData });
+          }
           showToast('Digital signature uploaded successfully');
         }
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleRemoveSignature = (userId: string) => {
+    updateUser(userId, { signatureUrl: '' });
+    if (signatureModalUser && signatureModalUser.id === userId) {
+      setSignatureModalUser({ ...signatureModalUser, signatureUrl: '' });
+    }
+    showToast('Signature removed');
   };
 
   const toggleRoleSelection = (role: string) => {
@@ -83,8 +102,8 @@ export const UsersView: React.FC = () => {
     );
   };
 
-  const toggleEditRoleSelection = (role: string) => {
-    setEditRoles(prev =>
+  const toggleUserRole = (role: string) => {
+    setUserAssignedRoles(prev =>
       prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
     );
   };
@@ -102,13 +121,11 @@ export const UsersView: React.FC = () => {
       return;
     }
 
-    // Username format check (no spaces)
     if (/\s/.test(username)) {
       showToast('Username cannot contain spaces');
       return;
     }
 
-    // Check duplicate username
     if (users.some(u => u.username.toLowerCase() === username.trim().toLowerCase())) {
       showToast(`Username @${username} is already in use`);
       return;
@@ -145,7 +162,7 @@ export const UsersView: React.FC = () => {
         signatureUrl: ''
       });
 
-      // Clear Form
+      // Clear Form & Close Modal
       setFullName('');
       setUsername('');
       setEmail('');
@@ -154,7 +171,9 @@ export const UsersView: React.FC = () => {
       setPassword('');
       setConfirmPassword('');
       setIsSubmitting(false);
-    }, 400);
+      setShowAddUserModal(false);
+      showToast(`User @${username.trim()} created successfully`);
+    }, 300);
   };
 
   const handleStartEdit = (user: User) => {
@@ -162,27 +181,42 @@ export const UsersView: React.FC = () => {
     setEditFullName(user.name);
     setEditEmail(user.email || '');
     setEditPhone(user.phone || '');
-    setEditRoles(user.roles || [user.role]);
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
 
-    if (editRoles.length === 0) {
-      showToast('User must have at least one role');
-      return;
-    }
-
     updateUser(editingUser.id, {
       name: editFullName.trim(),
       email: editEmail.trim(),
-      phone: editPhone.trim(),
-      roles: editRoles,
-      role: editRoles[0]
+      phone: editPhone.trim()
     });
 
+    showToast(`Updated details for @${editingUser.username}`);
     setEditingUser(null);
+  };
+
+  const handleOpenRoleModal = (user: User) => {
+    setRoleModalUser(user);
+    setUserAssignedRoles(user.roles && user.roles.length > 0 ? [...user.roles] : [user.role]);
+  };
+
+  const handleSaveRoles = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roleModalUser) return;
+    if (userAssignedRoles.length === 0) {
+      showToast('User must have at least one role assigned');
+      return;
+    }
+
+    updateUser(roleModalUser.id, {
+      roles: userAssignedRoles,
+      role: userAssignedRoles[0]
+    });
+
+    showToast(`Roles updated for @${roleModalUser.username}`);
+    setRoleModalUser(null);
   };
 
   const handleConfirmPasswordReset = (e: React.FormEvent) => {
@@ -192,10 +226,15 @@ export const UsersView: React.FC = () => {
       showToast('Password must be at least 8 characters');
       return;
     }
+    if (newPassword !== confirmNewPassword) {
+      showToast('Passwords do not match');
+      return;
+    }
 
     showToast(`Password successfully reset for @${resettingUser.username}`);
     setResettingUser(null);
     setNewPassword('');
+    setConfirmNewPassword('');
   };
 
   const handleToggleActive = (user: User) => {
@@ -221,6 +260,7 @@ export const UsersView: React.FC = () => {
 
     if (window.confirm(`Are you sure you want to permanently remove @${user.username}?`)) {
       deleteUser(user.id);
+      showToast(`User @${user.username} removed`);
     }
   };
 
@@ -234,7 +274,12 @@ export const UsersView: React.FC = () => {
       roleFilter === 'ALL' ||
       (u.roles && u.roles.includes(roleFilter)) ||
       u.role === roleFilter;
-    return matchesSearch && matchesRole;
+    const isActive = u.status !== 'INACTIVE' && u.isActive !== false;
+    const matchesStatus =
+      statusFilter === 'ALL' ||
+      (statusFilter === 'ACTIVE' && isActive) ||
+      (statusFilter === 'INACTIVE' && !isActive);
+    return matchesSearch && matchesRole && matchesStatus;
   });
 
   const getInitials = (name: string) => {
@@ -248,525 +293,768 @@ export const UsersView: React.FC = () => {
 
   return (
     <div className="view-container" style={{ maxWidth: '1160px', margin: '0 auto' }}>
-      {/* Header Matching Live Site */}
-      <div className="page-header" style={{ marginBottom: '22px' }}>
+      {/* Header Matching SihatSuite Layout */}
+      <div
+        className="page-header"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: '16px',
+          marginBottom: '20px'
+        }}
+      >
         <div>
           <h1 className="page-title" style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
             User Management
           </h1>
           <p className="page-subtitle" style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
-            Create users for your team, assign roles, and manage access. Inactive users cannot log in.
+            Manage team accounts, assign roles, and revoke access. Inactive users cannot log in.
           </p>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#059669', marginTop: '6px' }}>
+            {users.length} active staff accounts
+          </div>
+        </div>
+
+        {/* Top Right Action Button */}
+        <div>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setShowAddUserModal(true)}
+            style={{
+              background: '#059669',
+              color: '#ffffff',
+              fontWeight: 600,
+              padding: '8px 18px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 1px 3px rgba(5,150,105,0.2)'
+            }}
+          >
+            <Plus size={16} /> Add user
+          </button>
         </div>
       </div>
 
       {/* ====================================================================
-          CARD 1: CREATE NEW USER FORM (MATCHING LIVE SCREENSHOT)
+          SEARCH & FILTER BAR MATCHING LIVE SITE
           ==================================================================== */}
       <div
         className="card"
         style={{
-          padding: '24px',
-          borderRadius: '12px',
+          padding: '12px 16px',
+          borderRadius: '10px',
           border: '1px solid #e2e8f0',
           background: '#ffffff',
-          marginBottom: '28px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+          marginBottom: '20px',
+          display: 'flex',
+          gap: '12px',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
         }}
       >
-        <div style={{ marginBottom: '18px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-            Create New User
-          </h2>
-          <p style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0 0' }}>
-            All users created here belong to your tenant.
-          </p>
+        <div style={{ position: 'relative', flex: '1 1 280px' }}>
+          <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search name, username, phone, email... ( / )"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{ paddingLeft: '34px', height: '38px', borderRadius: '7px', fontSize: '13px' }}
+          />
         </div>
 
-        <form onSubmit={handleCreateUser} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Row 1: Full Name & Username */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                Full Name *
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. John Doe"
-                value={fullName}
-                onChange={e => setFullName(e.target.value)}
-                required
-                style={{ height: '42px', borderRadius: '8px', fontSize: '14px', border: '1px solid #cbd5e1' }}
-              />
-            </div>
+        <select
+          className="form-control"
+          value={roleFilter}
+          onChange={e => setRoleFilter(e.target.value)}
+          style={{ width: 'auto', minWidth: '140px', height: '38px', borderRadius: '7px', fontSize: '13px' }}
+        >
+          <option value="ALL">All roles</option>
+          {LIVE_ROLES.map(r => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
 
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                Username *
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. john_doe (no spaces)"
-                value={username}
-                onChange={e => setUsername(e.target.value.replace(/\s+/g, '').toLowerCase())}
-                required
-                style={{ height: '42px', borderRadius: '8px', fontSize: '14px', border: '1px solid #cbd5e1' }}
-              />
-            </div>
-          </div>
+        <select
+          className="form-control"
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+          style={{ width: 'auto', minWidth: '120px', height: '38px', borderRadius: '7px', fontSize: '13px' }}
+        >
+          <option value="ALL">All statuses</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
 
-          {/* Row 2: Email & Phone */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                Email
-              </label>
-              <input
-                type="email"
-                className="form-control"
-                placeholder="user@example.com (optional)"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                style={{ height: '42px', borderRadius: '8px', fontSize: '14px', border: '1px solid #cbd5e1' }}
-              />
-            </div>
-
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                Phone
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="01XXXXXXXXX (optional)"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                style={{ height: '42px', borderRadius: '8px', fontSize: '14px', border: '1px solid #cbd5e1' }}
-              />
-            </div>
-          </div>
-
-          {/* Row 3: 12 Roles Checkable Pills Matching Live Site */}
-          <div>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '8px', display: 'block' }}>
-              Roles *
-            </label>
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {LIVE_ROLES.map(role => {
-                const isSelected = selectedRoles.includes(role);
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => toggleRoleSelection(role)}
-                    style={{
-                      border: isSelected ? '1.5px solid #0f172a' : '1px solid #cbd5e1',
-                      background: isSelected ? '#f8fafc' : '#ffffff',
-                      color: isSelected ? '#0f172a' : '#475569',
-                      fontWeight: isSelected ? 700 : 500,
-                      padding: '6px 14px',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      transition: 'all 0.12s ease'
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '14px',
-                        height: '14px',
-                        borderRadius: '3px',
-                        border: isSelected ? '1.5px solid #0f172a' : '1.5px solid #94a3b8',
-                        background: isSelected ? '#0f172a' : '#ffffff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      {isSelected && <Check size={10} style={{ color: '#ffffff' }} />}
-                    </div>
-                    {role}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
-              Select one or more roles. Permissions from all selected roles are combined.
-            </div>
-          </div>
-
-          {/* Row 4: Password & Confirm Password */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                Password *
-              </label>
-              <input
-                type="password"
-                className="form-control"
-                placeholder="min 8 characters"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                style={{ height: '42px', borderRadius: '8px', fontSize: '14px', border: '1px solid #cbd5e1' }}
-              />
-            </div>
-
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                Confirm Password *
-              </label>
-              <input
-                type="password"
-                className="form-control"
-                placeholder="repeat password"
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                required
-                style={{ height: '42px', borderRadius: '8px', fontSize: '14px', border: '1px solid #cbd5e1' }}
-              />
-            </div>
-          </div>
-
-          {/* Submit Button Matching Live */}
-          <div style={{ marginTop: '8px' }}>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn btn-primary"
-              style={{
-                background: '#0f172a',
-                color: '#ffffff',
-                fontWeight: 600,
-                padding: '10px 22px',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <UserPlus size={16} /> {isSubmitting ? 'Creating...' : 'Create User'}
-            </button>
-          </div>
-        </form>
+        <button
+          type="button"
+          className="btn btn-primary"
+          style={{
+            background: '#059669',
+            color: '#fff',
+            padding: '8px 18px',
+            borderRadius: '7px',
+            fontSize: '13px',
+            fontWeight: 600,
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          Search
+        </button>
       </div>
 
       {/* ====================================================================
-          CARD 2: TEAM MEMBERS LIST (MATCHING LIVE SCREENSHOT)
+          USERS DATA TABLE MATCHING SIHATSUITE LAYOUT
           ==================================================================== */}
       <div
         className="card"
         style={{
-          padding: '24px',
+          padding: 0,
           borderRadius: '12px',
           border: '1px solid #e2e8f0',
           background: '#ffffff',
+          overflow: 'hidden',
           boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '20px' }}>
-          <div>
-            <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-              Team Members ({users.length})
-            </h2>
-          </div>
+        <div className="table-container" style={{ overflowX: 'auto' }}>
+          <table className="custom-table" style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
+                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '11px', letterSpacing: '0.05em' }}>
+                  USER
+                </th>
+                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '11px', letterSpacing: '0.05em' }}>
+                  ROLES
+                </th>
+                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '11px', letterSpacing: '0.05em' }}>
+                  CONTACT
+                </th>
+                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '11px', letterSpacing: '0.05em' }}>
+                  LAST LOGIN
+                </th>
+                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '11px', letterSpacing: '0.05em', textAlign: 'center' }}>
+                  STATUS
+                </th>
+                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '11px', letterSpacing: '0.05em', textAlign: 'right' }}>
+                  ACTIONS
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: '40px 16px', textAlign: 'center', color: '#64748b' }}>
+                    No users match your current search filters.
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map(u => {
+                  const isMe = u.username === currentUser?.username;
+                  const rolesList = u.roles && u.roles.length > 0 ? u.roles : [u.role];
+                  const isActive = u.status !== 'INACTIVE' && u.isActive !== false;
 
-          {/* Search & Filter */}
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', width: '220px' }}>
-              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input
-                type="text"
-                placeholder="Search members..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: '32px', height: '36px', fontSize: '12px', borderRadius: '7px' }}
-              />
-            </div>
-
-            <select
-              value={roleFilter}
-              onChange={e => setRoleFilter(e.target.value)}
-              className="form-control"
-              style={{ width: 'auto', height: '36px', fontSize: '12px', borderRadius: '7px' }}
-            >
-              <option value="ALL">All Roles</option>
-              {LIVE_ROLES.map(r => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* User Items List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {filteredUsers.map(u => {
-            const isMe = u.username === currentUser?.username;
-            const rolesList = u.roles && u.roles.length > 0 ? u.roles : [u.role];
-            const isActive = u.status !== 'INACTIVE' && u.isActive !== false;
-
-            return (
-              <div
-                key={u.id}
-                style={{
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  padding: '18px 20px',
-                  background: '#ffffff',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '14px'
-                }}
-              >
-                {/* Top Info Row */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
-                    {/* Circle Avatar Initials */}
-                    <div
-                      style={{
-                        width: '42px',
-                        height: '42px',
-                        borderRadius: '50%',
-                        background: isMe ? '#dbeafe' : '#f1f5f9',
-                        color: isMe ? '#1d4ed8' : '#334155',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 800,
-                        fontSize: '14px',
-                        flexShrink: 0
-                      }}
+                  return (
+                    <tr
+                      key={u.id}
+                      style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.12s ease' }}
+                      className="table-row-hover"
                     >
-                      {getInitials(u.name || u.username)}
-                    </div>
-
-                    <div>
-                      {/* Name & Badges */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <strong style={{ fontSize: '15px', color: '#0f172a' }}>
-                          {u.name}
-                        </strong>
-
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            color: '#64748b',
-                            background: '#f1f5f9',
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            fontWeight: 500
-                          }}
-                        >
-                          @{u.username}
-                        </span>
-
-                        {rolesList.map((r, i) => (
-                          <span
-                            key={i}
+                      {/* USER Column: Avatar + Name + @username */}
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div
                             style={{
-                              fontSize: '11px',
-                              color: '#334155',
-                              background: '#e2e8f0',
-                              padding: '2px 8px',
-                              borderRadius: '12px',
-                              fontWeight: 600
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '50%',
+                              background: isMe ? '#ecfdf5' : '#f1f5f9',
+                              color: isMe ? '#059669' : '#334155',
+                              border: isMe ? '1.5px solid #a7f3d0' : '1px solid #e2e8f0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 800,
+                              fontSize: '13px',
+                              flexShrink: 0
                             }}
                           >
-                            {r}
-                          </span>
-                        ))}
+                            {getInitials(u.name || u.username)}
+                          </div>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <strong style={{ fontSize: '13.5px', color: '#0f172a' }}>
+                                {u.name}
+                              </strong>
+                              {isMe && (
+                                <span
+                                  style={{
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    padding: '1px 6px',
+                                    borderRadius: '8px',
+                                    background: '#ecfdf5',
+                                    color: '#059669',
+                                    border: '1px solid #bbf7d0'
+                                  }}
+                                >
+                                  you
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                              @{u.username}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
 
+                      {/* ROLES Column: Badges */}
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {rolesList.map((r, i) => (
+                            <span
+                              key={i}
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                color: '#334155',
+                                background: '#f1f5f9',
+                                border: '1px solid #e2e8f0',
+                                padding: '2px 8px',
+                                borderRadius: '10px'
+                              }}
+                            >
+                              {r}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+
+                      {/* CONTACT Column: Phone & Email */}
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ fontSize: '12px', color: '#0f172a', fontWeight: 500 }}>
+                          {u.phone || '—'}
+                        </div>
+                        <div style={{ fontSize: '11.5px', color: '#64748b' }}>
+                          {u.email || '—'}
+                        </div>
+                      </td>
+
+                      {/* LAST LOGIN Column */}
+                      <td style={{ padding: '12px 16px', fontSize: '12px', color: '#475569' }}>
+                        {isMe ? 'Active now' : u.joinedDate || 'Recently'}
+                      </td>
+
+                      {/* STATUS Column */}
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                         <span
                           style={{
                             fontSize: '10px',
                             fontWeight: 800,
-                            padding: '2px 8px',
-                            borderRadius: '10px',
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            letterSpacing: '0.04em',
                             background: isActive ? '#ecfdf5' : '#f1f5f9',
-                            color: isActive ? '#059669' : '#94a3b8'
+                            color: isActive ? '#059669' : '#94a3b8',
+                            border: isActive ? '1px solid #a7f3d0' : '1px solid #cbd5e1'
                           }}
                         >
                           {isActive ? 'ACTIVE' : 'INACTIVE'}
                         </span>
+                      </td>
 
-                        {isMe && (
-                          <span
+                      {/* ACTIONS Column: 5 row action icon buttons */}
+                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                          {/* 1. Digital Signature Button */}
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => setSignatureModalUser(u)}
                             style={{
-                              fontSize: '10px',
-                              fontWeight: 800,
-                              padding: '2px 8px',
-                              borderRadius: '10px',
-                              background: '#cffafe',
-                              color: '#0891b2'
+                              padding: '6px 8px',
+                              borderRadius: '6px',
+                              background: u.signatureUrl ? '#ecfdf5' : '#ffffff',
+                              border: u.signatureUrl ? '1px solid #a7f3d0' : '1px solid #cbd5e1',
+                              color: u.signatureUrl ? '#059669' : '#64748b',
+                              cursor: 'pointer'
                             }}
+                            title={u.signatureUrl ? 'View/replace digital signature' : 'Upload digital signature'}
                           >
-                            you
-                          </span>
-                        )}
-                      </div>
+                            <FileSignature size={13} />
+                          </button>
 
-                      {/* Contact & Joined Meta */}
-                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                        {u.email} · {u.phone} · joined {u.joinedDate || '9/1/2026'}
-                      </div>
-                    </div>
-                  </div>
+                          {/* 2. Edit User Details Button */}
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleStartEdit(u)}
+                            style={{
+                              padding: '6px 8px',
+                              borderRadius: '6px',
+                              background: '#ffffff',
+                              border: '1px solid #cbd5e1',
+                              color: '#334155',
+                              cursor: 'pointer'
+                            }}
+                            title="Edit user details"
+                          >
+                            <Edit2 size={13} />
+                          </button>
 
-                  {/* Actions */}
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => handleStartEdit(u)}
-                      style={{ padding: '5px 10px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                    >
-                      <Edit2 size={12} /> Edit
-                    </button>
+                          {/* 3. Change Roles Button */}
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleOpenRoleModal(u)}
+                            style={{
+                              padding: '6px 8px',
+                              borderRadius: '6px',
+                              background: '#ffffff',
+                              border: '1px solid #cbd5e1',
+                              color: '#334155',
+                              cursor: 'pointer'
+                            }}
+                            title="Manage assigned roles"
+                          >
+                            <Shield size={13} />
+                          </button>
 
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => {
-                        setResettingUser(u);
-                        setNewPassword('');
-                      }}
-                      style={{ padding: '5px 10px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                    >
-                      <Key size={12} /> Reset Password
-                    </button>
+                          {/* 4. Reset Password Button */}
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => {
+                              setResettingUser(u);
+                              setNewPassword('');
+                              setConfirmNewPassword('');
+                            }}
+                            style={{
+                              padding: '6px 8px',
+                              borderRadius: '6px',
+                              background: '#ffffff',
+                              border: '1px solid #cbd5e1',
+                              color: '#334155',
+                              cursor: 'pointer'
+                            }}
+                            title="Reset password"
+                          >
+                            <Lock size={13} />
+                          </button>
 
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => handleToggleActive(u)}
-                      disabled={isMe}
-                      style={{
-                        padding: '5px 10px',
-                        fontSize: '11px',
-                        cursor: isMe ? 'not-allowed' : 'pointer',
-                        color: isActive ? '#e11d48' : '#059669'
-                      }}
-                    >
-                      {isActive ? 'Deactivate' : 'Activate'}
-                    </button>
+                          {/* 5. Activate / Deactivate Toggle Button */}
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleToggleActive(u)}
+                            disabled={isMe}
+                            style={{
+                              padding: '6px 8px',
+                              borderRadius: '6px',
+                              background: isMe ? '#f8fafc' : '#ffffff',
+                              border: '1px solid #cbd5e1',
+                              color: isActive ? '#e11d48' : '#059669',
+                              cursor: isMe ? 'not-allowed' : 'pointer'
+                            }}
+                            title={isMe ? 'Cannot deactivate self' : isActive ? 'Deactivate account' : 'Activate account'}
+                          >
+                            <Power size={13} />
+                          </button>
 
-                    {!isMe && (
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => handleDelete(u)}
-                        style={{ padding: '5px 8px', fontSize: '11px', color: '#e11d48' }}
-                        title="Remove User"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* SIGNATURE SUBSECTION MATCHING LIVE SITE */}
-                <div
-                  style={{
-                    background: '#f8fafc',
-                    borderRadius: '8px',
-                    padding: '12px 16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px'
-                  }}
-                >
-                  <div style={{ fontSize: '10px', fontWeight: 800, color: '#64748b', letterSpacing: '0.5px' }}>
-                    SIGNATURE
-                  </div>
-
-                  {u.signatureUrl ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <img
-                        src={u.signatureUrl}
-                        alt={`${u.name} signature`}
-                        style={{ maxHeight: '40px', maxWidth: '140px', objectFit: 'contain', background: '#fff', border: '1px solid #cbd5e1', padding: '4px', borderRadius: '4px' }}
-                      />
-                      <label
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '4px 10px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          borderRadius: '6px',
-                          border: '1px solid #cbd5e1',
-                          background: '#ffffff',
-                          cursor: 'pointer',
-                          color: '#334155'
-                        }}
-                      >
-                        <Upload size={12} /> Replace signature
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={e => handleSignatureUpload(u.id, e)}
-                          style={{ display: 'none' }}
-                        />
-                      </label>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '13px', color: '#64748b' }}>
-                        No signature uploaded yet.
-                      </span>
-
-                      <label
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '5px 12px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          borderRadius: '6px',
-                          border: '1px solid #cbd5e1',
-                          background: '#ffffff',
-                          cursor: 'pointer',
-                          color: '#334155'
-                        }}
-                      >
-                        <Upload size={13} /> Upload signature
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={e => handleSignatureUpload(u.id, e)}
-                          style={{ display: 'none' }}
-                        />
-                      </label>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                          {/* Delete Action (only if not self) */}
+                          {!isMe && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => handleDelete(u)}
+                              style={{
+                                padding: '6px 7px',
+                                borderRadius: '6px',
+                                background: '#ffffff',
+                                border: '1px solid #fecdd3',
+                                color: '#e11d48',
+                                cursor: 'pointer'
+                              }}
+                              title="Delete user"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
       {/* ====================================================================
-          EDIT USER MODAL
+          MODAL 1: ADD NEW USER MODAL (MATCHING SIHATSUITE)
+          ==================================================================== */}
+      {showAddUserModal && (
+        <div className="modal-backdrop" onClick={() => setShowAddUserModal(false)}>
+          <div
+            className="modal-content"
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '600px', width: '92%', maxHeight: '90vh', overflowY: 'auto' }}
+          >
+            <div className="modal-header" style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
+              <div>
+                <h3 className="modal-title" style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Add New User
+                </h3>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0 0' }}>
+                  Create an employee account and grant role privileges for this tenant.
+                </p>
+              </div>
+              <button className="icon-btn" onClick={() => setShowAddUserModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser}>
+              <div className="modal-body" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Full Name & Username */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. Dr. Farhana Islam"
+                      value={fullName}
+                      onChange={e => setFullName(e.target.value)}
+                      required
+                      style={{ height: '40px', borderRadius: '8px' }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                      Username *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. farhana_doc (no spaces)"
+                      value={username}
+                      onChange={e => setUsername(e.target.value.replace(/\s+/g, '').toLowerCase())}
+                      required
+                      style={{ height: '40px', borderRadius: '8px' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Email & Phone */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                      Email (optional)
+                    </label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      placeholder="doctor@example.com"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      style={{ height: '40px', borderRadius: '8px' }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                      Phone (optional)
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="01700000000"
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
+                      style={{ height: '40px', borderRadius: '8px' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Role Selector Pills */}
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '8px', display: 'block' }}>
+                    Roles *
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', maxHeight: '180px', overflowY: 'auto', padding: '4px 0' }}>
+                    {LIVE_ROLES.map(role => {
+                      const isSelected = selectedRoles.includes(role);
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => toggleRoleSelection(role)}
+                          style={{
+                            border: isSelected ? '1.5px solid #059669' : '1px solid #cbd5e1',
+                            background: isSelected ? '#ecfdf5' : '#ffffff',
+                            color: isSelected ? '#065f46' : '#475569',
+                            fontWeight: isSelected ? 700 : 500,
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            transition: 'all 0.12s ease'
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '3px',
+                              border: isSelected ? '1.5px solid #059669' : '1.5px solid #94a3b8',
+                              background: isSelected ? '#059669' : '#ffffff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            {isSelected && <Check size={10} style={{ color: '#ffffff' }} />}
+                          </div>
+                          {role}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
+                    Select one or more roles. Permissions from all selected roles are combined.
+                  </div>
+                </div>
+
+                {/* Password & Confirm */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                      Password *
+                    </label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      placeholder="min 8 characters"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
+                      style={{ height: '40px', borderRadius: '8px' }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                      Confirm Password *
+                    </label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      placeholder="repeat password"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      required
+                      style={{ height: '40px', borderRadius: '8px' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-footer" style={{ padding: '14px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowAddUserModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn btn-primary"
+                  style={{
+                    background: '#059669',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    padding: '8px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {isSubmitting ? 'Creating...' : 'Create User'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL 2: DIGITAL SIGNATURE MODAL
+          ==================================================================== */}
+      {signatureModalUser && (
+        <div className="modal-backdrop" onClick={() => setSignatureModalUser(null)}>
+          <div
+            className="modal-content"
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '480px', width: '92%' }}
+          >
+            <div className="modal-header" style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
+              <h3 className="modal-title" style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                Digital Signature: {signatureModalUser.name}
+              </h3>
+              <button className="icon-btn" onClick={() => setSignatureModalUser(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ padding: '24px', textAlign: 'center' }}>
+              {signatureModalUser.signatureUrl ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+                  <div
+                    style={{
+                      border: '1px dashed #cbd5e1',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      background: '#f8fafc',
+                      width: '100%',
+                      maxWidth: '300px'
+                    }}
+                  >
+                    <img
+                      src={signatureModalUser.signatureUrl}
+                      alt={`${signatureModalUser.name} signature`}
+                      style={{ maxHeight: '90px', maxWidth: '100%', objectFit: 'contain' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <label
+                      style={{
+                        padding: '6px 14px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        background: '#ffffff',
+                        cursor: 'pointer',
+                        color: '#334155',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Upload size={13} /> Replace signature
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={e => handleSignatureUpload(signatureModalUser.id, e)}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSignature(signatureModalUser.id)}
+                      style={{
+                        padding: '6px 14px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        borderRadius: '6px',
+                        border: '1px solid #fecdd3',
+                        background: '#fff',
+                        color: '#e11d48',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+                  <div
+                    style={{
+                      border: '2px dashed #cbd5e1',
+                      borderRadius: '10px',
+                      padding: '30px 20px',
+                      background: '#f8fafc',
+                      width: '100%'
+                    }}
+                  >
+                    <FileSignature size={36} color="#94a3b8" style={{ margin: '0 auto 8px' }} />
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+                      No digital signature uploaded yet
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                      PNG or JPG with transparent/white background. Used on lab reports.
+                    </div>
+                  </div>
+                  <label
+                    style={{
+                      padding: '8px 18px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      borderRadius: '8px',
+                      background: '#059669',
+                      color: '#ffffff',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Upload size={14} /> Upload image file
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={e => handleSignatureUpload(signatureModalUser.id, e)}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer" style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" onClick={() => setSignatureModalUser(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL 3: EDIT USER DETAILS MODAL
           ==================================================================== */}
       {editingUser && (
         <div className="modal-backdrop" onClick={() => setEditingUser(null)}>
           <div
             className="modal-content"
             onClick={e => e.stopPropagation()}
-            style={{ maxWidth: '580px', width: '92%' }}
+            style={{ maxWidth: '520px', width: '92%' }}
           >
             <div className="modal-header" style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
               <h3 className="modal-title" style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                Edit Team Member: @{editingUser.username}
+                Edit Details: @{editingUser.username}
               </h3>
               <button className="icon-btn" onClick={() => setEditingUser(null)}>
                 <X size={18} />
@@ -789,87 +1077,49 @@ export const UsersView: React.FC = () => {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      className="form-control"
-                      value={editEmail}
-                      onChange={e => setEditEmail(e.target.value)}
-                      style={{ height: '40px', borderRadius: '7px' }}
-                    />
-                  </div>
-
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                      Phone
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={editPhone}
-                      onChange={e => setEditPhone(e.target.value)}
-                      style={{ height: '40px', borderRadius: '7px' }}
-                    />
-                  </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    value={editEmail}
+                    onChange={e => setEditEmail(e.target.value)}
+                    style={{ height: '40px', borderRadius: '7px' }}
+                  />
                 </div>
 
-                <div>
+                <div className="form-group" style={{ margin: 0 }}>
                   <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                    Assigned Roles *
+                    Phone
                   </label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {LIVE_ROLES.map(role => {
-                      const isSelected = editRoles.includes(role);
-                      return (
-                        <button
-                          key={role}
-                          type="button"
-                          onClick={() => toggleEditRoleSelection(role)}
-                          style={{
-                            border: isSelected ? '1.5px solid #0f172a' : '1px solid #cbd5e1',
-                            background: isSelected ? '#f8fafc' : '#ffffff',
-                            color: isSelected ? '#0f172a' : '#475569',
-                            fontWeight: isSelected ? 700 : 500,
-                            padding: '4px 10px',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '12px',
-                              height: '12px',
-                              borderRadius: '2px',
-                              border: isSelected ? '1px solid #0f172a' : '1px solid #94a3b8',
-                              background: isSelected ? '#0f172a' : '#ffffff',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                          >
-                            {isSelected && <Check size={8} style={{ color: '#ffffff' }} />}
-                          </div>
-                          {role}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={editPhone}
+                    onChange={e => setEditPhone(e.target.value)}
+                    style={{ height: '40px', borderRadius: '7px' }}
+                  />
                 </div>
               </div>
 
-              <div className="modal-footer" style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <div className="modal-footer" style={{ padding: '14px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setEditingUser(null)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" style={{ background: '#0f172a' }}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{
+                    background: '#059669',
+                    color: '#fff',
+                    fontWeight: 600,
+                    border: 'none',
+                    padding: '8px 20px',
+                    borderRadius: '7px'
+                  }}
+                >
                   Save Changes
                 </button>
               </div>
@@ -879,7 +1129,104 @@ export const UsersView: React.FC = () => {
       )}
 
       {/* ====================================================================
-          PASSWORD RESET MODAL
+          MODAL 4: MANAGE ASSIGNED ROLES MODAL
+          ==================================================================== */}
+      {roleModalUser && (
+        <div className="modal-backdrop" onClick={() => setRoleModalUser(null)}>
+          <div
+            className="modal-content"
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '540px', width: '92%' }}
+          >
+            <div className="modal-header" style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
+              <div>
+                <h3 className="modal-title" style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Assign Roles: {roleModalUser.name}
+                </h3>
+                <div style={{ fontSize: '12px', color: '#64748b' }}>
+                  @{roleModalUser.username}
+                </div>
+              </div>
+              <button className="icon-btn" onClick={() => setRoleModalUser(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveRoles}>
+              <div className="modal-body" style={{ padding: '20px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '12px' }}>
+                  Select one or more active roles:
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', maxHeight: '240px', overflowY: 'auto' }}>
+                  {LIVE_ROLES.map(role => {
+                    const isSelected = userAssignedRoles.includes(role);
+                    return (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => toggleUserRole(role)}
+                        style={{
+                          border: isSelected ? '1.5px solid #059669' : '1px solid #cbd5e1',
+                          background: isSelected ? '#ecfdf5' : '#ffffff',
+                          color: isSelected ? '#065f46' : '#475569',
+                          fontWeight: isSelected ? 700 : 500,
+                          padding: '7px 14px',
+                          borderRadius: '8px',
+                          fontSize: '12.5px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '14px',
+                            height: '14px',
+                            borderRadius: '3px',
+                            border: isSelected ? '1.5px solid #059669' : '1.5px solid #94a3b8',
+                            background: isSelected ? '#059669' : '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {isSelected && <Check size={10} style={{ color: '#ffffff' }} />}
+                        </div>
+                        {role}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="modal-footer" style={{ padding: '14px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setRoleModalUser(null)}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{
+                    background: '#059669',
+                    color: '#fff',
+                    fontWeight: 600,
+                    border: 'none',
+                    padding: '8px 20px',
+                    borderRadius: '7px'
+                  }}
+                >
+                  Save Roles
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL 5: RESET PASSWORD MODAL
           ==================================================================== */}
       {resettingUser && (
         <div className="modal-backdrop" onClick={() => setResettingUser(null)}>
@@ -899,10 +1246,6 @@ export const UsersView: React.FC = () => {
 
             <form onSubmit={handleConfirmPasswordReset}>
               <div className="modal-body" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-                  Enter a new password for <strong>{resettingUser.name}</strong>. The user can immediately log in with this new password.
-                </p>
-
                 <div className="form-group" style={{ margin: 0 }}>
                   <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
                     New Password *
@@ -917,14 +1260,40 @@ export const UsersView: React.FC = () => {
                     style={{ height: '40px', borderRadius: '7px' }}
                   />
                 </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                    Confirm New Password *
+                  </label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    placeholder="repeat new password"
+                    value={confirmNewPassword}
+                    onChange={e => setConfirmNewPassword(e.target.value)}
+                    required
+                    style={{ height: '40px', borderRadius: '7px' }}
+                  />
+                </div>
               </div>
 
-              <div className="modal-footer" style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <div className="modal-footer" style={{ padding: '14px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setResettingUser(null)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" style={{ background: '#0f172a' }}>
-                  Update Password
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{
+                    background: '#059669',
+                    color: '#fff',
+                    fontWeight: 600,
+                    border: 'none',
+                    padding: '8px 20px',
+                    borderRadius: '7px'
+                  }}
+                >
+                  Set Password
                 </button>
               </div>
             </form>
