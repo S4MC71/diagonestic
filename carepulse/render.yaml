@@ -1,0 +1,26 @@
+# CarePulse — Backend (Render.com)
+services:
+  - type: web
+    name: carepulse-api
+    runtime: node
+    region: singapore          # Asia — closest to BD
+    plan: free                 # Free tier দিয়ে শুরু
+    rootDir: carepulse/apps/backend
+    buildCommand: npm install && npm run build && npx prisma generate
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        sync: false            # Render dashboard থেকে manually দিতে হবে
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true    # Render auto-generate করবে
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        sync: false            # Vercel URLs দিতে হবে

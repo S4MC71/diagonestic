@@ -1,0 +1,17 @@
+{
+  "name": "carepulse",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=apps/backend",
+    "dev:superadmin": "npm run dev --workspace=apps/superadmin",
+    "build:backend": "npm run build --workspace=apps/backend",
+    "build:superadmin": "npm run build --workspace=apps/superadmin"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

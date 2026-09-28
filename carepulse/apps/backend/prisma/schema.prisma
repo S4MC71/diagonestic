@@ -1,0 +1,658 @@
+// CarePulse — Prisma Schema
+// Database: PostgreSQL (Supabase)
+// Multi-tenant: Row-Level Isolation via tenantId
+// Column names map to snake_case in DB via @map annotations
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────
+//  ENUMS
+// ─────────────────────────────────────────────
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+
+  @@map("tenant_status")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  CENTER_MANAGER
+  RECEPTIONIST
+  LAB_TECHNICIAN
+  DOCTOR
+  PHARMACIST
+  ACCOUNTANT
+  PHLEBOTOMIST
+  STORE_MANAGER
+
+  @@map("user_role")
+}
+
+// ─────────────────────────────────────────────
+//  PLANS
+// ─────────────────────────────────────────────
+model Plan {
+  id           String   @id @default(uuid())
+  name         String
+  priceMonthly Int      @map("price_monthly")
+  priceYearly  Int?     @map("price_yearly")
+  maxUsers     Int      @default(5) @map("max_users")
+  modules      Json     @default("[]")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenants              Tenant[]
+  subscriptionPayments SubscriptionPayment[]
+
+  @@map("plans")
+}
+
+// ─────────────────────────────────────────────
+//  TENANTS
+// ─────────────────────────────────────────────
+model Tenant {
+  id            String       @id @default(uuid())
+  slug          String       @unique
+  name          String
+  bengaliName   String?      @map("bengali_name")
+  address       String?
+  phone         String?
+  email         String?
+  logoUrl       String?      @map("logo_url")
+  status        TenantStatus @default(TRIAL)
+  planId        String?      @map("plan_id")
+  planExpiresAt DateTime?    @map("plan_expires_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  plan                 Plan?                @relation(fields: [planId], references: [id])
+  users                User[]
+  modules              TenantModule[]
+  settings             TenantSettings?
+  subscriptionPayments SubscriptionPayment[]
+  patients             Patient[]
+  doctors              Doctor[]
+  chambers             Chamber[]
+  diagnosticTests      DiagnosticTest[]
+  invoices             Invoice[]
+  samples              Sample[]
+  appointments         Appointment[]
+  labReports           LabReport[]
+  pharmacyProducts     PharmacyProduct[]
+  pharmacySales        PharmacySale[]
+  accountingTxns       AccountingTransaction[]
+  commissionEntries    CommissionEntry[]
+  recallRules          RecallRule[]
+  supportTickets       SupportTicket[]
+  inventoryItems       InventoryItem[]
+  inventoryTxns        InventoryTransaction[]
+
+  @@map("tenants")
+}
+
+// ─────────────────────────────────────────────
+//  USERS
+// ─────────────────────────────────────────────
+model User {
+  id           String    @id @default(uuid())
+  tenantId     String?   @map("tenant_id")
+  name         String
+  username     String
+  email        String?
+  passwordHash String    @map("password_hash")
+  role         UserRole
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  tenant              Tenant?               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdInvoices     Invoice[]             @relation("InvoiceCreatedBy")
+  createdAppointments Appointment[]         @relation("AppointmentCreatedBy")
+  collectedSamples    Sample[]              @relation("SampleCollectedBy")
+  verifiedReports     LabReport[]           @relation("ReportVerifiedBy")
+  accountingTxns      AccountingTransaction[] @relation("TxnCreatedBy")
+
+  @@unique([tenantId, username])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+//  TENANT MODULES
+// ─────────────────────────────────────────────
+model TenantModule {
+  id        String  @id @default(uuid())
+  tenantId  String  @map("tenant_id")
+  moduleKey String  @map("module_key")
+  isEnabled Boolean @default(true) @map("is_enabled")
+  config    Json    @default("{}")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, moduleKey])
+  @@map("tenant_modules")
+}
+
+// ─────────────────────────────────────────────
+//  TENANT SETTINGS
+// ─────────────────────────────────────────────
+model TenantSettings {
+  tenantId          String  @id @map("tenant_id")
+  invoicePrefix     String  @default("INV") @map("invoice_prefix")
+  samplePrefix      String  @default("SMP") @map("sample_prefix")
+  patientPrefix     String  @default("PT") @map("patient_prefix")
+  reportPrefix      String  @default("RPT") @map("report_prefix")
+  currency          String  @default("BDT")
+  vatRate           Decimal @default(0) @map("vat_rate")
+  defaultPrintFormat String @default("thermal") @map("default_print_format")
+  thermalWidth      String  @default("80mm") @map("thermal_width")
+  reportDisclaimer  String? @map("report_disclaimer")
+  whatsappEnabled   Boolean @default(false) @map("whatsapp_enabled")
+  smsBalance        Int     @default(0) @map("sms_balance")
+  showQrOnReport    Boolean @default(false) @map("show_qr_on_report")
+  enableHomeCollection Boolean @default(false) @map("enable_home_collection")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_settings")
+}
+
+// ─────────────────────────────────────────────
+//  SUBSCRIPTION PAYMENTS
+// ─────────────────────────────────────────────
+model SubscriptionPayment {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  planId       String?  @map("plan_id")
+  amount       Int
+  method       String?
+  receiptNo    String?  @map("receipt_no")
+  status       String   @default("PAID")
+  billingCycle String   @default("monthly") @map("billing_cycle")
+  paidAt       DateTime @default(now()) @map("paid_at")
+  notes        String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan   Plan?  @relation(fields: [planId], references: [id])
+
+  @@map("subscription_payments")
+}
+
+// ─────────────────────────────────────────────
+//  PATIENTS
+// ─────────────────────────────────────────────
+model Patient {
+  id             String    @id @default(uuid())
+  tenantId       String    @map("tenant_id")
+  patientId      String    @map("patient_id")
+  name           String
+  phone          String
+  whatsapp       String?
+  age            Int
+  ageUnit        String    @default("Years") @map("age_unit")
+  gender         String
+  bloodGroup     String?   @map("blood_group")
+  address        String
+  nid            String?
+  outstandingDue Decimal   @default(0) @map("outstanding_due")
+  totalVisits    Int       @default(0) @map("total_visits")
+  totalBilled    Decimal   @default(0) @map("total_billed")
+  lastVisitAt    DateTime? @map("last_visit_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoices     Invoice[]
+  samples      Sample[]
+  labReports   LabReport[]
+  appointments Appointment[]
+
+  @@unique([tenantId, patientId])
+  @@map("patients")
+}
+
+// ─────────────────────────────────────────────
+//  DOCTORS
+// ─────────────────────────────────────────────
+model Doctor {
+  id                    String   @id @default(uuid())
+  tenantId              String   @map("tenant_id")
+  name                  String
+  degrees               String?
+  designation           String
+  specialty             String
+  hospital              String?
+  phone                 String
+  email                 String?
+  bmdcReg               String?  @map("bmdc_reg")
+  isConsultant          Boolean  @default(false) @map("is_consultant")
+  isReferralAgent       Boolean  @default(true) @map("is_referral_agent")
+  commissionType        String   @default("percentage") @map("commission_type")
+  commissionValue       Decimal  @default(0) @map("commission_value")
+  totalReferrals        Int      @default(0) @map("total_referrals")
+  totalCommissionEarned Decimal  @default(0) @map("total_commission_earned")
+  totalCommissionPaid   Decimal  @default(0) @map("total_commission_paid")
+  isActive              Boolean  @default(true) @map("is_active")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  chambers          Chamber[]
+  referredInvoices  Invoice[]         @relation("InvoiceReferredBy")
+  commissionEntries CommissionEntry[]
+  appointments      Appointment[]
+
+  @@map("doctors")
+}
+
+// ─────────────────────────────────────────────
+//  CHAMBERS
+// ─────────────────────────────────────────────
+model Chamber {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  roomNo          String   @map("room_no")
+  name            String
+  floor           String?
+  department      String?
+  doctorId        String?  @map("doctor_id")
+  visitingDays    Json     @default("[]") @map("visiting_days")
+  startTime       String?  @map("start_time")
+  endTime         String?  @map("end_time")
+  maxPatients     Int?     @map("max_patients")
+  consultationFee Decimal  @default(0) @map("consultation_fee")
+  followUpFee     Decimal  @default(0) @map("follow_up_fee")
+  status          String   @default("Available")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  doctor       Doctor?       @relation(fields: [doctorId], references: [id])
+  appointments Appointment[]
+
+  @@map("chambers")
+}
+
+// ─────────────────────────────────────────────
+//  DIAGNOSTIC TESTS
+// ─────────────────────────────────────────────
+model DiagnosticTest {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  code            String
+  name            String
+  bengaliName     String?  @map("bengali_name")
+  department      String   @default("General")
+  specimen        String?
+  method          String?
+  normalRange     String?  @map("normal_range")
+  unit            String?
+  price           Decimal  @default(0)
+  costPrice       Decimal  @default(0) @map("cost_price")
+  labVendorPrice  Decimal  @default(0) @map("lab_vendor_price")
+  tubeColor       String?  @map("tube_color")
+  tatHours        Int      @default(24) @map("tat_hours")
+  isSendout       Boolean  @default(false) @map("is_sendout")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoiceItems InvoiceItem[]
+  samples      Sample[]
+  labReports   LabReport[]
+  recallRules  RecallRule[]
+
+  @@unique([tenantId, code])
+  @@map("diagnostic_tests")
+}
+
+// ─────────────────────────────────────────────
+//  INVOICES
+// ─────────────────────────────────────────────
+model Invoice {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  invoiceNo     String   @map("invoice_no")
+  patientId     String   @map("patient_id")
+  patientName   String   @map("patient_name")
+  referredBy    String?  @map("referred_by")
+  date          DateTime @default(now()) @db.Date
+  grossTotal    Decimal  @default(0) @map("gross_total")
+  discount      Decimal  @default(0)
+  discountPct   Decimal  @default(0) @map("discount_pct")
+  netTotal      Decimal  @default(0) @map("net_total")
+  paid          Decimal  @default(0)
+  due           Decimal  @default(0)
+  paymentStatus String   @default("UNPAID") @map("payment_status")
+  paymentMethod String?  @map("payment_method")
+  vat           Decimal  @default(0)
+  createdBy     String?  @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient  Patient       @relation(fields: [patientId], references: [id])
+  referrer Doctor?       @relation("InvoiceReferredBy", fields: [referredBy], references: [id])
+  creator  User?         @relation("InvoiceCreatedBy", fields: [createdBy], references: [id])
+  items    InvoiceItem[]
+  samples  Sample[]
+  reports  LabReport[]
+  commissions CommissionEntry[]
+
+  @@unique([tenantId, invoiceNo])
+  @@map("invoices")
+}
+
+// ─────────────────────────────────────────────
+//  INVOICE ITEMS
+// ─────────────────────────────────────────────
+model InvoiceItem {
+  id          String  @id @default(uuid())
+  invoiceId   String  @map("invoice_id")
+  testId      String? @map("test_id")
+  testCode    String  @map("test_code")
+  testName    String  @map("test_name")
+  quantity    Int     @default(1)
+  unitPrice   Decimal @map("unit_price")
+  discount    Decimal @default(0)
+  netPrice    Decimal @map("net_price")
+  isSendout   Boolean @default(false) @map("is_sendout")
+  labVendorId String? @map("lab_vendor_id")
+
+  invoice Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  test    DiagnosticTest? @relation(fields: [testId], references: [id])
+
+  @@map("invoice_items")
+}
+
+// ─────────────────────────────────────────────
+//  SAMPLES
+// ─────────────────────────────────────────────
+model Sample {
+  id             String    @id @default(uuid())
+  tenantId       String    @map("tenant_id")
+  sampleId       String    @map("sample_id")
+  invoiceId      String    @map("invoice_id")
+  patientId      String    @map("patient_id")
+  testId         String?   @map("test_id")
+  testName       String    @map("test_name")
+  specimen       String?
+  tubeColor      String?   @map("tube_color")
+  collectedAt    DateTime? @map("collected_at")
+  collectedBy    String?   @map("collected_by")
+  receivedAt     DateTime? @map("received_at")
+  status         String    @default("PENDING")
+  collectionType String    @default("center") @map("collection_type")
+  deliveryAddress String?  @map("delivery_address")
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoice   Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  patient   Patient        @relation(fields: [patientId], references: [id])
+  test      DiagnosticTest? @relation(fields: [testId], references: [id])
+  collector User?          @relation("SampleCollectedBy", fields: [collectedBy], references: [id])
+
+  @@unique([tenantId, sampleId])
+  @@map("samples")
+}
+
+// ─────────────────────────────────────────────
+//  LAB REPORTS
+// ─────────────────────────────────────────────
+model LabReport {
+  id             String    @id @default(uuid())
+  tenantId       String    @map("tenant_id")
+  reportNo       String    @map("report_no")
+  invoiceId      String    @map("invoice_id")
+  patientId      String    @map("patient_id")
+  testId         String?   @map("test_id")
+  testName       String    @map("test_name")
+  results        Json      @default("[]")
+  interpretation String?
+  remarks        String?
+  pathologistId  String?   @map("pathologist_id")
+  status         String    @default("PENDING")
+  verifiedAt     DateTime? @map("verified_at")
+  printedAt      DateTime? @map("printed_at")
+  whatsappSentAt DateTime? @map("whatsapp_sent_at")
+  isCritical     Boolean   @default(false) @map("is_critical")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoice     Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  patient     Patient        @relation(fields: [patientId], references: [id])
+  test        DiagnosticTest? @relation(fields: [testId], references: [id])
+  pathologist User?          @relation("ReportVerifiedBy", fields: [pathologistId], references: [id])
+
+  @@unique([tenantId, reportNo])
+  @@map("lab_reports")
+}
+
+// ─────────────────────────────────────────────
+//  APPOINTMENTS
+// ─────────────────────────────────────────────
+model Appointment {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  appointmentNo   String   @map("appointment_no")
+  patientId       String   @map("patient_id")
+  doctorId        String   @map("doctor_id")
+  chamberId       String?  @map("chamber_id")
+  appointmentDate DateTime @map("appointment_date") @db.Date
+  appointmentTime String?  @map("appointment_time")
+  type            String   @default("New")
+  fee             Decimal  @default(0)
+  paid            Decimal  @default(0)
+  paymentMethod   String?  @map("payment_method")
+  status          String   @default("Scheduled")
+  notes           String?
+  createdBy       String?  @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient Patient  @relation(fields: [patientId], references: [id])
+  doctor  Doctor   @relation(fields: [doctorId], references: [id])
+  chamber Chamber? @relation(fields: [chamberId], references: [id])
+  creator User?    @relation("AppointmentCreatedBy", fields: [createdBy], references: [id])
+
+  @@unique([tenantId, appointmentNo])
+  @@map("appointments")
+}
+
+// ─────────────────────────────────────────────
+//  PHARMACY PRODUCTS
+// ─────────────────────────────────────────────
+model PharmacyProduct {
+  id           String    @id @default(uuid())
+  tenantId     String    @map("tenant_id")
+  code         String
+  name         String
+  genericName  String?   @map("generic_name")
+  manufacturer String?
+  unit         String    @default("pcs")
+  packSize     Int       @default(1) @map("pack_size")
+  purchasePrice Decimal  @default(0) @map("purchase_price")
+  salePrice    Decimal   @default(0) @map("sale_price")
+  stockQty     Decimal   @default(0) @map("stock_qty")
+  reorderLevel Int       @default(10) @map("reorder_level")
+  rackLocation String?   @map("rack_location")
+  expiryDate   DateTime? @map("expiry_date") @db.Date
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, code])
+  @@map("pharmacy_products")
+}
+
+// ─────────────────────────────────────────────
+//  PHARMACY SALES
+// ─────────────────────────────────────────────
+model PharmacySale {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  saleNo        String   @map("sale_no")
+  invoiceId     String?  @map("invoice_id")
+  patientId     String?  @map("patient_id")
+  items         Json     @default("[]")
+  grossTotal    Decimal  @default(0) @map("gross_total")
+  discount      Decimal  @default(0)
+  netTotal      Decimal  @default(0) @map("net_total")
+  paid          Decimal  @default(0)
+  due           Decimal  @default(0)
+  paymentMethod String?  @map("payment_method")
+  soldBy        String?  @map("sold_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, saleNo])
+  @@map("pharmacy_sales")
+}
+
+// ─────────────────────────────────────────────
+//  ACCOUNTING
+// ─────────────────────────────────────────────
+model AccountingTransaction {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  date          DateTime @default(now()) @db.Date
+  type          String   // INCOME | EXPENSE
+  category      String
+  amount        Decimal
+  description   String
+  paymentMethod String?  @map("payment_method")
+  reference     String?
+  createdBy     String?  @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  tenant  Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator User?  @relation("TxnCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("accounting_transactions")
+}
+
+// ─────────────────────────────────────────────
+//  COMMISSIONS
+// ─────────────────────────────────────────────
+model CommissionEntry {
+  id        String    @id @default(uuid())
+  tenantId  String    @map("tenant_id")
+  doctorId  String    @map("doctor_id")
+  invoiceId String    @map("invoice_id")
+  amount    Decimal
+  status    String    @default("PENDING")
+  note      String?
+  paidAt    DateTime? @map("paid_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("commission_entries")
+}
+
+// ─────────────────────────────────────────────
+//  RECALL RULES
+// ─────────────────────────────────────────────
+model RecallRule {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  name            String
+  triggerType     String   @default("test_done") @map("trigger_type")
+  testId          String?  @map("test_id")
+  daysAfter       Int      @default(30) @map("days_after")
+  messageTemplate String?  @map("message_template")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  tenant Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  test   DiagnosticTest? @relation(fields: [testId], references: [id])
+
+  @@map("recall_rules")
+}
+
+// ─────────────────────────────────────────────
+//  SUPPORT TICKETS
+// ─────────────────────────────────────────────
+model SupportTicket {
+  id        String    @id @default(uuid())
+  tenantId  String    @map("tenant_id")
+  ticketNo  String    @map("ticket_no")
+  subject   String
+  message   String
+  status    String    @default("OPEN")
+  priority  String    @default("normal")
+  reply     String?
+  repliedAt DateTime? @map("replied_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, ticketNo])
+  @@map("support_tickets")
+}
+
+// ─────────────────────────────────────────────
+//  INVENTORY (Non-Medicine Stock)
+// ─────────────────────────────────────────────
+model InventoryItem {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  code         String   @map("code")
+  name         String
+  category     String
+  unit         String   @default("pcs")
+  stockQty     Float    @default(0) @map("stock_qty")
+  reorderLevel Int      @default(5) @map("reorder_level")
+  unitCost     Float    @default(0) @map("unit_cost")
+  location     String?
+  supplier     String?
+  notes        String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  transactions InventoryTransaction[]
+
+  @@unique([tenantId, code])
+  @@map("inventory_items")
+}
+
+model InventoryTransaction {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  itemId      String   @map("item_id")
+  type        String
+  qty         Float
+  stockBefore Float    @map("stock_before")
+  stockAfter  Float    @map("stock_after")
+  reason      String?
+  refNo       String?  @map("ref_no")
+  createdBy   String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  item   InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("inventory_transactions")
+}

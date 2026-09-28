@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useApp } from './context/AppContext';
+import { useAuth } from './context/AuthContext';
 import { Topbar } from './components/layout/Topbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { PrintModal } from './components/print/PrintModal';
@@ -34,7 +35,8 @@ import { PracticeView } from './views/PracticeView';
 import { ActionInboxView } from './views/ActionInboxView';
 
 export const App: React.FC = () => {
-  const { currentView, setCurrentView, isSidebarCollapsed, toggleSidebar, currentUser, closePrintModal, showPrintModal } = useApp();
+  const { currentView, setCurrentView, isSidebarCollapsed, toggleSidebar, closePrintModal, showPrintModal } = useApp();
+  const { authUser, isAuthLoading } = useAuth();
 
   // Global Clinical & POS Keyboard Shortcuts
   useEffect(() => {
@@ -76,8 +78,17 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setCurrentView, showPrintModal, closePrintModal]);
 
-  // If on login view, render clean full-screen login layout
-  if (currentView === 'login' || !currentUser) {
+  // Show loading spinner while checking auth
+  if (isAuthLoading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #e2e8f0', borderTopColor: '#059669', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    );
+  }
+
+  // If on login view or not authenticated, render clean full-screen login layout
+  if (currentView === 'login' || !authUser) {
     return <LoginView />;
   }
 

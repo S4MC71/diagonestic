@@ -1,29 +1,45 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
-  const { setCurrentView, setCurrentUser, users, showToast } = useApp();
-  const [username, setUsername] = useState('lifecare_admin');
-  const [password, setPassword] = useState('B8hAz3zRkyBr');
+  const { setCurrentView, showToast } = useApp();
+  const { login } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setCurrentUser(users[0]);
+    try {
+      await login(username, password);
+      showToast(`Welcome back, ${username}!`);
       setCurrentView('dashboard');
-      showToast('Welcome back, LifeCare Diagnostic Admin!');
-    }, 400);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleQuickDemo = () => {
-    setCurrentUser(users[0]);
-    setCurrentView('dashboard');
-    showToast('Signed in with Demo Admin account');
+  // Demo still available for testing — uses real credentials
+  const handleQuickDemo = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      await login('lifecare_admin', 'Admin@1234');
+      showToast('Signed in with Demo Admin account');
+      setCurrentView('dashboard');
+    } catch {
+      setError('Demo account not available. Please log in with your credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -316,6 +332,22 @@ export const LoginView: React.FC = () => {
               Enter your credentials to continue.
             </p>
           </div>
+
+          {error && (
+            <div
+              style={{
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                fontSize: '13px',
+                color: '#dc2626',
+                marginBottom: '12px',
+              }}
+            >
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
