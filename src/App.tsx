@@ -66,8 +66,47 @@ const VIEW_MODULE_MAP: Record<string, string> = {
 };
 
 export const App: React.FC = () => {
-  const { currentView, setCurrentView, isSidebarCollapsed, toggleSidebar, closePrintModal, showPrintModal } = useApp();
+  const {
+    currentView,
+    setCurrentView,
+    isSidebarCollapsed,
+    toggleSidebar,
+    closePrintModal,
+    showPrintModal,
+    tenantSettings,
+    updateTenantSettings,
+    currentUser,
+    setCurrentUser,
+  } = useApp();
   const { authUser, isAuthLoading, hasModule } = useAuth();
+
+  // Synchronize authenticated tenant user and center metadata into AppContext
+  useEffect(() => {
+    if (authUser) {
+      if (authUser.tenant?.name && tenantSettings.name !== authUser.tenant.name) {
+        updateTenantSettings({
+          name: authUser.tenant.name,
+          slug: authUser.tenant.slug || tenantSettings.slug,
+        });
+      }
+      if (!currentUser || currentUser.username !== authUser.username) {
+        setCurrentUser({
+          id: authUser.id,
+          name: authUser.name || 'Administrator',
+          username: authUser.username,
+          email: authUser.email || '',
+          phone: '',
+          role: authUser.role,
+          roles: [authUser.role],
+          status: 'ACTIVE',
+          isActive: true,
+          active: true,
+          joinedDate: new Date().toLocaleDateString(),
+          signatureUrl: '',
+        });
+      }
+    }
+  }, [authUser, tenantSettings.name, currentUser, updateTenantSettings, setCurrentUser]);
 
   // Global Clinical & POS Keyboard Shortcuts
   useEffect(() => {

@@ -81,6 +81,74 @@ export const Topbar: React.FC = () => {
     setShowProfileMenu(false);
   };
 
+  // Dynamic Center Name & Avatar
+  const activeTenantName = authUser?.tenant?.name || tenantSettings?.name || 'Diagnostic Center';
+
+  const getInitials = (text: string, fallback = 'DC'): string => {
+    if (!text) return fallback;
+    const clean = text.trim();
+    const words = clean.split(/\s+/).filter(Boolean);
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return clean.slice(0, 2).toUpperCase();
+  };
+
+  // Admin Display Name: show actual Admin Name (NOT the center/tenant name like "medinova")
+  const getAdminDisplayName = (): string => {
+    const tenantSlug = authUser?.tenant?.slug?.toLowerCase();
+    const tenantName = authUser?.tenant?.name?.toLowerCase();
+
+    // 1. Check personal name first
+    const candName = authUser?.name?.trim() || currentUser?.name?.trim();
+    if (candName) {
+      const lower = candName.toLowerCase();
+      if ((!tenantSlug || lower !== tenantSlug) && (!tenantName || lower !== tenantName)) {
+        return candName;
+      }
+    }
+
+    // 2. Check username
+    const rawUsername = authUser?.username?.trim() || currentUser?.username?.trim();
+    if (rawUsername) {
+      const lower = rawUsername.toLowerCase();
+      if ((!tenantSlug || lower !== tenantSlug) && (!tenantName || lower !== tenantName)) {
+        if (lower.endsWith('_admin')) {
+          const prefix = rawUsername.slice(0, -6);
+          if (prefix.toLowerCase() !== tenantSlug && prefix.toLowerCase() !== tenantName) {
+            return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+          }
+        } else {
+          return rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
+        }
+      }
+    }
+
+    return 'Administrator';
+  };
+
+  const formatRole = (role?: string): string => {
+    if (!role) return 'Administrator';
+    const roleMap: Record<string, string> = {
+      SUPER_ADMIN: 'Super Administrator',
+      ADMIN_L2: 'Operations Admin',
+      TENANT_ADMIN: 'Administrator',
+      CENTER_MANAGER: 'Center Manager',
+      RECEPTIONIST: 'Receptionist',
+      LAB_TECHNICIAN: 'Lab Technologist',
+      DOCTOR: 'Consultant Doctor',
+      PHARMACIST: 'Pharmacist',
+      ACCOUNTANT: 'Accountant',
+      PHLEBOTOMIST: 'Phlebotomist',
+      STORE_MANAGER: 'Storekeeper',
+    };
+    return roleMap[role] || role.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  const adminDisplayName = getAdminDisplayName();
+  const tenantInitials = getInitials(activeTenantName, 'DC');
+  const adminInitials = getInitials(adminDisplayName, 'AD');
+
   return (
     <header className="topbar">
       {/* Left side */}
@@ -94,10 +162,14 @@ export const Topbar: React.FC = () => {
           <Menu size={20} />
         </button>
 
-        <div className="tenant-badge" onClick={() => setCurrentView('settings')}>
-          <div className="tenant-avatar">LC</div>
-          <span className="tenant-title">{tenantSettings.name}</span>
-          <ChevronDown size={14} color="#64748b" style={{ flexShrink: 0 }} />
+        <div
+          className="tenant-badge"
+          onClick={() => setCurrentView('settings')}
+          title={`${activeTenantName} (Click to manage Diagnostic Center Settings)`}
+        >
+          <div className="tenant-avatar">{tenantInitials}</div>
+          <span className="tenant-title">{activeTenantName}</span>
+          <ChevronDown size={14} color="#059669" style={{ flexShrink: 0, opacity: 0.8 }} />
         </div>
 
         <div className="page-title-crumb">
@@ -143,13 +215,14 @@ export const Topbar: React.FC = () => {
           <div
             className="user-profile-pill"
             onClick={() => setShowProfileMenu(!showProfileMenu)}
+            title={`Signed in as ${adminDisplayName} (${formatRole(authUser?.role || currentUser?.role)})`}
           >
             <div className="user-avatar">
-              {(currentUser?.name || authUser?.name || 'AD').slice(0, 2).toUpperCase()}
+              {adminInitials}
             </div>
             <div className="user-meta">
-              <div className="user-name">{currentUser?.username || authUser?.username || authUser?.name || 'Administrator'}</div>
-              <div className="user-role">{currentUser?.role || authUser?.role || 'Administrator'}</div>
+              <div className="user-name">{adminDisplayName}</div>
+              <div className="user-role">{formatRole(authUser?.role || currentUser?.role)}</div>
             </div>
             <ChevronDown size={14} color="#64748b" style={{ flexShrink: 0 }} />
           </div>
@@ -165,7 +238,7 @@ export const Topbar: React.FC = () => {
                 border: '1px solid var(--slate-200)',
                 borderRadius: '12px',
                 boxShadow: 'var(--shadow-lg)',
-                width: '230px',
+                width: '240px',
                 padding: '6px',
                 zIndex: 100
               }}
@@ -179,9 +252,12 @@ export const Topbar: React.FC = () => {
                 }}
               >
                 Signed in as{' '}
-                <strong style={{ color: 'var(--slate-800)', display: 'block' }}>
-                  {currentUser?.username || authUser?.username || authUser?.name || 'Administrator'}
+                <strong style={{ color: 'var(--slate-800)', display: 'block', fontSize: '13px' }}>
+                  {adminDisplayName}
                 </strong>
+                <span style={{ fontSize: '11px', color: 'var(--slate-400)', display: 'block', marginTop: '2px' }}>
+                  {formatRole(authUser?.role || currentUser?.role)} • {activeTenantName}
+                </span>
               </div>
 
               <div

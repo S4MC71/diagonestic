@@ -235,7 +235,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   ]);
   const [transactions, setTransactions] = useState<AccountingTransaction[]>(initialTransactions);
-  const [tenantSettings, setTenantSettings] = useState<TenantSettings>(initialSettings);
+  const [tenantSettings, setTenantSettings] = useState<TenantSettings>(() => {
+    try {
+      const stored = localStorage.getItem('cp_tenant');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.name) {
+          return {
+            ...initialSettings,
+            name: parsed.name,
+            slug: parsed.slug || initialSettings.slug,
+          };
+        }
+      }
+    } catch {
+      // fallback
+    }
+    return initialSettings;
+  });
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(initialSupportTickets);
   const [activeSubscription, setActiveSubscription] = useState<ActiveSubscription>(initialActiveSubscription);
   const [subscriptionPayments, setSubscriptionPayments] = useState<SubscriptionPayment[]>(initialSubscriptionPayments);

@@ -178,7 +178,7 @@ a {
 }
 
 .tenant-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   background: #ecfdf5;
@@ -187,14 +187,17 @@ a {
   border-radius: 9999px;
   cursor: pointer;
   transition: all var(--transition-fast);
-  flex-shrink: 0;
-  max-width: 250px;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: clamp(160px, 35vw, 420px);
   white-space: nowrap;
 }
 
 .tenant-badge:hover {
   background: #d1fae5;
   border-color: #6ee7b7;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
 }
 
 .tenant-avatar {
@@ -205,6 +208,7 @@ a {
   color: #fff;
   font-weight: 700;
   font-size: 11px;
+  letter-spacing: 0.02em;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,9 +222,8 @@ a {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: clamp(100px, 14vw, 190px);
-  display: inline-block;
-  vertical-align: middle;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .page-title-crumb {
@@ -329,10 +332,11 @@ a {
   width: 30px;
   height: 30px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #059669, #10b981);
+  background: linear-gradient(135deg, #0284c7, #2563eb);
   color: #fff;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -341,20 +345,27 @@ a {
 
 .user-meta {
   text-align: left;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .user-name {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--slate-900);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
 
 .user-role {
   font-size: 10px;
+  font-weight: 500;
   color: var(--slate-500);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
 
 /* --------------------------------------------------------------------------
@@ -1338,8 +1349,16 @@ textarea.form-control {
     gap: 8px !important;
   }
 
+  .page-title-crumb {
+    display: none;
+  }
+
+  .tenant-badge {
+    max-width: 220px;
+  }
+
   .tenant-title {
-    max-width: 130px;
+    max-width: 170px;
   }
 
   .content-body {

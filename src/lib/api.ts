@@ -46,7 +46,9 @@ async function request<T = unknown>(
   path: string,
   options: RequestInit & { skipAuth?: boolean } = {}
 ): Promise<T> {
-  const { skipAuth = false, ...fetchOptions } = options;
+  const isAuthRoute = path.includes('/auth/login') || path.includes('/auth/refresh');
+  const skipAuth = options.skipAuth ?? isAuthRoute;
+  const { skipAuth: _s, ...fetchOptions } = options;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(fetchOptions.headers as Record<string, string>),
@@ -59,8 +61,8 @@ async function request<T = unknown>(
 
   let res = await fetch(`${API_BASE}${path}`, { ...fetchOptions, headers });
 
-  // Token expired — try refresh once
-  if (res.status === 401 && !skipAuth) {
+  // Token expired on protected endpoint — try refresh once
+  if (res.status === 401 && !skipAuth && !isAuthRoute) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
@@ -72,8 +74,17 @@ async function request<T = unknown>(
     }
   }
 
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message ?? `Request failed: ${res.status}`);
+  let json: any = {};
+  try {
+    json = await res.json();
+  } catch {
+    json = {};
+  }
+
+  if (!res.ok) {
+    throw new Error(json.message ?? `Request failed: ${res.status}`);
+  }
+
   return json as T;
 }
 
