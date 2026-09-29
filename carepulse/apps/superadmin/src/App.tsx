@@ -5,9 +5,10 @@ import { LoginView } from './views/LoginView';
 import { DashboardView } from './views/DashboardView';
 import { TenantsView } from './views/TenantsView';
 import { PlansView } from './views/PlansView';
+import { TenantDetailView } from './views/TenantDetailView';
 import { Sidebar } from './components/layout/Sidebar';
 
-type View = 'dashboard' | 'tenants' | 'plans' | 'billing' | 'support' | 'settings';
+type View = 'dashboard' | 'tenants' | 'plans' | 'billing' | 'support' | 'settings' | 'tenant-detail';
 
 const PAGE_TITLES: Record<View, string> = {
   dashboard: 'Dashboard',
@@ -21,6 +22,12 @@ const PAGE_TITLES: Record<View, string> = {
 const AppInner: React.FC = () => {
   const { user, isLoading } = useAuth();
   const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+
+  const navigateToTenant = (id: string) => {
+    setSelectedTenantId(id);
+    setCurrentView('tenant-detail');
+  };
 
   if (isLoading) {
     return (
@@ -36,8 +43,13 @@ const AppInner: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case 'dashboard': return <DashboardView />;
-      case 'tenants':   return <TenantsView />;
+      case 'tenants':   return <TenantsView onViewTenant={navigateToTenant} />;
       case 'plans':     return <PlansView />;
+      case 'tenant-detail':
+        return selectedTenantId
+          ? <TenantDetailView tenantId={selectedTenantId} onBack={() => setCurrentView('tenants')} />
+          : <TenantsView onViewTenant={navigateToTenant} />;
+
       default:
         return (
           <div className="empty-state" style={{ marginTop: 80 }}>

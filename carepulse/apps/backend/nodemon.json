@@ -2,7 +2,7 @@
   "watch": ["src"],
   "ext": "ts,json",
   "ignore": ["src/**/*.spec.ts"],
-  "exec": "node_modules/.bin/ts-node.cmd --project tsconfig.json src/index.ts",
+  "exec": "cmd /c ..\\..\\node_modules\\.bin\\ts-node.cmd --project tsconfig.json src/index.ts",
   "env": {
     "NODE_ENV": "development"
   }
