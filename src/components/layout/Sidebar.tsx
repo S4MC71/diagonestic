@@ -53,7 +53,7 @@ const NAVIGATION_GROUPS: NavCategory[] = [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { id: 'reception', label: 'Live Queue', icon: Clock, moduleKey: 'clinical' },
       { id: 'patients', label: 'Patients', icon: Users, moduleKey: 'patients' },
-      { id: 'online-bookings', label: 'Online Bookings', icon: Globe, moduleKey: 'clinical' },
+      { id: 'online-bookings', label: 'Online Bookings', icon: Globe, moduleKey: 'website' },
       { id: 'recall', label: 'Recall', icon: Calendar, moduleKey: 'recall' },
       { id: 'prescriptions', label: 'Prescriptions', icon: FileText, moduleKey: 'clinical' },
       { id: 'chambers', label: 'Chambers', icon: Building, moduleKey: 'clinical' },

@@ -35,10 +35,40 @@ const updateModuleSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
+const DEFAULT_MODULE_CATALOG = [
+  { key: 'patients',        label: 'Patients',        description: 'Patient records, demographics, and visit history', icon: '👥', category: 'CLINICAL',  sortOrder: 1 },
+  { key: 'clinical',        label: 'Clinical',        description: 'Prescriptions, chambers, and clinical consultations', icon: '🩺', category: 'CLINICAL',  sortOrder: 2 },
+  { key: 'lab',             label: 'Laboratory',      description: 'Test catalog, samples, and diagnostic reports', icon: '🔬', category: 'LAB',       sortOrder: 3 },
+  { key: 'pharmacy',        label: 'Pharmacy',        description: 'Point-of-sale, medicine inventory, and sales', icon: '💊', category: 'PHARMACY',  sortOrder: 4 },
+  { key: 'home_collection', label: 'Home Collection', description: 'At-home sample collection and delivery dispatch', icon: '🏠', category: 'CLINICAL',  sortOrder: 5 },
+  { key: 'send_out',        label: 'Send-Out Lab',    description: 'Outsourced specialized lab tests and vendor tracking', icon: '📦', category: 'LAB',       sortOrder: 6 },
+  { key: 'finance',         label: 'Finance',         description: 'Billing, invoices, and payments collection', icon: '💰', category: 'FINANCE',   sortOrder: 7 },
+  { key: 'commissions',     label: 'Commissions',     description: 'Doctor referral commission management', icon: '🎯', category: 'FINANCE',   sortOrder: 8 },
+  { key: 'inventory',       label: 'Inventory',       description: 'Reagents, equipment, and medical consumable stock', icon: '📋', category: 'ADMIN',     sortOrder: 9 },
+  { key: 'accounting',      label: 'Accounting',      description: 'Income, expense ledgers, and cash flow journals', icon: '📊', category: 'FINANCE',   sortOrder: 10 },
+  { key: 'recall',          label: 'Recall',          description: 'Automated patient follow-up and chronic re-check reminders', icon: '🔔', category: 'CLINICAL',  sortOrder: 11 },
+  { key: 'whatsapp',        label: 'WhatsApp',        description: 'Automated report delivery & alert messaging', icon: '💬', category: 'ADMIN',     sortOrder: 12 },
+  { key: 'hrm',             label: 'Staff & HRM',     description: 'Staff directory, biometric attendance, payroll generation, and leave management', icon: '👥', category: 'ADMIN', sortOrder: 13 },
+  { key: 'website',         label: 'Website & Branding', description: 'Patient-facing website CMS, online bookings, and branding studio', icon: '🌐', category: 'ADMIN', sortOrder: 14 },
+  { key: 'sms',             label: 'SMS Notifications', description: 'SMS gateway integration, delivery logs, and patient notifications', icon: '📱', category: 'ADMIN', sortOrder: 15 },
+];
+
 // ─── GET /api/superadmin/modules ──────────────────────────────
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
+    // Ensure default module catalog exists
+    const existingCount = await prisma.module.count();
+    if (existingCount < DEFAULT_MODULE_CATALOG.length) {
+      for (const mod of DEFAULT_MODULE_CATALOG) {
+        await prisma.module.upsert({
+          where: { key: mod.key },
+          update: {},
+          create: mod,
+        }).catch(() => {});
+      }
+    }
+
     const search = typeof req.query.search === 'string' ? req.query.search : undefined;
     const category = typeof req.query.category === 'string' ? req.query.category : undefined;
     const status = typeof req.query.status === 'string' ? req.query.status : undefined;

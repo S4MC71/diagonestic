@@ -76,7 +76,7 @@ const VIEW_MODULE_MAP: Record<string, string> = {
   commissions: 'commissions',
   accounting: 'accounting',
   reception: 'clinical',
-  'online-bookings': 'clinical',
+  'online-bookings': 'website',
   staff: 'hrm',
   'staff-attendance': 'hrm',
   'staff-payroll': 'hrm',
@@ -345,32 +345,38 @@ export const App: React.FC = () => {
           <span>Dashboard</span>
         </button>
 
-        <button
-          className={`mobile-nav-btn ${currentView === 'patients' ? 'active' : ''}`}
-          onClick={() => setCurrentView('patients')}
-          type="button"
-        >
-          <Users size={20} />
-          <span>Patients</span>
-        </button>
+        {hasModule('patients') && (
+          <button
+            className={`mobile-nav-btn ${currentView === 'patients' ? 'active' : ''}`}
+            onClick={() => setCurrentView('patients')}
+            type="button"
+          >
+            <Users size={20} />
+            <span>Patients</span>
+          </button>
+        )}
 
-        <button
-          className="mobile-nav-fab"
-          onClick={() => setCurrentView('new-invoice')}
-          type="button"
-          title="New Invoice"
-        >
-          <Plus size={24} />
-        </button>
+        {hasModule('finance') && (
+          <button
+            className="mobile-nav-fab"
+            onClick={() => setCurrentView('new-invoice')}
+            type="button"
+            title="New Invoice"
+          >
+            <Plus size={24} />
+          </button>
+        )}
 
-        <button
-          className={`mobile-nav-btn ${currentView === 'reception' ? 'active' : ''}`}
-          onClick={() => setCurrentView('reception')}
-          type="button"
-        >
-          <Clock size={20} />
-          <span>Queue</span>
-        </button>
+        {hasModule('clinical') && (
+          <button
+            className={`mobile-nav-btn ${currentView === 'reception' ? 'active' : ''}`}
+            onClick={() => setCurrentView('reception')}
+            type="button"
+          >
+            <Clock size={20} />
+            <span>Queue</span>
+          </button>
+        )}
 
         <button
           className={`mobile-nav-btn ${!isSidebarCollapsed ? 'active' : ''}`}

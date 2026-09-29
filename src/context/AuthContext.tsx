@@ -73,11 +73,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     (moduleKey?: string): boolean => {
       // If no moduleKey specified, it's a core universal item (Dashboard, Settings, etc.)
       if (!moduleKey) return true;
-      if (authUser?.role === 'TENANT_ADMIN' || authUser?.role === 'Global Tenant Admin') return true;
-      if (modules.length === 0) return true; // dev/demo fallback
       return modules.includes(moduleKey);
     },
-    [modules, authUser]
+    [modules]
   );
 
   // On app mount — verify existing token
@@ -90,7 +88,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await api.get<{ data: { user: AuthUser; modules?: string[] } }>('/api/auth/me');
       const user = res.data.user;
-      const userModules = res.data.modules || user.modules || user.tenant?.modules || [];
+      let userModules = res.data.modules || user.modules || user.tenant?.modules || [];
+
+      // Query /api/tenant/modules to ensure real-time synced modules
+      try {
+        const modRes = await api.get<{ data: { moduleKeys?: string[] } }>('/api/tenant/modules');
+        if (modRes.data?.moduleKeys && Array.isArray(modRes.data.moduleKeys)) {
+          userModules = modRes.data.moduleKeys;
+        }
+      } catch {
+        // Fallback to auth/me modules
+      }
+
       setAuthUser(user);
       setModules(userModules);
       localStorage.setItem('cp_auth_user', JSON.stringify(user));
@@ -113,6 +122,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Auto-sync active modules whenever the window is refocused or tab becomes visible
+  useEffect(() => {
+    const syncModules = async () => {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await api.get<{ data: { moduleKeys?: string[] } }>('/api/tenant/modules');
+        if (res.data?.moduleKeys && Array.isArray(res.data.moduleKeys)) {
+          setModules(res.data.moduleKeys);
+          localStorage.setItem('cp_modules', JSON.stringify(res.data.moduleKeys));
+        }
+      } catch {
+        // Silently catch
+      }
+    };
+
+    const handleFocus = () => syncModules();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') syncModules();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
 
   const login = async (username: string, password: string): Promise<void> => {
     const res = await api.post<{
