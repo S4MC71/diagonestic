@@ -27,11 +27,14 @@ export function roleGuard(allowedRoles: string[]) {
   };
 }
 
+export const requireSuperAdmin = roleGuard(['SUPER_ADMIN']);
+export const requireAdminL2OrAbove = roleGuard(['SUPER_ADMIN', 'ADMIN_L2']);
+
 /**
  * Ensures the request is from a user that belongs to a specific tenant.
  * Prevents cross-tenant data access.
  *
- * For SUPER_ADMIN, this guard is bypassed — they can access any tenant.
+ * For SUPER_ADMIN and ADMIN_L2, this guard is bypassed — they can access any tenant.
  */
 export function tenantGuard(req: Request, res: Response, next: NextFunction): void {
   if (!req.user) {
@@ -39,8 +42,8 @@ export function tenantGuard(req: Request, res: Response, next: NextFunction): vo
     return;
   }
 
-  // Super admins can access any tenant
-  if (req.user.role === 'SUPER_ADMIN') {
+  // Super admins and Level 2 Admins can access any tenant
+  if (req.user.role === 'SUPER_ADMIN' || req.user.role === 'ADMIN_L2') {
     next();
     return;
   }

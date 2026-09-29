@@ -27,6 +27,7 @@ enum TenantStatus {
 
 enum UserRole {
   SUPER_ADMIN
+  ADMIN_L2
   TENANT_ADMIN
   CENTER_MANAGER
   RECEPTIONIST
@@ -38,6 +39,22 @@ enum UserRole {
   STORE_MANAGER
 
   @@map("user_role")
+}
+
+// ─────────────────────────────────────────────
+//  MODULE REGISTRY (Dynamic Modules)
+// ─────────────────────────────────────────────
+model Module {
+  key         String   @id
+  label       String
+  description String   @default("")
+  icon        String   @default("📦")
+  category    String   @default("GENERAL")
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("modules")
 }
 
 // ─────────────────────────────────────────────

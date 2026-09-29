@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { ActiveView } from '../../types';
 import {
   LayoutDashboard,
@@ -34,6 +35,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   badge?: string;
+  moduleKey?: string;
 }
 
 interface NavCategory {
@@ -46,46 +48,46 @@ const NAVIGATION_GROUPS: NavCategory[] = [
     category: 'CLINICAL',
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { id: 'patients', label: 'Patients', icon: Users },
-      { id: 'recall', label: 'Recall', icon: Calendar },
-      { id: 'prescriptions', label: 'Prescriptions', icon: FileText },
-      { id: 'chambers', label: 'Chambers', icon: Building },
-      { id: 'appointments', label: 'Appointments', icon: Calendar },
-      { id: 'investigations', label: 'Investigations', icon: FlaskConical },
-      { id: 'doctors', label: 'Doctors', icon: UserCheck },
-      { id: 'samples', label: 'Samples', icon: TestTube },
-      { id: 'home-collection', label: 'Home Collection', icon: Globe },
-      { id: 'sendout-vendors', label: 'Send-Out Vendors', icon: Truck },
-      { id: 'inventory', label: 'Inventory', icon: Briefcase },
-      { id: 'drugs', label: 'Drugs', icon: FolderPlus },
-      { id: 'report-templates', label: 'Report Templates', icon: FileText }
+      { id: 'patients', label: 'Patients', icon: Users, moduleKey: 'patients' },
+      { id: 'recall', label: 'Recall', icon: Calendar, moduleKey: 'recall' },
+      { id: 'prescriptions', label: 'Prescriptions', icon: FileText, moduleKey: 'clinical' },
+      { id: 'chambers', label: 'Chambers', icon: Building, moduleKey: 'clinical' },
+      { id: 'appointments', label: 'Appointments', icon: Calendar, moduleKey: 'clinical' },
+      { id: 'investigations', label: 'Investigations', icon: FlaskConical, moduleKey: 'lab' },
+      { id: 'doctors', label: 'Doctors', icon: UserCheck, moduleKey: 'clinical' },
+      { id: 'samples', label: 'Samples', icon: TestTube, moduleKey: 'lab' },
+      { id: 'home-collection', label: 'Home Collection', icon: Globe, moduleKey: 'home_collection' },
+      { id: 'sendout-vendors', label: 'Send-Out Vendors', icon: Truck, moduleKey: 'send_out' },
+      { id: 'inventory', label: 'Inventory', icon: Briefcase, moduleKey: 'inventory' },
+      { id: 'drugs', label: 'Drugs', icon: FolderPlus, moduleKey: 'pharmacy' },
+      { id: 'report-templates', label: 'Report Templates', icon: FileText, moduleKey: 'lab' }
     ]
   },
   {
     category: 'LAB',
     items: [
-      { id: 'lab-reports', label: 'Reports', icon: Activity }
+      { id: 'lab-reports', label: 'Reports', icon: Activity, moduleKey: 'lab' }
     ]
   },
   {
     category: 'PHARMACY',
     items: [
-      { id: 'pharmacy-overview', label: 'Overview', icon: FolderPlus },
-      { id: 'pharmacy-pos', label: 'Counter', icon: CreditCard },
-      { id: 'pharmacy-sales', label: 'Sales', icon: Activity },
-      { id: 'pharmacy-products', label: 'Products', icon: Briefcase },
-      { id: 'pharmacy-purchases', label: 'Purchases', icon: FileText },
-      { id: 'pharmacy-suppliers', label: 'Suppliers', icon: Home },
-      { id: 'pharmacy-reports', label: 'Pharmacy Reports', icon: Activity }
+      { id: 'pharmacy-overview', label: 'Overview', icon: FolderPlus, moduleKey: 'pharmacy' },
+      { id: 'pharmacy-pos', label: 'Counter', icon: CreditCard, moduleKey: 'pharmacy' },
+      { id: 'pharmacy-sales', label: 'Sales', icon: Activity, moduleKey: 'pharmacy' },
+      { id: 'pharmacy-products', label: 'Products', icon: Briefcase, moduleKey: 'pharmacy' },
+      { id: 'pharmacy-purchases', label: 'Purchases', icon: FileText, moduleKey: 'pharmacy' },
+      { id: 'pharmacy-suppliers', label: 'Suppliers', icon: Home, moduleKey: 'pharmacy' },
+      { id: 'pharmacy-reports', label: 'Pharmacy Reports', icon: Activity, moduleKey: 'pharmacy' }
     ]
   },
   {
     category: 'FINANCE',
     items: [
-      { id: 'invoices', label: 'Invoices', icon: FileText },
-      { id: 'payments', label: 'Payments', icon: CreditCard },
-      { id: 'commissions', label: 'Commissions', icon: DollarSign },
-      { id: 'accounting', label: 'Accounting', icon: Calculator }
+      { id: 'invoices', label: 'Invoices', icon: FileText, moduleKey: 'finance' },
+      { id: 'payments', label: 'Payments', icon: CreditCard, moduleKey: 'finance' },
+      { id: 'commissions', label: 'Commissions', icon: DollarSign, moduleKey: 'commissions' },
+      { id: 'accounting', label: 'Accounting', icon: Calculator, moduleKey: 'accounting' }
     ]
   },
   {
@@ -105,6 +107,12 @@ const NAVIGATION_GROUPS: NavCategory[] = [
 
 export const Sidebar: React.FC = () => {
   const { currentView, setCurrentView, isSidebarCollapsed, toggleSidebar } = useApp();
+  const { hasModule } = useAuth();
+
+  const filteredGroups = NAVIGATION_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => hasModule(item.moduleKey)),
+  })).filter((group) => group.items.length > 0);
 
   return (
     <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
@@ -141,7 +149,7 @@ export const Sidebar: React.FC = () => {
 
       {/* Nav List with custom scroll */}
       <div className="sidebar-scroll">
-        {NAVIGATION_GROUPS.map(group => (
+        {filteredGroups.map(group => (
           <div key={group.category} className="sidebar-category">
             {!isSidebarCollapsed && (
               <span className="category-title">{group.category}</span>

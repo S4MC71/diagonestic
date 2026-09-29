@@ -36,8 +36,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await api.get<{ data: { user: AuthUser } }>('/api/auth/me');
       const authUser = res.data.user;
 
-      // Only allow SUPER_ADMIN in this panel
-      if (authUser.role !== 'SUPER_ADMIN') {
+      // Allow SUPER_ADMIN and ADMIN_L2 in this panel
+      if (authUser.role !== 'SUPER_ADMIN' && authUser.role !== 'ADMIN_L2') {
         clearTokens();
         setUser(null);
       } else {
@@ -66,8 +66,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { accessToken, refreshToken, user: loggedUser } = res.data;
 
-    if (loggedUser.role !== 'SUPER_ADMIN') {
-      throw new Error('Access denied. This panel is for Super Admins only.');
+    if (loggedUser.role !== 'SUPER_ADMIN' && loggedUser.role !== 'ADMIN_L2') {
+      throw new Error('Access denied. This panel is for administrators only.');
     }
 
     justLoggedIn.current = true;

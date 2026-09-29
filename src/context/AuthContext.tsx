@@ -8,24 +8,28 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api, setTokens, clearTokens, getToken } from '../lib/api';
 
-// The shape returned by /api/auth/me
+// The shape returned by /api/auth/me and /api/auth/login
 export interface AuthUser {
   id: string;
   name: string;
   username: string;
   email?: string;
-  role: string;          // TENANT_ADMIN | RECEPTIONIST | LAB_TECHNICIAN | ...
+  role: string; // TENANT_ADMIN | RECEPTIONIST | LAB_TECHNICIAN | ...
   tenantId: string | null;
+  modules?: string[];
   tenant?: {
     id: string;
     name: string;
     slug: string;
     status: string;
+    modules?: string[];
   } | null;
 }
 
 interface AuthContextType {
   authUser: AuthUser | null;
+  modules: string[];
+  hasModule: (moduleKey?: string) => boolean;
   isAuthLoading: boolean;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<void>;
@@ -35,8 +39,35 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('cp_auth_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [modules, setModules] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('cp_modules');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+  // Helper to test if a given module is enabled for the logged-in tenant
+  const hasModule = useCallback(
+    (moduleKey?: string): boolean => {
+      // If no moduleKey specified, it's a core universal item (Dashboard, Settings, etc.)
+      if (!moduleKey) return true;
+      return modules.includes(moduleKey);
+    },
+    [modules]
+  );
 
   // On app mount — verify existing token
   const checkAuth = useCallback(async () => {
@@ -46,43 +77,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     try {
-      const res = await api.get<{ data: { user: AuthUser } }>('/api/auth/me');
-      setAuthUser(res.data.user);
+      const res = await api.get<{ data: { user: AuthUser; modules?: string[] } }>('/api/auth/me');
+      const user = res.data.user;
+      const userModules = res.data.modules || user.modules || user.tenant?.modules || [];
+      setAuthUser(user);
+      setModules(userModules);
+      localStorage.setItem('cp_auth_user', JSON.stringify(user));
+      localStorage.setItem('cp_modules', JSON.stringify(userModules));
+      if (user.tenant) {
+        localStorage.setItem('cp_tenant', JSON.stringify(user.tenant));
+      }
     } catch {
       clearTokens();
+      localStorage.removeItem('cp_auth_user');
+      localStorage.removeItem('cp_modules');
+      localStorage.removeItem('cp_tenant');
       setAuthUser(null);
+      setModules([]);
     } finally {
       setIsAuthLoading(false);
     }
   }, []);
 
-  useEffect(() => { checkAuth(); }, [checkAuth]);
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const login = async (username: string, password: string): Promise<void> => {
     const res = await api.post<{
-      data: { accessToken: string; refreshToken: string; user: AuthUser };
+      data: {
+        accessToken: string;
+        refreshToken: string;
+        user: AuthUser;
+        modules?: string[];
+      };
     }>('/api/auth/login', { username, password });
 
-    const { accessToken, refreshToken, user } = res.data;
+    const { accessToken, refreshToken, user, modules: returnedModules } = res.data;
 
-    // Tenant panel: block SUPER_ADMIN from logging in here
-    if (user.role === 'SUPER_ADMIN') {
+    // Tenant panel: block SUPER_ADMIN and ADMIN_L2 from logging in here
+    if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN_L2') {
       throw new Error('Super Admins must use the SuperAdmin panel.');
     }
 
+    const userModules = returnedModules || user.modules || user.tenant?.modules || [];
+
     setTokens(accessToken, refreshToken);
     setAuthUser(user);
+    setModules(userModules);
+
+    localStorage.setItem('cp_auth_user', JSON.stringify(user));
+    localStorage.setItem('cp_modules', JSON.stringify(userModules));
+    if (user.tenant) {
+      localStorage.setItem('cp_tenant', JSON.stringify(user.tenant));
+    }
   };
 
   const logout = () => {
     clearTokens();
+    localStorage.removeItem('cp_auth_user');
+    localStorage.removeItem('cp_modules');
+    localStorage.removeItem('cp_tenant');
     setAuthUser(null);
+    setModules([]);
   };
 
   return (
     <AuthContext.Provider
       value={{
         authUser,
+        modules,
+        hasModule,
         isAuthLoading,
         isAuthenticated: authUser !== null,
         login,

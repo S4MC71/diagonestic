@@ -10,6 +10,8 @@ import cors from 'cors';
 import authRouter from './routes/auth';
 import superAdminTenantsRouter from './routes/superadmin/tenants';
 import superAdminPlansRouter from './routes/superadmin/plans';
+import superAdminModulesRouter from './routes/superadmin/modules';
+import superAdminAdminsRouter from './routes/superadmin/admins';
 import tenantUsersRouter from './routes/tenant/users';
 import tenantModulesRouter from './routes/tenant/modules';
 import tenantPatientsRouter from './routes/tenant/patients';
@@ -76,6 +78,8 @@ app.use('/api/auth', authRouter);
 // SuperAdmin
 app.use('/api/superadmin/tenants', superAdminTenantsRouter);
 app.use('/api/superadmin/plans', superAdminPlansRouter);
+app.use('/api/superadmin/modules', superAdminModulesRouter);
+app.use('/api/superadmin/admins', superAdminAdminsRouter);
 
 // Tenant
 app.use('/api/tenant/users',        tenantUsersRouter);

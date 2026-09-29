@@ -63,12 +63,25 @@ interface CreateModalProps {
   onCreated: () => void;
 }
 
+interface DynamicModule {
+  key: string;
+  label: string;
+  description: string;
+  icon: string;
+  category: string;
+  isActive: boolean;
+}
+
 const CreateTenantModal: React.FC<CreateModalProps> = ({ plans, onClose, onCreated }) => {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState({
     name: '', slug: '', bengaliName: '', phone: '', email: '', address: '',
     planId: '', adminName: '', adminUsername: '', adminPassword: '',
   });
+  const [availableModules, setAvailableModules] = useState<DynamicModule[]>([]);
+  const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetchingModules, setFetchingModules] = useState(true);
   const [error, setError] = useState('');
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -80,14 +93,81 @@ const CreateTenantModal: React.FC<CreateModalProps> = ({ plans, onClose, onCreat
     }
   }, [form.name]);
 
+  // Load modules from DB
+  useEffect(() => {
+    async function loadModules() {
+      try {
+        setFetchingModules(true);
+        const res = await api.get<{ data: { modules: DynamicModule[] } }>('/api/superadmin/modules');
+        const active = (res.data.modules || []).filter(m => m.isActive);
+        setAvailableModules(active);
+        // Default to all active modules if trial/no plan
+        setSelectedModules(active.map(m => m.key));
+      } catch (err) {
+        console.error('Failed to load modules:', err);
+      } finally {
+        setFetchingModules(false);
+      }
+    }
+    loadModules();
+  }, []);
+
+  // When plan changes, sync default modules from the plan
+  const handlePlanChange = (planId: string) => {
+    set('planId', planId);
+    if (!planId) {
+      // Trial: keep all or current selection
+      return;
+    }
+    const chosenPlan = plans.find(p => p.id === planId);
+    if (chosenPlan && Array.isArray(chosenPlan.modules)) {
+      setSelectedModules(chosenPlan.modules);
+    }
+  };
+
+  const toggleModule = (key: string) => {
+    setSelectedModules(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+
+  const selectAllModules = () => setSelectedModules(availableModules.map(m => m.key));
+  const deselectAllModules = () => setSelectedModules([]);
+  const resetToPlanModules = () => {
+    const chosenPlan = plans.find(p => p.id === form.planId);
+    if (chosenPlan && Array.isArray(chosenPlan.modules)) {
+      setSelectedModules(chosenPlan.modules);
+    } else {
+      setSelectedModules(availableModules.map(m => m.key));
+    }
+  };
+
+  const validateStep1 = () => {
+    if (!form.name.trim()) return 'Center name is required';
+    if (!form.slug.trim()) return 'Center slug is required';
+    if (!form.phone.trim()) return 'Phone number is required';
+    return '';
+  };
+
+  const validateStep3 = () => {
+    if (!form.adminName.trim()) return 'Admin name is required';
+    if (!form.adminUsername.trim()) return 'Admin username is required';
+    if (form.adminPassword.length < 8) return 'Admin password must be at least 8 characters';
+    return '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const err3 = validateStep3();
+    if (err3) { setError(err3); return; }
+
     setError('');
     setLoading(true);
     try {
       await api.post('/api/superadmin/tenants', {
         ...form,
         planId: form.planId || undefined,
+        modules: selectedModules,
       });
       onCreated();
       onClose();
@@ -98,79 +178,247 @@ const CreateTenantModal: React.FC<CreateModalProps> = ({ plans, onClose, onCreat
     }
   };
 
+  // Group modules by category
+  const categories = Array.from(new Set(availableModules.map(m => m.category || 'GENERAL')));
+
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
+      <div className="modal" style={{ maxWidth: 640 }}>
         <div className="modal-header">
-          <span className="modal-title">Create New Tenant</span>
-          <button className="btn btn-icon btn-ghost btn-sm" onClick={onClose}><X size={16} /></button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="modal-body">
-            {error && <div className="error-alert">{error}</div>}
-
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Organization Info
-            </p>
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Center Name *</label>
-                <input className="input" placeholder="LifeCare Diagnostic" value={form.name} onChange={e => set('name', e.target.value)} required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Slug * (URL identifier)</label>
-                <input className="input" placeholder="lifecare" value={form.slug} onChange={e => set('slug', e.target.value.toLowerCase())} required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Bengali Name</label>
-                <input className="input" placeholder="লাইফকেয়ার ডায়াগনস্টিক" value={form.bengaliName} onChange={e => set('bengaliName', e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Phone *</label>
-                <input className="input" placeholder="01XXXXXXXXX" value={form.phone} onChange={e => set('phone', e.target.value)} required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Email</label>
-                <input className="input" type="email" placeholder="info@lifecare.com" value={form.email} onChange={e => set('email', e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Plan</label>
-                <select className="select" value={form.planId} onChange={e => set('planId', e.target.value)}>
-                  <option value="">-- Trial (No Plan) --</option>
-                  {plans.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Address</label>
-              <input className="input" placeholder="Dhaka, Bangladesh" value={form.address} onChange={e => set('address', e.target.value)} />
-            </div>
-
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 8 }}>
-              First Admin Account
-            </p>
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Admin Name *</label>
-                <input className="input" placeholder="Admin Name" value={form.adminName} onChange={e => set('adminName', e.target.value)} required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Username *</label>
-                <input className="input" placeholder="lifecare_admin" value={form.adminUsername} onChange={e => set('adminUsername', e.target.value)} required />
-              </div>
-              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label className="form-label">Password * (min 8 chars)</label>
-                <input className="input" type="password" placeholder="••••••••••" value={form.adminPassword} onChange={e => set('adminPassword', e.target.value)} required minLength={8} />
-              </div>
+          <div>
+            <span className="modal-title">Create New Diagnostic Center</span>
+            <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+              {[1, 2, 3].map((s) => (
+                <div
+                  key={s}
+                  style={{
+                    height: 4,
+                    width: 40,
+                    borderRadius: 2,
+                    background: s <= step ? 'var(--accent)' : 'var(--border)',
+                    transition: 'background 0.2s ease',
+                  }}
+                />
+              ))}
             </div>
           </div>
-          <div className="modal-footer">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? <span className="spinner" /> : <><Plus size={15} /> Create Tenant</>}
-            </button>
+          <button className="btn btn-icon btn-ghost btn-sm" onClick={onClose}><X size={16} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body" style={{ maxHeight: 'calc(80vh - 140px)', overflowY: 'auto' }}>
+            {error && <div className="error-alert" style={{ marginBottom: 16 }}>{error}</div>}
+
+            {/* STEP 1: Center Information */}
+            {step === 1 && (
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+                  Step 1 of 3: Organization Details
+                </p>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Center Name *</label>
+                    <input className="input" placeholder="e.g. LifeCare Diagnostic Center" value={form.name} onChange={e => set('name', e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Slug * (Unique Domain ID)</label>
+                    <input className="input" placeholder="e.g. lifecare" value={form.slug} onChange={e => set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Bengali Name</label>
+                    <input className="input" placeholder="লাইফকেয়ার ডায়াগনস্টিক সেন্টার" value={form.bengaliName} onChange={e => set('bengaliName', e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Phone Number *</label>
+                    <input className="input" placeholder="01XXXXXXXXX" value={form.phone} onChange={e => set('phone', e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Official Email</label>
+                    <input className="input" type="email" placeholder="info@lifecare.com" value={form.email} onChange={e => set('email', e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Subscription Plan</label>
+                    <select className="select" value={form.planId} onChange={e => handlePlanChange(e.target.value)}>
+                      <option value="">-- Trial Plan (Custom) --</option>
+                      {plans.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} (৳{(p.priceMonthly / 100).toLocaleString()}/mo)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginTop: 12 }}>
+                  <label className="form-label">Full Address</label>
+                  <input className="input" placeholder="House #, Road #, Area, City" value={form.address} onChange={e => set('address', e.target.value)} />
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: Granular Module Selection */}
+            {step === 2 && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Step 2 of 3: Granular Module Customization
+                    </p>
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                      Enabled for <strong>{form.name || 'Center'}</strong>: {selectedModules.length} of {availableModules.length} services
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={selectAllModules} style={{ fontSize: 11, padding: '4px 8px' }}>
+                      Select All
+                    </button>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={deselectAllModules} style={{ fontSize: 11, padding: '4px 8px' }}>
+                      Clear All
+                    </button>
+                    {form.planId && (
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={resetToPlanModules} style={{ fontSize: 11, padding: '4px 8px' }}>
+                        Plan Defaults
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {fetchingModules ? (
+                  <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
+                    Loading module catalog...
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {categories.map(cat => {
+                      const catModules = availableModules.filter(m => (m.category || 'GENERAL') === cat);
+                      if (catModules.length === 0) return null;
+
+                      return (
+                        <div key={cat} style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', padding: 12 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.05em' }}>
+                            {cat} Services ({catModules.filter(m => selectedModules.includes(m.key)).length}/{catModules.length})
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
+                            {catModules.map(mod => {
+                              const isChecked = selectedModules.includes(mod.key);
+                              return (
+                                <label
+                                  key={mod.key}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 10,
+                                    padding: '8px 10px',
+                                    borderRadius: 6,
+                                    background: isChecked ? 'rgba(59,130,246,0.1)' : 'var(--bg-surface)',
+                                    border: isChecked ? '1px solid rgba(59,130,246,0.4)' : '1px solid var(--border)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => toggleModule(mod.key)}
+                                    style={{ width: 16, height: 16, cursor: 'pointer' }}
+                                  />
+                                  <span style={{ fontSize: 18 }}>{mod.icon || '📦'}</span>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: isChecked ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                                      {mod.label}
+                                    </div>
+                                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+                                      {mod.key}
+                                    </div>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 3: First Admin Account & Confirmation */}
+            {step === 3 && (
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+                  Step 3 of 3: Primary Center Administrator
+                </p>
+
+                {/* Summary Card */}
+                <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: 14, marginBottom: 16, border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+                    Provisioning Overview
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+                    <div>Center: <strong style={{ color: 'var(--text-primary)' }}>{form.name}</strong></div>
+                    <div>Slug: <strong style={{ color: 'var(--text-primary)', fontFamily: 'JetBrains Mono' }}>{form.slug}</strong></div>
+                    <div>Modules: <strong style={{ color: 'var(--success)' }}>{selectedModules.length} enabled</strong></div>
+                  </div>
+                </div>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Administrator Full Name *</label>
+                    <input className="input" placeholder="e.g. Dr. Rafiqul Islam" value={form.adminName} onChange={e => set('adminName', e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Username *</label>
+                    <input className="input" placeholder="e.g. rafiqul_admin" value={form.adminUsername} onChange={e => set('adminUsername', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} required />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label className="form-label">Initial Password * (min 8 characters)</label>
+                    <input className="input" type="password" placeholder="••••••••••••" value={form.adminPassword} onChange={e => set('adminPassword', e.target.value)} required minLength={8} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {step > 1 ? (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => { setError(''); setStep((s) => (s - 1) as any); }}
+              >
+                ← Back
+              </button>
+            ) : (
+              <button type="button" className="btn btn-ghost" onClick={onClose}>
+                Cancel
+              </button>
+            )}
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              {step < 3 ? (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    if (step === 1) {
+                      const err = validateStep1();
+                      if (err) { setError(err); return; }
+                    }
+                    setError('');
+                    setStep((s) => (s + 1) as any);
+                  }}
+                >
+                  Continue →
+                </button>
+              ) : (
+                <button type="submit" className="btn btn-primary" disabled={loading}>
+                  {loading ? <span className="spinner" /> : <><Plus size={15} /> Provision Center</>}
+                </button>
+              )}
+            </div>
           </div>
         </form>
       </div>

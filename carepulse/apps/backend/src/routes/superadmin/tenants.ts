@@ -5,12 +5,12 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { asyncHandler, createError } from '../../middleware/errorHandler';
 import { auth } from '../../middleware/auth';
-import { roleGuard } from '../../middleware/roleGuard';
+import { requireSuperAdmin, requireAdminL2OrAbove } from '../../middleware/roleGuard';
 
 const router = Router();
 
-// All routes require SUPER_ADMIN role
-router.use(auth, roleGuard(['SUPER_ADMIN']));
+// Base router requires ADMIN_L2 or SUPER_ADMIN
+router.use(auth, requireAdminL2OrAbove);
 
 // ─── Helpers ──────────────────────────────────────────────────
 /** Cast req.query values safely to string */
@@ -25,7 +25,6 @@ function toJson(val: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(val)) as Prisma.InputJsonValue;
 }
 
-// ─── Validation Schemas ───────────────────────────────────────
 const createTenantSchema = z.object({
   slug: z
     .string()
@@ -39,9 +38,15 @@ const createTenantSchema = z.object({
   address: z.string().optional(),
   planId: z.string().uuid().optional(),
   planExpiresAt: z.string().datetime().optional(),
+  modules: z.array(z.string()).optional(),
   adminName: z.string().min(2),
   adminUsername: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/),
   adminPassword: z.string().min(8),
+});
+
+const deleteTenantSchema = z.object({
+  confirmationSlug: z.string().min(1, 'Confirmation slug is required'),
+  reason: z.string().optional(),
 });
 
 const updateStatusSchema = z.object({
@@ -167,12 +172,16 @@ router.post(
     const existing = await prisma.tenant.findUnique({ where: { slug } });
     if (existing) throw createError(`Slug "${slug}" is already taken`, 409);
 
-    let planModules: string[] = [];
-    if (planId) {
+    let targetModules: string[] = [];
+    if (Array.isArray(parsed.data.modules) && parsed.data.modules.length > 0) {
+      targetModules = parsed.data.modules;
+    } else if (planId) {
       const plan = await prisma.plan.findUnique({ where: { id: planId } });
       if (!plan) throw createError('Plan not found', 404);
-      planModules = plan.modules as string[];
+      targetModules = (plan.modules as string[]) ?? [];
     }
+
+    const uniqueModules = Array.from(new Set(targetModules));
 
     const passwordHash = await bcrypt.hash(adminPassword, 12);
 
@@ -203,9 +212,9 @@ router.post(
         },
       });
 
-      if (planModules.length > 0) {
+      if (uniqueModules.length > 0) {
         await tx.tenantModule.createMany({
-          data: planModules.map((moduleKey) => ({
+          data: uniqueModules.map((moduleKey) => ({
             tenantId: tenant.id,
             moduleKey,
             isEnabled: true,
@@ -322,15 +331,57 @@ router.post(
 // ─── DELETE /api/superadmin/tenants/:id ───────────────────────
 router.delete(
   '/:id',
+  requireSuperAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const id = req.params['id'] as string;
 
     const tenant = await prisma.tenant.findUnique({ where: { id } });
     if (!tenant) throw createError('Tenant not found', 404);
 
-    await prisma.tenant.delete({ where: { id } });
+    const parsed = deleteTenantSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw createError(parsed.error.errors[0].message, 400);
+    }
 
-    res.json({ success: true, message: 'Tenant permanently deleted' });
+    const { confirmationSlug, reason } = parsed.data;
+    if (confirmationSlug.trim().toLowerCase() !== tenant.slug.toLowerCase()) {
+      throw createError(
+        `Confirmation slug "${confirmationSlug}" does not match tenant slug "${tenant.slug}". Deletion aborted.`,
+        400
+      );
+    }
+
+    // Comprehensive cascade deletion in proper dependency order
+    await prisma.$transaction([
+      prisma.subscriptionPayment.deleteMany({ where: { tenantId: id } }),
+      prisma.tenantModule.deleteMany({ where: { tenantId: id } }),
+      prisma.tenantSettings.deleteMany({ where: { tenantId: id } }),
+      prisma.inventoryTransaction.deleteMany({ where: { tenantId: id } }),
+      prisma.inventoryItem.deleteMany({ where: { tenantId: id } }),
+      prisma.supportTicket.deleteMany({ where: { tenantId: id } }),
+      prisma.recallRule.deleteMany({ where: { tenantId: id } }),
+      prisma.commissionEntry.deleteMany({ where: { tenantId: id } }),
+      prisma.accountingTransaction.deleteMany({ where: { tenantId: id } }),
+      prisma.pharmacySale.deleteMany({ where: { tenantId: id } }),
+      prisma.pharmacyProduct.deleteMany({ where: { tenantId: id } }),
+      prisma.labReport.deleteMany({ where: { tenantId: id } }),
+      prisma.sample.deleteMany({ where: { tenantId: id } }),
+      prisma.invoiceItem.deleteMany({ where: { invoice: { tenantId: id } } }),
+      prisma.invoice.deleteMany({ where: { tenantId: id } }),
+      prisma.appointment.deleteMany({ where: { tenantId: id } }),
+      prisma.chamber.deleteMany({ where: { tenantId: id } }),
+      prisma.diagnosticTest.deleteMany({ where: { tenantId: id } }),
+      prisma.doctor.deleteMany({ where: { tenantId: id } }),
+      prisma.patient.deleteMany({ where: { tenantId: id } }),
+      prisma.user.deleteMany({ where: { tenantId: id } }),
+      prisma.tenant.delete({ where: { id } }),
+    ]);
+
+    res.json({
+      success: true,
+      message: `Tenant "${tenant.name}" (${tenant.slug}) and all associated records permanently deleted`,
+      data: { tenantId: id, slug: tenant.slug, reason },
+    });
   })
 );
 

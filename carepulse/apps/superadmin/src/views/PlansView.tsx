@@ -41,8 +41,20 @@ const PlanFormModal: React.FC<PlanFormProps> = ({ plan, onClose, onSaved }) => {
   const [priceYearly, setPriceYearly] = useState(plan?.priceYearly ?? 0);
   const [maxUsers, setMaxUsers] = useState(plan?.maxUsers ?? 5);
   const [selectedModules, setSelectedModules] = useState<string[]>(plan?.modules ?? []);
+  const [moduleOptions, setModuleOptions] = useState<{ key: string; label: string; icon?: string }[]>(MODULE_OPTIONS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.get<{ data: { modules: { key: string; label: string; icon: string; isActive: boolean }[] } }>('/api/superadmin/modules')
+      .then(res => {
+        const active = (res.data.modules || []).filter(m => m.isActive);
+        if (active.length > 0) {
+          setModuleOptions(active.map(m => ({ key: m.key, label: m.label, icon: m.icon })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const toggleModule = (key: string) =>
     setSelectedModules(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
@@ -102,7 +114,7 @@ const PlanFormModal: React.FC<PlanFormProps> = ({ plan, onClose, onSaved }) => {
             <div className="form-group">
               <label className="form-label">Included Modules *</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-                {MODULE_OPTIONS.map(mod => {
+                {moduleOptions.map(mod => {
                   const selected = selectedModules.includes(mod.key);
                   return (
                     <button
@@ -112,20 +124,22 @@ const PlanFormModal: React.FC<PlanFormProps> = ({ plan, onClose, onSaved }) => {
                       className={`badge ${selected ? 'badge-active' : ''}`}
                       style={{
                         cursor: 'pointer',
-                        padding: '5px 12px',
-                        border: selected ? '1px solid var(--success)' : '1px solid var(--border-light)',
-                        background: selected ? 'var(--success-bg)' : 'var(--bg-elevated)',
-                        color: selected ? 'var(--success)' : 'var(--text-secondary)',
+                        padding: '6px 14px',
+                        border: selected ? '1px solid var(--primary)' : '1px solid var(--border-light)',
+                        background: selected ? 'rgba(59, 130, 246, 0.12)' : 'var(--bg-elevated)',
+                        color: selected ? '#60a5fa' : 'var(--text-secondary)',
                         borderRadius: 99,
                         fontSize: 12,
                         fontWeight: 500,
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 4,
+                        gap: 6,
+                        transition: 'all 0.15s ease',
                       }}
                     >
-                      {selected && <Check size={11} />}
-                      {mod.label}
+                      {selected && <Check size={12} />}
+                      {mod.icon && <span style={{ fontSize: 13 }}>{mod.icon}</span>}
+                      <span>{mod.label}</span>
                     </button>
                   );
                 })}

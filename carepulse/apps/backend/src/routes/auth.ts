@@ -78,11 +78,21 @@ router.post(
       data: { lastLoginAt: new Date() },
     });
 
+    // Fetch enabled modules for tenant user
+    const enabledModules = user.tenantId
+      ? await prisma.tenantModule.findMany({
+          where: { tenantId: user.tenantId, isEnabled: true },
+          select: { moduleKey: true },
+        })
+      : [];
+    const moduleKeys = enabledModules.map((m) => m.moduleKey);
+
     res.json({
       success: true,
       data: {
         accessToken,
         refreshToken,
+        modules: moduleKeys,
         user: {
           id: user.id,
           name: user.name,
@@ -90,11 +100,14 @@ router.post(
           email: user.email,
           role: user.role,
           tenantId: user.tenantId,
+          modules: moduleKeys,
           tenant: user.tenant
             ? {
                 id: user.tenant.id,
                 name: user.tenant.name,
                 slug: user.tenant.slug,
+                status: user.tenant.status,
+                modules: moduleKeys,
               }
             : null,
         },
@@ -169,7 +182,24 @@ router.get(
       throw createError('User not found', 404);
     }
 
-    res.json({ success: true, data: { user } });
+    const enabledModules = user.tenantId
+      ? await prisma.tenantModule.findMany({
+          where: { tenantId: user.tenantId, isEnabled: true },
+          select: { moduleKey: true },
+        })
+      : [];
+    const moduleKeys = enabledModules.map((m) => m.moduleKey);
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          ...user,
+          modules: moduleKeys,
+        },
+        modules: moduleKeys,
+      },
+    });
   })
 );
 

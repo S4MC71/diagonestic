@@ -18,20 +18,40 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const tenantId = req.user!.tenantId!;
 
-    const modules = await prisma.tenantModule.findMany({
-      where: { tenantId, isEnabled: true },
-      select: { moduleKey: true, config: true },
-    });
+    const [modules, moduleDefs] = await Promise.all([
+      prisma.tenantModule.findMany({
+        where: { tenantId, isEnabled: true },
+        select: { moduleKey: true, config: true },
+      }),
+      prisma.module.findMany({
+        where: { isActive: true },
+      }),
+    ]);
+
+    const defMap = new Map(moduleDefs.map((d) => [d.key, d]));
 
     const enabledModules = modules.reduce(
       (acc, m) => {
-        acc[m.moduleKey] = { enabled: true, config: m.config };
+        const def = defMap.get(m.moduleKey);
+        acc[m.moduleKey] = {
+          enabled: true,
+          config: m.config,
+          label: def?.label ?? m.moduleKey,
+          icon: def?.icon ?? '📦',
+          category: def?.category ?? 'GENERAL',
+        };
         return acc;
       },
-      {} as Record<string, { enabled: boolean; config: unknown }>
+      {} as Record<string, { enabled: boolean; config: unknown; label: string; icon: string; category: string }>
     );
 
-    res.json({ success: true, data: { modules: enabledModules } });
+    res.json({
+      success: true,
+      data: {
+        modules: enabledModules,
+        moduleKeys: modules.map((m) => m.moduleKey),
+      },
+    });
   })
 );
 

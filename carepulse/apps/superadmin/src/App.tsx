@@ -5,15 +5,19 @@ import { LoginView } from './views/LoginView';
 import { DashboardView } from './views/DashboardView';
 import { TenantsView } from './views/TenantsView';
 import { PlansView } from './views/PlansView';
+import { ModulesView } from './views/ModulesView';
+import { AdminsView } from './views/AdminsView';
 import { TenantDetailView } from './views/TenantDetailView';
 import { Sidebar } from './components/layout/Sidebar';
 
-type View = 'dashboard' | 'tenants' | 'plans' | 'billing' | 'support' | 'settings' | 'tenant-detail';
+type View = 'dashboard' | 'tenants' | 'plans' | 'modules' | 'admins' | 'billing' | 'support' | 'settings' | 'tenant-detail';
 
 const PAGE_TITLES: Record<View, string> = {
   dashboard: 'Dashboard',
   tenants: 'Tenants',
   plans: 'Plans & Packages',
+  modules: 'Module Registry',
+  admins: 'Admin Team',
   billing: 'Billing',
   support: 'Support',
   settings: 'Settings',
@@ -41,11 +45,15 @@ const AppInner: React.FC = () => {
 
   if (!user) return <LoginView />;
 
+  const isSuperAdmin = user.role === 'SUPER_ADMIN';
+
   const renderView = () => {
     switch (currentView) {
       case 'dashboard': return <DashboardView />;
       case 'tenants':   return <TenantsView onViewTenant={navigateToTenant} />;
-      case 'plans':     return <PlansView />;
+      case 'plans':     return isSuperAdmin ? <PlansView /> : <DashboardView />;
+      case 'modules':   return isSuperAdmin ? <ModulesView /> : <DashboardView />;
+      case 'admins':    return isSuperAdmin ? <AdminsView /> : <DashboardView />;
       case 'tenant-detail':
         return selectedTenantId
           ? <TenantDetailView tenantId={selectedTenantId} onBack={() => setCurrentView('tenants')} />

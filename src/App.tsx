@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Lock } from 'lucide-react';
 import { useApp } from './context/AppContext';
 import { useAuth } from './context/AuthContext';
 import { Topbar } from './components/layout/Topbar';
@@ -34,9 +35,39 @@ import { TutorialsView } from './views/TutorialsView';
 import { PracticeView } from './views/PracticeView';
 import { ActionInboxView } from './views/ActionInboxView';
 
+const VIEW_MODULE_MAP: Record<string, string> = {
+  patients: 'patients',
+  recall: 'recall',
+  prescriptions: 'clinical',
+  'new-prescription': 'clinical',
+  chambers: 'clinical',
+  appointments: 'clinical',
+  investigations: 'lab',
+  doctors: 'clinical',
+  samples: 'lab',
+  'home-collection': 'home_collection',
+  'sendout-vendors': 'send_out',
+  inventory: 'inventory',
+  drugs: 'pharmacy',
+  'report-templates': 'lab',
+  'lab-reports': 'lab',
+  'pharmacy-overview': 'pharmacy',
+  'pharmacy-pos': 'pharmacy',
+  'pharmacy-sales': 'pharmacy',
+  'pharmacy-products': 'pharmacy',
+  'pharmacy-purchases': 'pharmacy',
+  'pharmacy-suppliers': 'pharmacy',
+  'pharmacy-reports': 'pharmacy',
+  invoices: 'finance',
+  'new-invoice': 'finance',
+  payments: 'finance',
+  commissions: 'commissions',
+  accounting: 'accounting',
+};
+
 export const App: React.FC = () => {
   const { currentView, setCurrentView, isSidebarCollapsed, toggleSidebar, closePrintModal, showPrintModal } = useApp();
-  const { authUser, isAuthLoading } = useAuth();
+  const { authUser, isAuthLoading, hasModule } = useAuth();
 
   // Global Clinical & POS Keyboard Shortcuts
   useEffect(() => {
@@ -94,6 +125,38 @@ export const App: React.FC = () => {
 
   // Dynamic View Resolver
   const renderCurrentView = () => {
+    const requiredModule = VIEW_MODULE_MAP[currentView];
+    if (requiredModule && !hasModule(requiredModule)) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 160px)', padding: 24 }}>
+          <div style={{ maxWidth: 460, width: '100%', padding: '40px 32px', textAlign: 'center', background: '#fff', borderRadius: 16, boxShadow: '0 10px 30px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0' }}>
+            <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#ef4444' }}>
+              <Lock size={28} />
+            </div>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>Module Not Subscribed</h2>
+            <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6, marginBottom: 24 }}>
+              The <strong style={{ color: '#0f172a' }}>{requiredModule.toUpperCase()}</strong> module is not included in your diagnostic center's current subscription. Please contact your administrator to activate this service.
+            </p>
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              style={{
+                padding: '10px 24px',
+                borderRadius: 8,
+                background: '#059669',
+                color: '#fff',
+                fontWeight: 600,
+                fontSize: 13,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     switch (currentView) {
       case 'dashboard':
         return <DashboardView />;

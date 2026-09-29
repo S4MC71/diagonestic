@@ -80,6 +80,37 @@ async function main() {
     console.log(`     ⚠️  Change this password after first login!`);
   }
 
+  // 3. Default Modules
+  const DEFAULT_MODULES = [
+    { key: 'patients',        label: 'Patients',        description: 'Patient records, demographics, and visit history', icon: '👥', category: 'CLINICAL',  sortOrder: 1 },
+    { key: 'clinical',        label: 'Clinical',        description: 'Prescriptions, chambers, and clinical consultations', icon: '🩺', category: 'CLINICAL',  sortOrder: 2 },
+    { key: 'lab',             label: 'Laboratory',      description: 'Test catalog, samples, and diagnostic reports', icon: '🔬', category: 'LAB',       sortOrder: 3 },
+    { key: 'pharmacy',        label: 'Pharmacy',        description: 'Point-of-sale, medicine inventory, and sales', icon: '💊', category: 'PHARMACY',  sortOrder: 4 },
+    { key: 'home_collection', label: 'Home Collection', description: 'At-home sample collection and delivery dispatch', icon: '🏠', category: 'CLINICAL',  sortOrder: 5 },
+    { key: 'send_out',        label: 'Send-Out Lab',    description: 'Outsourced specialized lab tests and vendor tracking', icon: '📦', category: 'LAB',       sortOrder: 6 },
+    { key: 'finance',         label: 'Finance',         description: 'Billing, invoices, and payments collection', icon: '💰', category: 'FINANCE',   sortOrder: 7 },
+    { key: 'commissions',     label: 'Commissions',     description: 'Doctor referral commission management', icon: '🎯', category: 'FINANCE',   sortOrder: 8 },
+    { key: 'inventory',       label: 'Inventory',       description: 'Reagents, equipment, and medical consumable stock', icon: '📋', category: 'ADMIN',     sortOrder: 9 },
+    { key: 'accounting',      label: 'Accounting',      description: 'Income, expense ledgers, and cash flow journals', icon: '📊', category: 'FINANCE',   sortOrder: 10 },
+    { key: 'recall',          label: 'Recall',          description: 'Automated patient follow-up and chronic re-check reminders', icon: '🔔', category: 'CLINICAL',  sortOrder: 11 },
+    { key: 'whatsapp',        label: 'WhatsApp',        description: 'Automated report delivery & alert messaging', icon: '💬', category: 'ADMIN',     sortOrder: 12 },
+  ];
+
+  for (const mod of DEFAULT_MODULES) {
+    await prisma.module.upsert({
+      where: { key: mod.key },
+      update: {
+        label: mod.label,
+        description: mod.description,
+        icon: mod.icon,
+        category: mod.category,
+        sortOrder: mod.sortOrder,
+      },
+      create: mod,
+    });
+    console.log(`  ✅ Module "${mod.key}" synced`);
+  }
+
   console.log('\n✅ Seed complete!\n');
 }
 
