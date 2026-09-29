@@ -22,7 +22,18 @@ import {
   RecallRule,
   SupportTicket,
   SubscriptionPayment,
-  ActiveSubscription
+  ActiveSubscription,
+  StaffMember,
+  LeaveType,
+  LeaveRequest,
+  AttendanceRecord,
+  PayrollRecord,
+  SalaryAdvance,
+  TenantWebsite,
+  PublicBookingRequest,
+  ReportShareLink,
+  SmsLog,
+  SmsConfig
 } from '../types';
 import { getViewFromPath, getPathFromView } from '../utils/navigation';
 import {
@@ -41,7 +52,18 @@ import {
   initialTransactions,
   initialSupportTickets,
   initialActiveSubscription,
-  initialSubscriptionPayments
+  initialSubscriptionPayments,
+  INITIAL_STAFF_MEMBERS,
+  INITIAL_LEAVE_TYPES,
+  INITIAL_LEAVE_REQUESTS,
+  INITIAL_ATTENDANCE_RECORDS,
+  INITIAL_PAYROLL_RECORDS,
+  INITIAL_SALARY_ADVANCES,
+  INITIAL_TENANT_WEBSITE,
+  INITIAL_PUBLIC_BOOKING_REQUESTS,
+  INITIAL_REPORT_SHARE_LINKS,
+  INITIAL_SMS_LOGS,
+  INITIAL_SMS_CONFIG
 } from '../data/mockData';
 
 interface AppContextType {
@@ -149,6 +171,54 @@ interface AppContextType {
 
   // Settings
   updateTenantSettings: (settings: Partial<TenantSettings>) => void;
+
+  // Staff & HRM
+  staffMembers: StaffMember[];
+  addStaffMember: (staff: Omit<StaffMember, 'id' | 'createdAt'>) => void;
+  updateStaffMember: (id: string, updates: Partial<StaffMember>) => void;
+  deleteStaffMember: (id: string) => void;
+
+  // Leave Management
+  leaveTypes: LeaveType[];
+  addLeaveType: (type: Omit<LeaveType, 'id'>) => void;
+  deleteLeaveType: (id: string) => void;
+  leaveRequests: LeaveRequest[];
+  submitLeaveRequest: (req: Omit<LeaveRequest, 'id' | 'createdAt' | 'status'>) => void;
+  reviewLeaveRequest: (id: string, status: 'APPROVED' | 'REJECTED', reviewerName?: string) => void;
+
+  // Attendance
+  attendanceRecords: AttendanceRecord[];
+  markAttendance: (record: Omit<AttendanceRecord, 'id' | 'createdAt'>) => void;
+  markBulkAttendance: (records: Omit<AttendanceRecord, 'id' | 'createdAt'>[]) => void;
+
+  // Payroll
+  payrollRecords: PayrollRecord[];
+  generatePayroll: (month: string) => void;
+  markPayrollPaid: (id: string, paymentMethod?: string, paidBy?: string) => void;
+  updatePayrollRecord: (id: string, updates: Partial<PayrollRecord>) => void;
+  salaryAdvances: SalaryAdvance[];
+  giveSalaryAdvance: (adv: Omit<SalaryAdvance, 'id' | 'createdAt' | 'isDeducted'>) => void;
+
+  // Website CMS
+  tenantWebsite: TenantWebsite;
+  updateTenantWebsite: (updates: Partial<TenantWebsite>) => void;
+
+  // Public Online Bookings
+  bookingRequests: PublicBookingRequest[];
+  addBookingRequest: (req: Omit<PublicBookingRequest, 'id' | 'createdAt' | 'status'>) => void;
+  confirmBookingRequest: (id: string, confirmedBy?: string) => void;
+  cancelBookingRequest: (id: string) => void;
+
+  // Report Share Links
+  reportShareLinks: ReportShareLink[];
+  generateReportShareLink: (invoiceIdOrId: string, invoiceNoOrProtected?: string | boolean, patientName?: string, patientPhone?: string) => ReportShareLink;
+  getReportShareLink: (token: string) => ReportShareLink | undefined;
+
+  // SMS Notifications
+  smsConfig: SmsConfig;
+  updateSmsConfig: (updates: Partial<SmsConfig>) => void;
+  smsLogs: SmsLog[];
+  sendSmsNotification: (phone: string, message: string, type?: SmsLog['type']) => boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -256,6 +326,173 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(initialSupportTickets);
   const [activeSubscription, setActiveSubscription] = useState<ActiveSubscription>(initialActiveSubscription);
   const [subscriptionPayments, setSubscriptionPayments] = useState<SubscriptionPayment[]>(initialSubscriptionPayments);
+
+  // Staff & HRM State
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>(() => {
+    try {
+      const s = localStorage.getItem('cp_staff');
+      return s ? JSON.parse(s) : INITIAL_STAFF_MEMBERS;
+    } catch {
+      return INITIAL_STAFF_MEMBERS;
+    }
+  });
+
+  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>(() => {
+    try {
+      const s = localStorage.getItem('cp_leave_types');
+      return s ? JSON.parse(s) : INITIAL_LEAVE_TYPES;
+    } catch {
+      return INITIAL_LEAVE_TYPES;
+    }
+  });
+
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(() => {
+    try {
+      const s = localStorage.getItem('cp_leave_requests');
+      return s ? JSON.parse(s) : INITIAL_LEAVE_REQUESTS;
+    } catch {
+      return INITIAL_LEAVE_REQUESTS;
+    }
+  });
+
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(() => {
+    try {
+      const s = localStorage.getItem('cp_attendance');
+      return s ? JSON.parse(s) : INITIAL_ATTENDANCE_RECORDS;
+    } catch {
+      return INITIAL_ATTENDANCE_RECORDS;
+    }
+  });
+
+  const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>(() => {
+    try {
+      const s = localStorage.getItem('cp_payroll');
+      return s ? JSON.parse(s) : INITIAL_PAYROLL_RECORDS;
+    } catch {
+      return INITIAL_PAYROLL_RECORDS;
+    }
+  });
+
+  const [salaryAdvances, setSalaryAdvances] = useState<SalaryAdvance[]>(() => {
+    try {
+      const s = localStorage.getItem('cp_advances');
+      return s ? JSON.parse(s) : INITIAL_SALARY_ADVANCES;
+    } catch {
+      return INITIAL_SALARY_ADVANCES;
+    }
+  });
+
+  const [tenantWebsite, setTenantWebsite] = useState<TenantWebsite>(() => {
+    try {
+      const s = localStorage.getItem('cp_website');
+      return s ? JSON.parse(s) : INITIAL_TENANT_WEBSITE;
+    } catch {
+      return INITIAL_TENANT_WEBSITE;
+    }
+  });
+
+  const [bookingRequests, setBookingRequests] = useState<PublicBookingRequest[]>(() => {
+    try {
+      const s = localStorage.getItem('cp_bookings');
+      return s ? JSON.parse(s) : INITIAL_PUBLIC_BOOKING_REQUESTS;
+    } catch {
+      return INITIAL_PUBLIC_BOOKING_REQUESTS;
+    }
+  });
+
+  const [reportShareLinks, setReportShareLinks] = useState<ReportShareLink[]>(() => {
+    try {
+      const s = localStorage.getItem('cp_share_links');
+      return s ? JSON.parse(s) : INITIAL_REPORT_SHARE_LINKS;
+    } catch {
+      return INITIAL_REPORT_SHARE_LINKS;
+    }
+  });
+
+  const [smsConfig, setSmsConfig] = useState<SmsConfig>(() => {
+    try {
+      const s = localStorage.getItem('cp_sms_config');
+      return s ? JSON.parse(s) : INITIAL_SMS_CONFIG;
+    } catch {
+      return INITIAL_SMS_CONFIG;
+    }
+  });
+
+  const [smsLogs, setSmsLogs] = useState<SmsLog[]>(() => {
+    try {
+      const s = localStorage.getItem('cp_sms_logs');
+      return s ? JSON.parse(s) : INITIAL_SMS_LOGS;
+    } catch {
+      return INITIAL_SMS_LOGS;
+    }
+  });
+
+  // Persist new feature states
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_staff', JSON.stringify(staffMembers));
+    } catch {}
+  }, [staffMembers]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_leave_types', JSON.stringify(leaveTypes));
+    } catch {}
+  }, [leaveTypes]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_leave_requests', JSON.stringify(leaveRequests));
+    } catch {}
+  }, [leaveRequests]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_attendance', JSON.stringify(attendanceRecords));
+    } catch {}
+  }, [attendanceRecords]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_payroll', JSON.stringify(payrollRecords));
+    } catch {}
+  }, [payrollRecords]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_advances', JSON.stringify(salaryAdvances));
+    } catch {}
+  }, [salaryAdvances]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_website', JSON.stringify(tenantWebsite));
+    } catch {}
+  }, [tenantWebsite]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_bookings', JSON.stringify(bookingRequests));
+    } catch {}
+  }, [bookingRequests]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_share_links', JSON.stringify(reportShareLinks));
+    } catch {}
+  }, [reportShareLinks]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_sms_config', JSON.stringify(smsConfig));
+    } catch {}
+  }, [smsConfig]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_sms_logs', JSON.stringify(smsLogs));
+    } catch {}
+  }, [smsLogs]);
 
   // Secondary Data
   const [weeklySittings, setWeeklySittings] = useState<WeeklySitting[]>([
@@ -991,6 +1228,287 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(`Payment of ${newPayment.amount} BDT recorded! Subscription updated.`);
   };
 
+  // ── STAFF & HRM ACTIONS ──
+  const addStaffMember = (staffData: Omit<StaffMember, 'id' | 'createdAt'>) => {
+    const newStaff: StaffMember = {
+      ...staffData,
+      id: `staff-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setStaffMembers(prev => [newStaff, ...prev]);
+    showToast(`Staff member "${newStaff.name}" added successfully.`);
+  };
+
+  const updateStaffMember = (id: string, updates: Partial<StaffMember>) => {
+    setStaffMembers(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    showToast('Staff member updated.');
+  };
+
+  const deleteStaffMember = (id: string) => {
+    setStaffMembers(prev => prev.filter(s => s.id !== id));
+    showToast('Staff member deleted.');
+  };
+
+  // ── LEAVE MANAGEMENT ──
+  const addLeaveType = (typeData: Omit<LeaveType, 'id'>) => {
+    const newType: LeaveType = {
+      ...typeData,
+      id: `lt-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setLeaveTypes(prev => [...prev, newType]);
+    showToast(`Leave type "${newType.name}" added.`);
+  };
+
+  const deleteLeaveType = (id: string) => {
+    setLeaveTypes(prev => prev.filter(t => t.id !== id));
+    showToast('Leave type removed.');
+  };
+
+  const submitLeaveRequest = (reqData: Omit<LeaveRequest, 'id' | 'createdAt' | 'status'>) => {
+    const newReq: LeaveRequest = {
+      ...reqData,
+      id: `lr-${Date.now()}`,
+      status: 'PENDING',
+      createdAt: new Date().toISOString(),
+    };
+    setLeaveRequests(prev => [newReq, ...prev]);
+    showToast('Leave request submitted successfully.');
+  };
+
+  const reviewLeaveRequest = (id: string, status: 'APPROVED' | 'REJECTED', reviewerName = 'Administrator') => {
+    setLeaveRequests(prev => prev.map(r => r.id === id ? {
+      ...r,
+      status,
+      reviewedBy: reviewerName,
+      reviewedAt: new Date().toISOString()
+    } : r));
+    showToast(`Leave request ${status.toLowerCase()} successfully.`);
+  };
+
+  // ── ATTENDANCE ──
+  const markAttendance = (recordData: Omit<AttendanceRecord, 'id' | 'createdAt'>) => {
+    setAttendanceRecords(prev => {
+      const idx = prev.findIndex(r => r.staffId === recordData.staffId && r.date === recordData.date);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = { ...updated[idx], ...recordData };
+        return updated;
+      }
+      return [{ ...recordData, id: `att-${Date.now()}`, createdAt: new Date().toISOString() }, ...prev];
+    });
+    showToast('Attendance recorded.');
+  };
+
+  const markBulkAttendance = (records: Omit<AttendanceRecord, 'id' | 'createdAt'>[]) => {
+    setAttendanceRecords(prev => {
+      let updated = [...prev];
+      records.forEach(rec => {
+        const idx = updated.findIndex(r => r.staffId === rec.staffId && r.date === rec.date);
+        if (idx >= 0) {
+          updated[idx] = { ...updated[idx], ...rec };
+        } else {
+          updated.push({ ...rec, id: `att-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`, createdAt: new Date().toISOString() });
+        }
+      });
+      return updated;
+    });
+    showToast(`Attendance updated for ${records.length} staff members.`);
+  };
+
+  // ── PAYROLL ──
+  const generatePayroll = (month: string) => {
+    const newRecords: PayrollRecord[] = staffMembers.filter(s => s.status === 'ACTIVE').map(staff => {
+      const existing = payrollRecords.find(p => p.staffId === staff.id && p.month === month);
+      if (existing) return existing;
+
+      const staffAtt = attendanceRecords.filter(a => a.staffId === staff.id && a.date.startsWith(month));
+      const presentCount = staffAtt.filter(a => a.status === 'PRESENT' || a.status === 'LATE').length;
+      const leaveCount = staffAtt.filter(a => a.status === 'LEAVE').length;
+      const absentCount = staffAtt.filter(a => a.status === 'ABSENT').length;
+
+      const advances = salaryAdvances.filter(a => a.staffId === staff.id && a.deductMonth === month && !a.isDeducted);
+      const advanceDeduct = advances.reduce((sum, a) => sum + a.amount, 0);
+
+      const workingDays = 30;
+      const effectiveDays = presentCount > 0 ? presentCount + leaveCount : 30;
+      const basePay = Math.round((staff.salary / workingDays) * effectiveDays);
+      const bonus = 1000;
+      const overtime = 0;
+      const gross = basePay + bonus + overtime;
+      const deductions = advanceDeduct;
+      const net = Math.max(0, gross - deductions);
+
+      return {
+        id: `pay-${staff.id}-${month}`,
+        staffId: staff.id,
+        staffName: staff.name,
+        role: staff.role,
+        department: staff.department,
+        month,
+        basicSalary: staff.salary,
+        presentDays: effectiveDays,
+        absentDays: absentCount,
+        leaveDays: leaveCount,
+        overtimeAmount: overtime,
+        advanceDeduct,
+        bonus,
+        grossSalary: gross,
+        deductions,
+        netSalary: net,
+        status: 'DRAFT',
+        createdAt: new Date().toISOString(),
+      };
+    });
+
+    setPayrollRecords(prev => {
+      const remaining = prev.filter(p => p.month !== month);
+      return [...newRecords, ...remaining];
+    });
+    showToast(`Payroll generated for ${month}.`);
+  };
+
+  const markPayrollPaid = (id: string, paymentMethod = 'Cash', paidBy = 'Administrator') => {
+    setPayrollRecords(prev => prev.map(p => p.id === id ? {
+      ...p,
+      status: 'PAID',
+      paymentMethod,
+      paidAt: new Date().toISOString(),
+      paidBy
+    } : p));
+    showToast('Salary payment recorded.');
+  };
+
+  const updatePayrollRecord = (id: string, updates: Partial<PayrollRecord>) => {
+    setPayrollRecords(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    showToast('Payroll record updated.');
+  };
+
+  const giveSalaryAdvance = (advData: Omit<SalaryAdvance, 'id' | 'createdAt' | 'isDeducted'>) => {
+    const newAdv: SalaryAdvance = {
+      ...advData,
+      id: `adv-${Date.now()}`,
+      isDeducted: false,
+      createdAt: new Date().toISOString(),
+    };
+    setSalaryAdvances(prev => [newAdv, ...prev]);
+    showToast(`Salary advance of ৳${newAdv.amount} recorded for ${newAdv.staffName || 'staff'}.`);
+  };
+
+  // ── WEBSITE CMS & ONLINE BOOKINGS ──
+  const updateTenantWebsite = (updates: Partial<TenantWebsite>) => {
+    setTenantWebsite(prev => ({ ...prev, ...updates }));
+    showToast('Website settings updated successfully.');
+  };
+
+  const addBookingRequest = (reqData: Omit<PublicBookingRequest, 'id' | 'createdAt' | 'status'>) => {
+    const newBooking: PublicBookingRequest = {
+      ...reqData,
+      id: `pbr-${Date.now()}`,
+      status: 'NEW',
+      createdAt: new Date().toISOString(),
+    };
+    setBookingRequests(prev => [newBooking, ...prev]);
+    showToast('Booking request received!');
+  };
+
+  const confirmBookingRequest = (id: string, confirmedBy = 'Reception') => {
+    setBookingRequests(prev => prev.map(b => b.id === id ? {
+      ...b,
+      status: 'CONFIRMED',
+      confirmedBy,
+      confirmedAt: new Date().toISOString()
+    } : b));
+    showToast('Booking request confirmed.');
+  };
+
+  const cancelBookingRequest = (id: string) => {
+    setBookingRequests(prev => prev.map(b => b.id === id ? { ...b, status: 'CANCELLED' } : b));
+    showToast('Booking request cancelled.');
+  };
+
+  // ── REPORT SHARE LINKS ──
+  const generateReportShareLink = (
+    invoiceIdOrId: string,
+    invoiceNoOrProtected?: string | boolean,
+    patientName?: string,
+    patientPhone?: string
+  ): ReportShareLink => {
+    let invId = invoiceIdOrId;
+    let invNo = typeof invoiceNoOrProtected === 'string' ? invoiceNoOrProtected : '';
+    let pName = patientName || '';
+    let pPhone = patientPhone || '';
+    const isProtected = typeof invoiceNoOrProtected === 'boolean' ? invoiceNoOrProtected : false;
+
+    // Auto-detect from invoice if missing
+    const matchedInv = invoices.find(i => i.id === invId || i.invoiceNo === invId) ||
+      invoices.find(i => labReports.some(r => (r.id === invId || r.invoiceId === i.id) && r.invoiceId === i.id));
+    if (matchedInv) {
+      invId = matchedInv.id;
+      invNo = matchedInv.invoiceNo;
+      if (!pName) pName = matchedInv.patientName;
+      if (!pPhone) pPhone = matchedInv.patientPhone;
+    }
+
+    const existing = reportShareLinks.find(l => l.invoiceId === invId || (invNo && l.invoiceNo === invNo));
+    if (existing) {
+      return {
+        ...existing,
+        token: existing.shareToken,
+        reportId: invId,
+        isPasswordProtected: isProtected || existing.isPasswordProtected,
+      };
+    }
+
+    const token = `rep_${(pName || 'patient').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)}_${Math.random().toString(36).substr(2, 6)}`;
+    const newLink: ReportShareLink = {
+      id: `rsl-${Date.now()}`,
+      invoiceId: invId,
+      invoiceNo: invNo || `INV-${Date.now().toString().slice(-4)}`,
+      reportId: invId,
+      patientName: pName || 'Valued Patient',
+      patientPhone: pPhone || '01700000000',
+      shareToken: token,
+      token,
+      isPasswordProtected: isProtected,
+      viewCount: 0,
+      createdAt: new Date().toISOString()
+    };
+    setReportShareLinks(prev => [newLink, ...prev]);
+    return newLink;
+  };
+
+  const getReportShareLink = (token: string): ReportShareLink | undefined => {
+    return reportShareLinks.find(l => l.shareToken === token || l.token === token || l.id === token);
+  };
+
+  // ── SMS NOTIFICATIONS ──
+  const updateSmsConfig = (updates: Partial<SmsConfig>) => {
+    setSmsConfig(prev => ({ ...prev, ...updates }));
+    showToast('SMS Gateway settings updated.');
+  };
+
+  const sendSmsNotification = (phone: string, message: string, type: SmsLog['type'] = 'GENERAL'): boolean => {
+    if (smsConfig.balance < 0.50) {
+      showToast('SMS balance low! Please recharge.');
+      return false;
+    }
+    const newLog: SmsLog = {
+      id: `sms-${Date.now()}`,
+      phone,
+      message,
+      type,
+      status: 'DELIVERED',
+      provider: smsConfig.provider === 'ssl_wireless' ? 'SSL Wireless' : smsConfig.provider,
+      cost: 0.50,
+      createdAt: new Date().toISOString(),
+    };
+    setSmsLogs(prev => [newLog, ...prev]);
+    setSmsConfig(prev => ({ ...prev, balance: Math.max(0, Number((prev.balance - 0.50).toFixed(2))) }));
+    showToast(`SMS sent to ${phone}`);
+    return true;
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -1071,7 +1589,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         activeSubscription,
         updateActiveSubscription,
         subscriptionPayments,
-        recordSubscriptionPayment
+        recordSubscriptionPayment,
+        // Staff & HRM
+        staffMembers,
+        addStaffMember,
+        updateStaffMember,
+        deleteStaffMember,
+        // Leave
+        leaveTypes,
+        addLeaveType,
+        deleteLeaveType,
+        leaveRequests,
+        submitLeaveRequest,
+        reviewLeaveRequest,
+        // Attendance
+        attendanceRecords,
+        markAttendance,
+        markBulkAttendance,
+        // Payroll
+        payrollRecords,
+        generatePayroll,
+        markPayrollPaid,
+        updatePayrollRecord,
+        salaryAdvances,
+        giveSalaryAdvance,
+        // Website CMS
+        tenantWebsite,
+        updateTenantWebsite,
+        // Bookings
+        bookingRequests,
+        addBookingRequest,
+        confirmBookingRequest,
+        cancelBookingRequest,
+        // Report Share
+        reportShareLinks,
+        generateReportShareLink,
+        getReportShareLink,
+        // SMS
+        smsConfig,
+        updateSmsConfig,
+        smsLogs,
+        sendSmsNotification
       }}
     >
       {children}

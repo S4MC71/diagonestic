@@ -55,7 +55,19 @@ export const VIEW_TO_PATH: Record<ActiveView, string> = {
   tutorials: '/tutorial',
   support: '/support',
   settings: '/settings',
-  login: '/login'
+  login: '/login',
+  // Front Desk / Queue
+  reception: '/reception',
+  'online-bookings': '/online-bookings',
+  // Staff & HR
+  staff: '/staff',
+  'staff-attendance': '/staff/attendance',
+  'staff-payroll': '/staff/payroll',
+  'staff-hrm': '/staff/hrm',
+  // Growth
+  'website-cms': '/website-cms',
+  'branding-studio': '/branding-studio',
+  'sms-notifications': '/sms-notifications',
 };
 
 /**
@@ -169,7 +181,40 @@ export const PATH_TO_VIEW: Record<string, ActiveView> = {
   '/tickets': 'support',
   '/settings': 'settings',
   '/setting': 'settings',
-  '/login': 'login'
+  '/login': 'login',
+
+  // Front Desk
+  '/reception': 'reception',
+  '/queue': 'reception',
+  '/waiting-room': 'reception',
+  '/online-bookings': 'online-bookings',
+  '/bookings': 'online-bookings',
+  '/booking': 'online-bookings',
+
+  // Staff & HR
+  '/staff': 'staff',
+  '/staffs': 'staff',
+  '/employee': 'staff',
+  '/employees': 'staff',
+  '/staff/attendance': 'staff-attendance',
+  '/attendance': 'staff-attendance',
+  '/staff/payroll': 'staff-payroll',
+  '/payroll': 'staff-payroll',
+  '/salaries': 'staff-payroll',
+  '/staff/hrm': 'staff-hrm',
+  '/hrm': 'staff-hrm',
+  '/leave': 'staff-hrm',
+  '/leaves': 'staff-hrm',
+
+  // Growth & Public
+  '/website-cms': 'website-cms',
+  '/website': 'website-cms',
+  '/cms': 'website-cms',
+  '/branding-studio': 'branding-studio',
+  '/branding': 'branding-studio',
+  '/marketing': 'branding-studio',
+  '/sms-notifications': 'sms-notifications',
+  '/sms': 'sms-notifications',
 };
 
 /**
@@ -206,6 +251,15 @@ export function getViewFromPath(pathname: string): ActiveView {
   if (normalized.startsWith('/accounting')) return 'accounting';
   if (normalized.startsWith('/user')) return 'users';
   if (normalized.startsWith('/setting')) return 'settings';
+  if (normalized.startsWith('/staff/attendance') || normalized.startsWith('/attendance')) return 'staff-attendance';
+  if (normalized.startsWith('/staff/payroll') || normalized.startsWith('/payroll')) return 'staff-payroll';
+  if (normalized.startsWith('/staff/hrm') || normalized.startsWith('/hrm') || normalized.startsWith('/leave')) return 'staff-hrm';
+  if (normalized.startsWith('/staff')) return 'staff';
+  if (normalized.startsWith('/website')) return 'website-cms';
+  if (normalized.startsWith('/booking')) return 'online-bookings';
+  if (normalized.startsWith('/branding')) return 'branding-studio';
+  if (normalized.startsWith('/sms')) return 'sms-notifications';
+  if (normalized.startsWith('/reception') || normalized.startsWith('/queue')) return 'reception';
 
   return 'dashboard';
 }

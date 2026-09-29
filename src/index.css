@@ -1392,5 +1392,111 @@ textarea.form-control {
   }
 }
 
+/* ==========================================================================
+   Mobile Bottom Navigation Bar (SaaS Mobile Optimized)
+   ========================================================================== */
+.mobile-bottom-nav {
+  display: none;
+}
 
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+    z-index: 1000;
+    padding: 0 8px;
+  }
 
+  .mobile-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mobile-nav-btn.active {
+    color: #059669;
+    font-weight: 700;
+  }
+
+  .mobile-nav-btn:hover {
+    color: #0f172a;
+  }
+
+  .mobile-nav-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #059669;
+    color: #ffffff;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+    cursor: pointer;
+    margin-top: -20px;
+    transition: transform 0.15s ease, background 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .mobile-nav-fab:active {
+    transform: scale(0.92);
+  }
+
+  .content-body {
+    padding-bottom: 84px !important;
+  }
+}
+
+/* ==========================================================================
+   Print Document Styles (ISO Laboratory Patient Reports)
+   ========================================================================== */
+@media print {
+  .no-print,
+  .sidebar,
+  .topbar,
+  .mobile-bottom-nav,
+  .sidebar-mobile-backdrop {
+    display: none !important;
+  }
+
+  .main-wrapper,
+  .content-body {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  #printable-report {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+}

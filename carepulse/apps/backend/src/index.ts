@@ -24,6 +24,10 @@ import tenantAppointmentsRouter from './routes/tenant/appointments';
 import tenantPharmacyRouter from './routes/tenant/pharmacy';
 import tenantAccountingRouter from './routes/tenant/accounting';
 import tenantInventoryRouter from './routes/tenant/inventory';
+import tenantStaffRouter from './routes/tenant/staff';
+import tenantWebsiteRouter from './routes/tenant/website';
+import tenantSmsRouter from './routes/tenant/sms';
+import publicRouter from './routes/public';
 
 // Middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -75,6 +79,9 @@ app.get('/health', (_req, res) => {
 // ─── Routes ───────────────────────────────────────────────────
 app.use('/api/auth', authRouter);
 
+// Public Unauthenticated
+app.use('/api/public',              publicRouter);
+
 // SuperAdmin
 app.use('/api/superadmin/tenants', superAdminTenantsRouter);
 app.use('/api/superadmin/plans', superAdminPlansRouter);
@@ -94,6 +101,9 @@ app.use('/api/tenant/appointments', tenantAppointmentsRouter);
 app.use('/api/tenant/pharmacy',     tenantPharmacyRouter);
 app.use('/api/tenant/accounting',   tenantAccountingRouter);
 app.use('/api/tenant/inventory',    tenantInventoryRouter);
+app.use('/api/tenant/staff',        tenantStaffRouter);
+app.use('/api/tenant/website',      tenantWebsiteRouter);
+app.use('/api/tenant/sms',          tenantSmsRouter);
 
 // ─── 404 Handler ──────────────────────────────────────────────
 app.use((_req, res) => {

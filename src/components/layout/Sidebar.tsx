@@ -26,6 +26,9 @@ import {
   Settings,
   GraduationCap,
   Inbox,
+  Clock,
+  MessageSquare,
+  Sparkles,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -48,7 +51,9 @@ const NAVIGATION_GROUPS: NavCategory[] = [
     category: 'CLINICAL',
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'reception', label: 'Live Queue', icon: Clock, moduleKey: 'clinical' },
       { id: 'patients', label: 'Patients', icon: Users, moduleKey: 'patients' },
+      { id: 'online-bookings', label: 'Online Bookings', icon: Globe, moduleKey: 'clinical' },
       { id: 'recall', label: 'Recall', icon: Calendar, moduleKey: 'recall' },
       { id: 'prescriptions', label: 'Prescriptions', icon: FileText, moduleKey: 'clinical' },
       { id: 'chambers', label: 'Chambers', icon: Building, moduleKey: 'clinical' },
@@ -82,12 +87,29 @@ const NAVIGATION_GROUPS: NavCategory[] = [
     ]
   },
   {
+    category: 'STAFF & HR',
+    items: [
+      { id: 'staff', label: 'Staff Members', icon: Users, moduleKey: 'hrm' },
+      { id: 'staff-attendance', label: 'Attendance', icon: UserCheck, moduleKey: 'hrm' },
+      { id: 'staff-payroll', label: 'Payroll', icon: Calculator, moduleKey: 'hrm' },
+      { id: 'staff-hrm', label: 'HRM & Leave', icon: Calendar, moduleKey: 'hrm' }
+    ]
+  },
+  {
     category: 'FINANCE',
     items: [
       { id: 'invoices', label: 'Invoices', icon: FileText, moduleKey: 'finance' },
       { id: 'payments', label: 'Payments', icon: CreditCard, moduleKey: 'finance' },
       { id: 'commissions', label: 'Commissions', icon: DollarSign, moduleKey: 'commissions' },
       { id: 'accounting', label: 'Accounting', icon: Calculator, moduleKey: 'accounting' }
+    ]
+  },
+  {
+    category: 'GROWTH',
+    items: [
+      { id: 'website-cms', label: 'Website CMS', icon: Globe, moduleKey: 'website' },
+      { id: 'branding-studio', label: 'Branding Studio', icon: Sparkles, moduleKey: 'website' },
+      { id: 'sms-notifications', label: 'SMS Alerts', icon: MessageSquare, moduleKey: 'sms' }
     ]
   },
   {

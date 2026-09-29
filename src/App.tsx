@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Lock } from 'lucide-react';
+import { Lock, LayoutDashboard, Users, Plus, Clock, Menu } from 'lucide-react';
 import { useApp } from './context/AppContext';
 import { useAuth } from './context/AuthContext';
 import { Topbar } from './components/layout/Topbar';
@@ -35,6 +35,18 @@ import { TutorialsView } from './views/TutorialsView';
 import { PracticeView } from './views/PracticeView';
 import { ActionInboxView } from './views/ActionInboxView';
 
+// New Growth, Clinical, HRM & Public Views
+import { ReceptionView } from './views/ReceptionView';
+import { StaffView } from './views/StaffView';
+import { AttendanceView } from './views/AttendanceView';
+import { PayrollView } from './views/PayrollView';
+import { HRMView } from './views/HRMView';
+import { WebsiteCMSView } from './views/WebsiteCMSView';
+import { OnlineBookingsView } from './views/OnlineBookingsView';
+import { BrandingStudioView } from './views/BrandingStudioView';
+import { SmsNotificationsView } from './views/SmsNotificationsView';
+import { PublicReportPage } from './views/PublicReportPage';
+
 const VIEW_MODULE_MAP: Record<string, string> = {
   patients: 'patients',
   recall: 'recall',
@@ -63,6 +75,15 @@ const VIEW_MODULE_MAP: Record<string, string> = {
   payments: 'finance',
   commissions: 'commissions',
   accounting: 'accounting',
+  reception: 'clinical',
+  'online-bookings': 'clinical',
+  staff: 'hrm',
+  'staff-attendance': 'hrm',
+  'staff-payroll': 'hrm',
+  'staff-hrm': 'hrm',
+  'website-cms': 'website',
+  'branding-studio': 'website',
+  'sms-notifications': 'sms',
 };
 
 export const App: React.FC = () => {
@@ -147,6 +168,15 @@ export const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setCurrentView, showPrintModal, closePrintModal]);
+
+  // Public Patient Report Route (e.g. /r/:token or /public/report/:token)
+  const pathname = window.location.pathname;
+  if (pathname.startsWith('/r/') || pathname.startsWith('/public/report/')) {
+    const token = pathname.startsWith('/r/')
+      ? pathname.replace('/r/', '')
+      : pathname.replace('/public/report/', '');
+    return <PublicReportPage token={token} />;
+  }
 
   // Show loading spinner while checking auth
   if (isAuthLoading) {
@@ -263,6 +293,24 @@ export const App: React.FC = () => {
         return <SupportView />;
       case 'settings':
         return <SettingsView />;
+      case 'reception':
+        return <ReceptionView />;
+      case 'staff':
+        return <StaffView />;
+      case 'staff-attendance':
+        return <AttendanceView />;
+      case 'staff-payroll':
+        return <PayrollView />;
+      case 'staff-hrm':
+        return <HRMView />;
+      case 'website-cms':
+        return <WebsiteCMSView />;
+      case 'online-bookings':
+        return <OnlineBookingsView />;
+      case 'branding-studio':
+        return <BrandingStudioView />;
+      case 'sms-notifications':
+        return <SmsNotificationsView />;
       default:
         return <DashboardView />;
     }
@@ -285,6 +333,54 @@ export const App: React.FC = () => {
           {renderCurrentView()}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar (Active on Mobile <= 768px) */}
+      <nav className="mobile-bottom-nav">
+        <button
+          className={`mobile-nav-btn ${currentView === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setCurrentView('dashboard')}
+          type="button"
+        >
+          <LayoutDashboard size={20} />
+          <span>Dashboard</span>
+        </button>
+
+        <button
+          className={`mobile-nav-btn ${currentView === 'patients' ? 'active' : ''}`}
+          onClick={() => setCurrentView('patients')}
+          type="button"
+        >
+          <Users size={20} />
+          <span>Patients</span>
+        </button>
+
+        <button
+          className="mobile-nav-fab"
+          onClick={() => setCurrentView('new-invoice')}
+          type="button"
+          title="New Invoice"
+        >
+          <Plus size={24} />
+        </button>
+
+        <button
+          className={`mobile-nav-btn ${currentView === 'reception' ? 'active' : ''}`}
+          onClick={() => setCurrentView('reception')}
+          type="button"
+        >
+          <Clock size={20} />
+          <span>Queue</span>
+        </button>
+
+        <button
+          className={`mobile-nav-btn ${!isSidebarCollapsed ? 'active' : ''}`}
+          onClick={toggleSidebar}
+          type="button"
+        >
+          <Menu size={20} />
+          <span>Menu</span>
+        </button>
+      </nav>
 
       {/* Global Print Modal Overlay (Thermal 80mm & A4 formats) */}
       <PrintModal />

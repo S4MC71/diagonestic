@@ -48,7 +48,16 @@ export type ActiveView =
   | 'action-inbox'
   | 'tutorials'
   | 'support'
-  | 'settings';
+  | 'settings'
+  | 'reception'
+  | 'staff'
+  | 'staff-attendance'
+  | 'staff-payroll'
+  | 'staff-hrm'
+  | 'website-cms'
+  | 'online-bookings'
+  | 'branding-studio'
+  | 'sms-notifications';
 
 export type LiveUserRole =
   | 'Doctor'
@@ -208,6 +217,7 @@ export interface Invoice {
   referredByName?: string;
   referralDoctorId?: string;
   referralDoctorName?: string;
+  doctorName?: string;
   items: InvoiceItem[];
   subtotal?: number;
   grossTotal?: number;
@@ -293,6 +303,7 @@ export interface Doctor {
   isConsultant?: boolean;
   isReferralAgent?: boolean;
   chamberRoom?: string;
+  chamberNo?: string;
   visitingDays?: string;
   visitingTime?: string;
   consultationFee?: number;
@@ -355,6 +366,7 @@ export interface Appointment {
   date: string;
   timeSlot: string;
   chamberRoom?: string;
+  chamberNo?: string;
   fee: number;
   paymentStatus: 'Paid' | 'Unpaid';
   status: 'Booked' | 'Waiting' | 'With Doctor' | 'Completed' | 'Cancelled';
@@ -608,5 +620,207 @@ export interface ActiveSubscription {
   startDate: string;
   expiryDate: string;
   daysRemaining: number;
+}
+
+// ── STAFF / HRM ──────────────────────────────────────
+export interface StaffMember {
+  id: string;
+  tenantId?: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  role: string;
+  department?: string;
+  joinDate?: string;
+  salary: number;
+  status: 'ACTIVE' | 'INACTIVE';
+  avatarUrl?: string;
+  nid?: string;
+  address?: string;
+  emergencyContact?: string;
+  createdAt: string;
+}
+
+export interface LeaveType {
+  id: string;
+  tenantId?: string;
+  name: string;
+  daysPerYear: number;
+  isPaid: boolean;
+  createdAt?: string;
+}
+
+export interface LeaveRequest {
+  id: string;
+  tenantId?: string;
+  staffId: string;
+  staffName?: string;
+  leaveTypeId: string;
+  leaveTypeName?: string;
+  fromDate: string;
+  toDate: string;
+  days: number;
+  reason?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
+}
+
+// ── ATTENDANCE ──────────────────────────────────────
+export interface AttendanceRecord {
+  id: string;
+  tenantId?: string;
+  staffId: string;
+  staffName?: string;
+  date: string;
+  status: 'PRESENT' | 'ABSENT' | 'LATE' | 'LEAVE' | 'HOLIDAY';
+  checkIn?: string;
+  checkOut?: string;
+  note?: string;
+  markedBy?: string;
+  createdAt?: string;
+}
+
+export interface AttendanceSummary {
+  staffId: string;
+  staffName: string;
+  month: string;
+  presentDays: number;
+  absentDays: number;
+  lateDays: number;
+  leaveDays: number;
+  totalWorkingDays: number;
+}
+
+// ── PAYROLL ──────────────────────────────────────────
+export interface PayrollRecord {
+  id: string;
+  tenantId?: string;
+  staffId: string;
+  staffName?: string;
+  role?: string;
+  department?: string;
+  month: string;         // e.g. "2026-09"
+  basicSalary: number;
+  presentDays: number;
+  absentDays: number;
+  leaveDays: number;
+  overtimeAmount: number;
+  advanceDeduct: number;
+  bonus: number;
+  grossSalary: number;
+  deductions: number;
+  netSalary: number;
+  status: 'DRAFT' | 'PAID';
+  paymentMethod?: string;
+  paidAt?: string;
+  paidBy?: string;
+  note?: string;
+  createdAt?: string;
+}
+
+export interface SalaryAdvance {
+  id: string;
+  tenantId?: string;
+  staffId: string;
+  staffName?: string;
+  amount: number;
+  givenDate: string;
+  deductMonth?: string;
+  note?: string;
+  isDeducted: boolean;
+  createdAt?: string;
+}
+
+// ── WEBSITE CMS ──────────────────────────────────────
+export interface TenantWebsite {
+  id?: string;
+  tenantId?: string;
+  isPublished: boolean;
+  acceptBookings: boolean;
+  theme: string;
+  primaryColor: string;
+  accentColor: string;
+  primaryLanguage: 'en' | 'bn';
+  logoUrl?: string;
+  heroImageUrl?: string;
+  tagline?: string;
+  aboutText?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  facebookUrl?: string;
+  googleBusinessUrl?: string;
+  customDomain?: string;
+  announcement?: string;
+  announcementType?: 'info' | 'warning' | 'success';
+  showTestPrices?: boolean;
+  showConsultationFees?: boolean;
+  requirePhoneOtp?: boolean;
+}
+
+// ── PUBLIC BOOKING ────────────────────────────────────
+export interface PublicBookingRequest {
+  id: string;
+  tenantId?: string;
+  patientName: string;
+  patientPhone: string;
+  patientAge?: number;
+  patientGender?: string;
+  bookingType: 'appointment' | 'test';
+  doctorId?: string;
+  doctorName?: string;
+  requestedTests?: string[];
+  preferredDate?: string;
+  preferredTime?: string;
+  notes?: string;
+  status: 'NEW' | 'CONFIRMED' | 'CANCELLED';
+  confirmedBy?: string;
+  confirmedAt?: string;
+  createdAt: string;
+}
+
+// ── REPORT SHARE ──────────────────────────────────────
+export interface ReportShareLink {
+  id: string;
+  tenantId?: string;
+  invoiceId?: string;
+  invoiceNo?: string;
+  reportId?: string;
+  patientName: string;
+  patientPhone: string;
+  shareToken: string;
+  token?: string;
+  isPasswordProtected?: boolean;
+  expiresAt?: string;
+  viewCount: number;
+  createdAt: string;
+}
+
+// ── SMS NOTIFICATIONS ─────────────────────────────────
+export interface SmsConfig {
+  provider: 'ssl_wireless' | 'greenweb' | 'twilio' | 'mock';
+  apiKey: string;
+  senderId: string;
+  balance: number;
+  notifyOnReportReady: boolean;
+  notifyOnAppointment: boolean;
+  notifyOnDuePayment: boolean;
+  notifyOnBookingConfirm: boolean;
+  templateReportReady: string;
+  templateAppointment: string;
+  templateDuePayment: string;
+}
+
+export interface SmsLog {
+  id: string;
+  tenantId?: string;
+  phone: string;
+  message: string;
+  type?: 'REPORT_READY' | 'APPOINTMENT_REMINDER' | 'PAYMENT_DUE' | 'BOOKING_CONFIRM' | 'GENERAL';
+  status: 'SENT' | 'FAILED' | 'DELIVERED';
+  provider?: string;
+  cost?: number;
+  createdAt: string;
 }
 

@@ -73,9 +73,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     (moduleKey?: string): boolean => {
       // If no moduleKey specified, it's a core universal item (Dashboard, Settings, etc.)
       if (!moduleKey) return true;
+      if (authUser?.role === 'TENANT_ADMIN' || authUser?.role === 'Global Tenant Admin') return true;
+      if (modules.length === 0) return true; // dev/demo fallback
       return modules.includes(moduleKey);
     },
-    [modules]
+    [modules, authUser]
   );
 
   // On app mount — verify existing token

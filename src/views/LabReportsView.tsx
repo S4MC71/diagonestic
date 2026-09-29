@@ -25,6 +25,8 @@ export const LabReportsView: React.FC = () => {
     labReports,
     updateLabReportResults,
     verifyLabReport,
+    generateReportShareLink,
+    sendSmsNotification,
     showToast
   } = useApp();
 
@@ -33,6 +35,12 @@ export const LabReportsView: React.FC = () => {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+
+  // Share modal state
+  const [sharingInvoice, setSharingInvoice] = useState<any | null>(null);
+  const [shareLinkGenerated, setShareLinkGenerated] = useState('');
+  const [isPinProtected, setIsPinProtected] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Selected report state
   const selectedReport =
@@ -146,6 +154,36 @@ export const LabReportsView: React.FC = () => {
     const linkUrl = `https://${slug}.carepulse.health/verify/report/${invNo}`;
     navigator.clipboard.writeText(linkUrl);
     showToast(`Copied verified approval link for ${invNo}`);
+  };
+
+  const openShareModal = (inv: any) => {
+    setSharingInvoice(inv);
+    const rep = labReports.find(r => r.invoiceId === inv.id);
+    const repId = rep?.id || `rep-${inv.id}`;
+    const shareRecord = generateReportShareLink(repId, isPinProtected);
+    const fullUrl = `${window.location.origin}/r/${shareRecord.token}`;
+    setShareLinkGenerated(fullUrl);
+    setCopiedLink(false);
+  };
+
+  const handleTogglePinProtect = (checked: boolean) => {
+    setIsPinProtected(checked);
+    if (sharingInvoice) {
+      const rep = labReports.find(r => r.invoiceId === sharingInvoice.id);
+      const repId = rep?.id || `rep-${sharingInvoice.id}`;
+      const shareRecord = generateReportShareLink(repId, checked);
+      setShareLinkGenerated(`${window.location.origin}/r/${shareRecord.token}`);
+    }
+  };
+
+  const handleSendShareSms = () => {
+    if (!sharingInvoice) return;
+    sendSmsNotification(
+      sharingInvoice.patientPhone,
+      `Dear ${sharingInvoice.patientName}, your test report is ready. View/Download: ${shareLinkGenerated}`,
+      'REPORT_READY'
+    );
+    showToast(`Report link SMS sent to ${sharingInvoice.patientPhone}`);
   };
 
   // Group invoices for reports view
@@ -476,6 +514,16 @@ export const LabReportsView: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {/* Share Link button */}
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '11px', padding: '3px 8px', color: '#059669', borderColor: '#a7f3d0' }}
+                    onClick={() => openShareModal(inv)}
+                    title="Generate Secure Patient Link & SMS"
+                  >
+                    <Share2 size={12} /> Share Link
+                  </button>
+
                   {/* Approval Link pill */}
                   <button
                     className="btn btn-secondary btn-sm"
@@ -570,6 +618,173 @@ export const LabReportsView: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Share Report Modal */}
+      {sharingInvoice && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: 520 }}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    background: '#ecfdf5',
+                    color: '#059669',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Share2 size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>
+                    Share Patient Report Online
+                  </h3>
+                  <div style={{ fontSize: 12, color: '#64748b' }}>
+                    {sharingInvoice.patientName} • Invoice #{sharingInvoice.invoiceNo}
+                  </div>
+                </div>
+              </div>
+              <button className="icon-btn" onClick={() => setSharingInvoice(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ padding: 20 }}>
+              {/* Shareable Link Box */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+                  Direct Public Link:
+                </label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    readOnly
+                    value={shareLinkGenerated}
+                    className="form-control"
+                    style={{ fontSize: 12, background: '#f8fafc', fontFamily: 'monospace' }}
+                  />
+                  <button
+                    className="btn btn-primary"
+                    style={{ whiteSpace: 'nowrap' }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(shareLinkGenerated);
+                      setCopiedLink(true);
+                      showToast('Copied public report link to clipboard');
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }}
+                  >
+                    {copiedLink ? <Check size={14} /> : <Link size={14} />} {copiedLink ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Security Protection Toggle */}
+              <div
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  padding: '12px 14px',
+                  marginBottom: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>
+                    Require Last 4 Mobile Digits
+                  </div>
+                  <div style={{ fontSize: 11, color: '#64748b' }}>
+                    Patient must verify phone (***-***-{sharingInvoice.patientPhone.slice(-4)}) to unlock
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={isPinProtected}
+                  onChange={e => handleTogglePinProtect(e.target.checked)}
+                  style={{ width: 18, height: 18, cursor: 'pointer' }}
+                />
+              </div>
+
+              {/* Direct Actions: SMS & WhatsApp */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={handleSendShareSms}
+                  className="btn btn-secondary"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    padding: '10px 12px',
+                    borderColor: '#cbd5e1',
+                  }}
+                >
+                  <Clock size={15} color="#059669" /> Send SMS Link
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleWhatsApp(
+                      sharingInvoice.invoiceNo,
+                      sharingInvoice.patientName,
+                      sharingInvoice.patientPhone
+                    )
+                  }
+                  className="btn"
+                  style={{
+                    background: '#25D366',
+                    color: '#fff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    padding: '10px 12px',
+                    fontWeight: 600,
+                  }}
+                >
+                  <MessageCircle size={15} /> WhatsApp
+                </button>
+              </div>
+
+              {/* Test link preview button */}
+              <div style={{ marginTop: 16, textAlign: 'center' }}>
+                <a
+                  href={shareLinkGenerated}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    fontSize: 12,
+                    color: '#059669',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    fontWeight: 600,
+                  }}
+                >
+                  Open Report in New Tab <ExternalLink size={12} />
+                </a>
+              </div>
+            </div>
+
+            <div className="modal-footer" style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', textAlign: 'right' }}>
+              <button className="btn btn-secondary" onClick={() => setSharingInvoice(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
