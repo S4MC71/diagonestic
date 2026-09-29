@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-type View = 'dashboard' | 'tenants' | 'plans' | 'billing' | 'support' | 'settings';
+type View = 'dashboard' | 'tenants' | 'plans' | 'billing' | 'support' | 'settings' | 'tenant-detail';
 
 interface SidebarProps {
   currentView: View;

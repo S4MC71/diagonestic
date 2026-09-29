@@ -81,7 +81,7 @@ export const TenantDetailView: React.FC<Props> = ({ tenantId, onBack }) => {
     try {
       setIsLoading(true);
       setError('');
-      const res = await api.get(`/api/superadmin/tenants/${tenantId}`);
+      const res = await api.get<{ data: { tenant: TenantDetail } }>(`/api/superadmin/tenants/${tenantId}`);
       setTenant(res.data.tenant);
     } catch (e: unknown) {
       setError((e as Error).message ?? 'Failed to load tenant');

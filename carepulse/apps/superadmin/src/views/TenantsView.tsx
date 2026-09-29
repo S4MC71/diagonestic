@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Plus, Search, RefreshCw, X, Building2, ToggleLeft, ToggleRight,
-  ExternalLink, Trash2, ChevronLeft, ChevronRight
+  Plus, Search, RefreshCw, X, Building2,
+  ExternalLink, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { api } from '../lib/api';
 
@@ -337,7 +337,11 @@ const TenantDetailModal: React.FC<DetailModalProps> = ({ tenantId, onClose, onUp
 };
 
 // ─── Main TenantsView ─────────────────────────────────────────────────────
-export const TenantsView: React.FC = () => {
+interface TenantsViewProps {
+  onViewTenant?: (id: string) => void;
+}
+
+export const TenantsView: React.FC<TenantsViewProps> = ({ onViewTenant }) => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -460,7 +464,10 @@ export const TenantsView: React.FC = () => {
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button
                         className="btn btn-ghost btn-sm btn-icon"
-                        onClick={() => setSelectedTenantId(t.id)}
+                        onClick={() => {
+                          setSelectedTenantId(t.id);
+                          if (onViewTenant) onViewTenant(t.id);
+                        }}
                         title="View Details"
                       >
                         <ExternalLink size={14} />

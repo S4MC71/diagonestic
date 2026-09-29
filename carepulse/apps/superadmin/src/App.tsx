@@ -17,6 +17,7 @@ const PAGE_TITLES: Record<View, string> = {
   billing: 'Billing',
   support: 'Support',
   settings: 'Settings',
+  'tenant-detail': 'Tenant Detail',
 };
 
 const AppInner: React.FC = () => {
