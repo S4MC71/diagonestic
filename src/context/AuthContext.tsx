@@ -42,7 +42,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
     try {
       const saved = localStorage.getItem('cp_auth_user');
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      if (parsed?.username === 'lifecare_admin' || parsed?.tenant?.slug === 'lifecare') {
+        localStorage.removeItem('cp_auth_user');
+        localStorage.removeItem('cp_modules');
+        localStorage.removeItem('cp_tenant');
+        clearTokens();
+        return null;
+      }
+      return parsed;
     } catch {
       return null;
     }

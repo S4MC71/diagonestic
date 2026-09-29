@@ -59,7 +59,7 @@ export const ActionInboxView: React.FC = () => {
       description: 'Patient Haji Nurul Haque has an outstanding balance of ৳450 on invoice INV-2026-0002 for over 32 days.',
       recordRef: 'INV-2026-0002',
       triggerReason: 'Unpaid diagnostic receivable >= 30 days old',
-      assignedTo: 'lifecare_admin',
+      assignedTo: 'admin',
       createdAt: 'Yesterday',
       status: 'Open',
       actionRoute: 'payments'
@@ -296,7 +296,7 @@ export const ActionInboxView: React.FC = () => {
                       <option value="Dr. Nusrat Jahan (Pathologist)">Dr. Nusrat Jahan</option>
                       <option value="Md. Al-Amin (Receptionist)">Md. Al-Amin</option>
                       <option value="Tanvir Hossain (Storekeeper)">Tanvir Hossain</option>
-                      <option value="lifecare_admin">Global Admin</option>
+                      <option value="admin">Administrator</option>
                     </select>
                   </div>
 

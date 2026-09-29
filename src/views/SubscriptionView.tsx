@@ -741,7 +741,7 @@ export const SubscriptionView: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#64748b' }}>Tenant:</span>
-                  <span>{tenantSettings?.name || 'LifeCare Diagnostic Center'}</span>
+                  <span>{tenantSettings?.name || 'Diagnostic Center'}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#64748b' }}>Package:</span>

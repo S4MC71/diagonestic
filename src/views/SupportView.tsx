@@ -61,11 +61,11 @@ export const SupportView: React.FC = () => {
         title: title.trim(),
         details: details.trim(),
         attachments: attachedFileNames,
-        submittedBy: currentUser?.username || 'lifecare_admin',
+        submittedBy: currentUser?.username || 'admin',
         replies: [
           {
             id: `rep-${Date.now()}`,
-            author: currentUser?.name || 'lifecare_admin',
+            author: currentUser?.name || currentUser?.username || 'Admin',
             isStaff: false,
             message: details.trim(),
             createdAt: 'Just now'
@@ -87,7 +87,7 @@ export const SupportView: React.FC = () => {
 
     const newReply = {
       id: `rep-${Date.now()}`,
-      author: currentUser?.name || 'lifecare_admin',
+      author: currentUser?.name || currentUser?.username || 'Admin',
       isStaff: false,
       message: replyText.trim(),
       createdAt: 'Just now'

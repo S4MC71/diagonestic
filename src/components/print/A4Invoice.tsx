@@ -297,7 +297,7 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ invoice }) => {
 
         <div>
           <div style={{ borderTop: '1px solid #94a3b8', width: '140px', margin: '0 auto', paddingTop: '4px' }}>
-            <div style={{ fontWeight: 600, color: '#059669' }}>{invoice.createdBy || 'lifecare_admin'}</div>
+            <div style={{ fontWeight: 600, color: '#059669' }}>{invoice.createdBy || 'Authorized Staff'}</div>
             Prepared By
           </div>
         </div>

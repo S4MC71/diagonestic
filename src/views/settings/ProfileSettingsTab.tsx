@@ -7,10 +7,10 @@ export const ProfileSettingsTab: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form State initialized from TenantSettings
-  const [displayName, setDisplayName] = useState(tenantSettings.name || 'LifeCare Diagnostic Center');
-  const [slug] = useState(tenantSettings.slug || 'lifecare-diagnostic-center');
-  const [establishedYear, setEstablishedYear] = useState(tenantSettings.established || tenantSettings.establishedYear || '2020');
-  const [website, setWebsite] = useState(tenantSettings.website || 'https://lifecarediagnostic.com.bd');
+  const [displayName, setDisplayName] = useState(tenantSettings.name || 'Diagnostic Center');
+  const [slug] = useState(tenantSettings.slug || 'diagnostic-center');
+  const [establishedYear, setEstablishedYear] = useState(tenantSettings.established || tenantSettings.establishedYear || '2024');
+  const [website, setWebsite] = useState(tenantSettings.website || '');
 
   const [address, setAddress] = useState(tenantSettings.address || 'Medical College Road, Central Square');
   const [thana, setThana] = useState(tenantSettings.thana || 'Central Sadar');
@@ -21,11 +21,11 @@ export const ProfileSettingsTab: React.FC = () => {
   const [phone, setPhone] = useState(tenantSettings.phone || '01834259899');
   const [phone2, setPhone2] = useState(tenantSettings.phone2 || '01894422170');
   const [hotline, setHotline] = useState(tenantSettings.hotline || '01894422170');
-  const [email, setEmail] = useState(tenantSettings.email || 'samubincoc1@gmail.com');
+  const [email, setEmail] = useState(tenantSettings.email || '');
 
   const [enableHomeCollection, setEnableHomeCollection] = useState(tenantSettings.enableHomeCollection ?? true);
   const [emailYesterdaySummary, setEmailYesterdaySummary] = useState(true);
-  const [alsoSendTo, setAlsoSendTo] = useState('accounts@lifecarediagnostic.com, manager@lifecarediagnostic.com');
+  const [alsoSendTo, setAlsoSendTo] = useState('');
 
   const [tradeLicense, setTradeLicense] = useState(tenantSettings.tradeLicenseNo || 'TRAD/DHK/2024/0982');
   const [bin, setBin] = useState(tenantSettings.binNo || '002938471-0402');

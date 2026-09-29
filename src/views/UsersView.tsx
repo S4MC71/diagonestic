@@ -151,7 +151,7 @@ export const UsersView: React.FC = () => {
       addUser({
         name: fullName.trim(),
         username: username.trim(),
-        email: email.trim() || `${username.trim()}@${tenantSettings.slug || 'lifecared'}.com`,
+        email: email.trim() || `${username.trim()}@${tenantSettings.slug || 'diagnostic'}.com`,
         phone: phone.trim() || '01XXXXXXXXX',
         role: selectedRoles[0],
         roles: selectedRoles,

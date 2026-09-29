@@ -210,7 +210,7 @@ export const NewInvoiceView: React.FC = () => {
         dueAmount,
         paymentMethod,
         paymentStatus: (paidNow || netTotal) >= netTotal ? 'PAID' : 'PARTIAL',
-        createdBy: currentUser?.username || 'lifecare_admin'
+        createdBy: currentUser?.username || 'admin'
       });
 
       addAppointment({
@@ -268,7 +268,7 @@ export const NewInvoiceView: React.FC = () => {
       dueAmount,
       paymentMethod,
       paymentStatus,
-      createdBy: currentUser?.username || 'lifecare_admin'
+      createdBy: currentUser?.username || 'admin'
     });
 
     // Navigate to invoices list

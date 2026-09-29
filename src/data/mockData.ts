@@ -139,7 +139,7 @@ export const INITIAL_DOCTORS: Doctor[] = [
     degrees: 'MBBS, DGO, MCPS (Obs & Gynae)',
     specialty: 'Gynecologist & Obstetrician',
     designation: 'Associate Professor',
-    hospital: 'LifeCare Hospital & Medical College',
+    hospital: 'Central Hospital & Medical College',
     phone: '01819-445566',
     email: 'dr.nusrat@yahoo.com',
     commissionType: 'percentage',
@@ -859,7 +859,7 @@ export const INITIAL_INVOICES: Invoice[] = [
     dueAmount: 0,
     paymentMethod: 'Cash',
     paymentStatus: 'PAID',
-    createdBy: 'lifecare_admin'
+    createdBy: 'admin'
   },
   {
     id: 'inv-2',
@@ -911,7 +911,7 @@ export const INITIAL_INVOICES: Invoice[] = [
     dueAmount: 450,
     paymentMethod: 'Mobile Banking',
     paymentStatus: 'PARTIAL',
-    createdBy: 'lifecare_admin'
+    createdBy: 'admin'
   }
 ];
 
@@ -1159,9 +1159,9 @@ export const INITIAL_INVENTORY_ITEMS: InventoryItem[] = [
 export const INITIAL_USERS: User[] = [
   {
     id: 'usr-1',
-    name: 'lifecare_admin',
-    username: 'lifecare_admin',
-    email: 'samubincoc1@gmail.com',
+    name: 'Administrator',
+    username: 'admin',
+    email: 'admin@diagnostic.com',
     phone: '01894422170',
     role: 'Global Tenant Admin',
     roles: ['Global Tenant Admin'],
@@ -1175,7 +1175,7 @@ export const INITIAL_USERS: User[] = [
     id: 'usr-2',
     name: 'Kamrul Hasan',
     username: 'kamrul_reception',
-    email: 'kamrul@lifecarediagnostic.com',
+    email: 'kamrul@diagnostic.com',
     phone: '01811-345678',
     role: 'Global Reception',
     roles: ['Global Reception'],
@@ -1189,7 +1189,7 @@ export const INITIAL_USERS: User[] = [
     id: 'usr-3',
     name: 'Farzana Parvin',
     username: 'farzana_lab',
-    email: 'farzana@lifecarediagnostic.com',
+    email: 'farzana@diagnostic.com',
     phone: '01912-456789',
     role: 'Global Lab Technologist',
     roles: ['Global Lab Technologist'],
@@ -1203,7 +1203,7 @@ export const INITIAL_USERS: User[] = [
     id: 'usr-4',
     name: 'Dr. Tariqul Islam',
     username: 'dr_tariqul',
-    email: 'tariqul@lifecarediagnostic.com',
+    email: 'tariqul@diagnostic.com',
     phone: '01715-998877',
     role: 'Doctor',
     roles: ['Doctor', 'Global Doctor'],
@@ -1226,7 +1226,7 @@ export const INITIAL_SUPPORT_TICKETS: SupportTicket[] = [
     createdAt: '2026-09-03 11:30 AM',
     updatedAt: '2026-09-04 03:15 PM',
     latestUpdate: 'Our engineering team is testing optimized camera autofocus and torch toggles for low-light lab environments. Scheduled for next release.',
-    submittedBy: 'lifecare_admin',
+    submittedBy: 'admin',
     replies: [
       {
         id: 'rep-1',
@@ -1247,13 +1247,13 @@ export const INITIAL_SUPPORT_TICKETS: SupportTicket[] = [
     createdAt: '2026-09-02 02:45 PM',
     updatedAt: '2026-09-02 05:00 PM',
     latestUpdate: 'Thank you for the wonderful feedback! Glad the Bengali typography is working nicely.',
-    submittedBy: 'lifecare_admin',
+    submittedBy: 'admin',
     replies: [
       {
         id: 'rep-2',
         author: 'CarePulse Support',
         isStaff: true,
-        message: 'Thank you for trusting CarePulse for LifeCare Diagnostic Center!',
+        message: 'Thank you for trusting CarePulse for your Diagnostic Center!',
         createdAt: '2026-09-02 05:00 PM'
       }
     ]

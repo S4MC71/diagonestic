@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
   const { setCurrentView, showToast } = useApp();
@@ -22,21 +22,6 @@ export const LoginView: React.FC = () => {
       setCurrentView('dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Demo still available for testing — uses real credentials
-  const handleQuickDemo = async () => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      await login('lifecare_admin', 'Admin@1234');
-      showToast('Signed in with Demo Admin account');
-      setCurrentView('dashboard');
-    } catch {
-      setError('Demo account not available. Please log in with your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -420,26 +405,6 @@ export const LoginView: React.FC = () => {
             >
               {isLoading ? 'Signing in…' : 'Sign in'}
             </button>
-
-            {/* Instant Demo Access Button */}
-            <div style={{ textAlign: 'center', marginTop: '12px' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{
-                  width: '100%',
-                  height: '44px',
-                  borderRadius: '12px',
-                  border: '1px dashed #10b981',
-                  color: '#047857',
-                  background: '#ecfdf5',
-                  fontWeight: 600
-                }}
-                onClick={handleQuickDemo}
-              >
-                <ShieldCheck size={16} /> ⚡ 1-Click Demo Login (LifeCare Admin)
-              </button>
-            </div>
           </form>
 
           <p style={{ marginTop: '40px', textAlign: 'center', fontSize: '11px', color: '#94a3b8' }}>

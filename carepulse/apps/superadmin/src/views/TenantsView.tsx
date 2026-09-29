@@ -218,15 +218,15 @@ const CreateTenantModal: React.FC<CreateModalProps> = ({ plans, onClose, onCreat
                 <div className="form-grid">
                   <div className="form-group">
                     <label className="form-label">Center Name *</label>
-                    <input className="input" placeholder="e.g. LifeCare Diagnostic Center" value={form.name} onChange={e => set('name', e.target.value)} required />
+                    <input className="input" placeholder="e.g. City Diagnostic Center" value={form.name} onChange={e => set('name', e.target.value)} required />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Slug * (Unique Domain ID)</label>
-                    <input className="input" placeholder="e.g. lifecare" value={form.slug} onChange={e => set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} required />
+                    <input className="input" placeholder="e.g. city-diagnostic" value={form.slug} onChange={e => set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} required />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Bengali Name</label>
-                    <input className="input" placeholder="লাইফকেয়ার ডায়াগনস্টিক সেন্টার" value={form.bengaliName} onChange={e => set('bengaliName', e.target.value)} />
+                    <input className="input" placeholder="সিটি ডায়াগনস্টিক সেন্টার" value={form.bengaliName} onChange={e => set('bengaliName', e.target.value)} />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Phone Number *</label>
@@ -234,7 +234,7 @@ const CreateTenantModal: React.FC<CreateModalProps> = ({ plans, onClose, onCreat
                   </div>
                   <div className="form-group">
                     <label className="form-label">Official Email</label>
-                    <input className="input" type="email" placeholder="info@lifecare.com" value={form.email} onChange={e => set('email', e.target.value)} />
+                    <input className="input" type="email" placeholder="info@citydiagnostic.com" value={form.email} onChange={e => set('email', e.target.value)} />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Subscription Plan</label>

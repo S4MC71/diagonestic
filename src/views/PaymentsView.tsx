@@ -41,7 +41,7 @@ interface PaymentRecord {
 }
 
 export const PaymentsView: React.FC = () => {
-  const { invoices, collectDuePayment, openPrintModal, showToast, setCurrentView } = useApp();
+  const { invoices, collectDuePayment, openPrintModal, showToast, setCurrentView, currentUser } = useApp();
 
   // Status Tabs (Exact SihatSuite layout: All, Due, Paid)
   const [activeTab, setActiveTab] = useState<'All' | 'Due' | 'Paid'>('All');
@@ -81,7 +81,7 @@ export const PaymentsView: React.FC = () => {
           date: '2026-09-15 10:30 AM',
           amount: 900,
           method: 'Cash',
-          receivedBy: 'lifecare_admin'
+          receivedBy: 'admin'
         }
       ]
     },
@@ -102,7 +102,7 @@ export const PaymentsView: React.FC = () => {
           date: '2026-09-16 02:15 PM',
           amount: 700,
           method: 'Cash',
-          receivedBy: 'lifecare_admin'
+          receivedBy: 'admin'
         },
         {
           id: 'pe-3',
@@ -177,7 +177,7 @@ export const PaymentsView: React.FC = () => {
       date: new Date().toLocaleString('en-GB'),
       amount: amountNum,
       method: collectMethod,
-      receivedBy: 'lifecare_admin'
+      receivedBy: currentUser?.username || 'admin'
     };
 
     setPaymentRecords(prev =>

@@ -154,7 +154,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(initialUsers[0]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentView, setCurrentViewState] = useState<ActiveView>(() => {
     if (typeof window !== 'undefined') {
       return getViewFromPath(window.location.pathname);
@@ -231,7 +231,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       time: '10:35 AM',
       amount: 900,
       method: 'Cash',
-      receivedBy: 'lifecare_admin'
+      receivedBy: 'admin'
     }
   ]);
   const [transactions, setTransactions] = useState<AccountingTransaction[]>(initialTransactions);
@@ -381,12 +381,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTimeout(() => setToastMessage(null), 3200);
   };
 
-  const login = (username: string, password?: string) => {
+  const login = (username: string, _password?: string) => {
     const user = users.find(u => u.username === username);
-    if (user || username === 'lifecare_admin') {
-      setCurrentUser(user || users[0]);
+    if (user) {
+      setCurrentUser(user);
       setCurrentView('dashboard');
-      showToast(`Successfully signed in to ${tenantSettings.name || 'LifeCare Diagnostic Center'}`);
+      showToast(`Successfully signed in to ${tenantSettings.name || 'Diagnostic Center'}`);
       return true;
     }
     return false;
@@ -443,7 +443,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       dueAmount: invInput.dueAmount || 0,
       paymentMethod: invInput.paymentMethod || 'Cash',
       paymentStatus: invInput.paymentStatus || 'PAID',
-      createdBy: invInput.createdBy || currentUser?.username || 'lifecare_admin',
+      createdBy: invInput.createdBy || currentUser?.username || 'admin',
       referralCommissionAmount: invInput.referralCommissionAmount,
       reportStatus: invInput.reportStatus || 'PENDING_SAMPLE'
     };

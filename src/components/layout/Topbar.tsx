@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   Bell,
   HelpCircle,
@@ -53,6 +54,7 @@ const VIEW_TITLES: Record<string, string> = {
 
 export const Topbar: React.FC = () => {
   const { currentView, setCurrentView, tenantSettings, currentUser, setCurrentUser, showToast, toggleSidebar } = useApp();
+  const { authUser, logout: authLogout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
@@ -74,6 +76,7 @@ export const Topbar: React.FC = () => {
 
   const handleSignOut = () => {
     setCurrentUser(null);
+    authLogout();
     setCurrentView('login');
     setShowProfileMenu(false);
   };
@@ -142,11 +145,11 @@ export const Topbar: React.FC = () => {
             onClick={() => setShowProfileMenu(!showProfileMenu)}
           >
             <div className="user-avatar">
-              {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : 'LC'}
+              {(currentUser?.name || authUser?.name || 'AD').slice(0, 2).toUpperCase()}
             </div>
             <div className="user-meta">
-              <div className="user-name">{currentUser?.username || 'lifecare_admin'}</div>
-              <div className="user-role">{currentUser?.role || 'Global Tenant Admin'}</div>
+              <div className="user-name">{currentUser?.username || authUser?.username || authUser?.name || 'Administrator'}</div>
+              <div className="user-role">{currentUser?.role || authUser?.role || 'Administrator'}</div>
             </div>
             <ChevronDown size={14} color="#64748b" style={{ flexShrink: 0 }} />
           </div>
@@ -177,7 +180,7 @@ export const Topbar: React.FC = () => {
               >
                 Signed in as{' '}
                 <strong style={{ color: 'var(--slate-800)', display: 'block' }}>
-                  {currentUser?.username || 'lifecare_admin'}
+                  {currentUser?.username || authUser?.username || authUser?.name || 'Administrator'}
                 </strong>
               </div>
 

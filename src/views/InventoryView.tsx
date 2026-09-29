@@ -85,7 +85,7 @@ export const InventoryView: React.FC = () => {
       type: 'Receive Stock',
       qty: '+4 Canisters',
       source: 'National Reagents Ltd (Challan #CH-882)',
-      user: 'lifecare_admin'
+      user: 'admin'
     },
     {
       id: 'h-2',
@@ -103,7 +103,7 @@ export const InventoryView: React.FC = () => {
       type: 'Stock Adjustment',
       qty: '+2 Bottles',
       source: 'Physical inventory reconciliation',
-      user: 'lifecare_admin'
+      user: 'admin'
     }
   ]);
 
@@ -154,7 +154,7 @@ export const InventoryView: React.FC = () => {
     if (reqItems.length === 0) return;
     createRequisition({
       department: reqNotes || 'General Laboratory Store',
-      requestedBy: currentUser?.username || 'lifecare_admin',
+      requestedBy: currentUser?.username || 'admin',
       items: reqItems,
       status,
       notes: reqNotes
