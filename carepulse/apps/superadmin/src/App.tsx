@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './index.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { RouterProvider, useRouter, SuperAdminView } from './context/RouterContext';
@@ -7,21 +7,24 @@ import { DashboardView } from './views/DashboardView';
 import { TenantsView } from './views/TenantsView';
 import { PlansView } from './views/PlansView';
 import { ModulesView } from './views/ModulesView';
+import { ModuleBuilderView } from './views/ModuleBuilderView';
 import { AdminsView } from './views/AdminsView';
 import { TenantDetailView } from './views/TenantDetailView';
 import { Sidebar } from './components/layout/Sidebar';
+import { Topbar } from './components/layout/Topbar';
 import { ShieldAlert, AlertTriangle, ArrowLeft } from 'lucide-react';
 
 const PAGE_TITLES: Record<SuperAdminView, string> = {
-  dashboard: 'Dashboard',
-  tenants: 'Tenants',
-  plans: 'Plans & Packages',
+  dashboard: 'Executive Dashboard',
+  tenants: 'Diagnostic Centers',
+  plans: 'Plans & Billing',
   modules: 'Module Registry',
+  'module-builder': 'Form Builder Studio',
   admins: 'Admin Team',
-  billing: 'Billing',
-  support: 'Support',
-  settings: 'Settings',
-  'tenant-detail': 'Tenant Detail',
+  billing: 'Billing Ledgers',
+  support: 'Support Desk',
+  settings: 'System Settings',
+  'tenant-detail': 'Center Details',
   login: 'Sign In',
   'not-found': 'Page Not Found',
 };
@@ -30,14 +33,40 @@ const AppInner: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { view, tenantId, navigate, securityNotice, clearSecurityNotice } = useRouter();
 
+  // Sidebar collapsible state with localStorage persistence
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('cp_sa_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('cp_sa_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // If in module builder mode, automatically collapse sidebar for maximized workspace width
+  useEffect(() => {
+    if (view === 'module-builder') {
+      setSidebarCollapsed(true);
+    }
+  }, [view]);
+
   if (isLoading) {
     return (
       <div className="full-loading">
         <span
           className="spinner"
-          style={{ borderTopColor: '#3b82f6', borderColor: 'rgba(59,130,246,0.2)', width: 28, height: 28 }}
+          style={{ width: 28, height: 28 }}
         />
-        Loading...
+        <span>Initializing CarePulse Core...</span>
       </div>
     );
   }
@@ -68,6 +97,9 @@ const AppInner: React.FC = () => {
       case 'modules':
         return isSuperAdmin ? <ModulesView /> : <DashboardView />;
 
+      case 'module-builder':
+        return isSuperAdmin ? <ModuleBuilderView /> : <DashboardView />;
+
       case 'admins':
         return isSuperAdmin ? <AdminsView /> : <DashboardView />;
 
@@ -75,7 +107,7 @@ const AppInner: React.FC = () => {
         return (
           <div className="empty-state" style={{ marginTop: 80, textAlign: 'center' }}>
             <AlertTriangle size={48} color="#f59e0b" style={{ margin: '0 auto 16px' }} />
-            <p className="empty-state-title">404 — Page Not Found</p>
+            <p className="empty-state-title">404 — Section Not Found</p>
             <p className="empty-state-sub" style={{ marginBottom: 20 }}>
               The requested administrative URL path does not exist or has been relocated.
             </p>
@@ -93,41 +125,34 @@ const AppInner: React.FC = () => {
         return (
           <div className="empty-state" style={{ marginTop: 80 }}>
             <p className="empty-state-title">{PAGE_TITLES[view] || 'Section'}</p>
-            <p className="empty-state-sub">Coming soon</p>
+            <p className="empty-state-sub">Administrative workspace module coming soon</p>
           </div>
         );
     }
   };
 
+  const isFullBleedView = view === 'module-builder';
+
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
 
       <div className="main-area">
-        {/* Topbar */}
-        <header className="topbar">
-          <span className="topbar-title">{PAGE_TITLES[view] || 'Control Panel'}</span>
-          <div className="topbar-right">
-            <div className="user-chip">
-              <div className="user-chip-avatar">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-              {user.name}
-            </div>
-          </div>
-        </header>
+        {/* Modern Topbar with Breadcrumbs and User Chip */}
+        <Topbar sidebarCollapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} />
 
-        <main className="content-area">
+        {/* Dynamic Main Workspace */}
+        <main className={isFullBleedView ? 'content-area-clean' : 'content-area'}>
           {/* Security Alert Banner */}
           {securityNotice && (
             <div
               style={{
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                color: '#ef4444',
+                background: 'var(--danger-bg)',
+                border: '1px solid var(--danger-border)',
+                color: 'var(--danger)',
                 padding: '10px 16px',
                 borderRadius: 8,
-                marginBottom: 16,
+                margin: isFullBleedView ? '16px 20px 0' : '0 0 16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -144,7 +169,7 @@ const AppInner: React.FC = () => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#ef4444',
+                  color: 'inherit',
                   cursor: 'pointer',
                   fontSize: 18,
                   lineHeight: 1,

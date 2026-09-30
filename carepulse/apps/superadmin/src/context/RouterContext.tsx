@@ -7,6 +7,7 @@ export type SuperAdminView =
   | 'tenant-detail'
   | 'plans'
   | 'modules'
+  | 'module-builder'
   | 'admins'
   | 'billing'
   | 'support'
@@ -18,6 +19,7 @@ export interface RouteState {
   path: string;
   view: SuperAdminView;
   tenantId?: string;
+  moduleKey?: string;
   securityNotice: string | null;
 }
 
@@ -25,6 +27,7 @@ interface RouterContextType {
   path: string;
   view: SuperAdminView;
   tenantId?: string;
+  moduleKey?: string;
   securityNotice: string | null;
   clearSecurityNotice: () => void;
   navigate: (targetPath: string, options?: { replace?: boolean }) => void;
@@ -32,13 +35,18 @@ interface RouterContextType {
 
 const RouterContext = createContext<RouterContextType | undefined>(undefined);
 
-const SUPER_ADMIN_ONLY_VIEWS: Set<SuperAdminView> = new Set(['plans', 'modules', 'admins']);
+const SUPER_ADMIN_ONLY_VIEWS: Set<SuperAdminView> = new Set(['plans', 'modules', 'module-builder', 'admins']);
 
 /**
  * Validates and parses the pathname into a structured, safe view.
  * Prevents directory traversal, XSS in URL parameters, and unauthorized routes.
  */
-function parsePath(rawPath: string): { view: SuperAdminView; tenantId?: string; normalizedPath: string } {
+function parsePath(rawPath: string): {
+  view: SuperAdminView;
+  tenantId?: string;
+  moduleKey?: string;
+  normalizedPath: string;
+} {
   // Normalize: strip search params, hashes, and trailing slashes
   const clean = (rawPath.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/').toLowerCase();
 
@@ -59,6 +67,14 @@ function parsePath(rawPath: string): { view: SuperAdminView; tenantId?: string; 
   if (clean === '/plans') {
     return { view: 'plans', normalizedPath: '/plans' };
   }
+
+  // Deep route: /modules/:key/builder (allows lowercase alphanumeric and underscores, 2-30 chars)
+  const builderMatch = rawPath.split('?')[0].split('#')[0].match(/^\/modules\/([a-z0-9_]{2,30})\/builder$/);
+  if (builderMatch) {
+    const rawKey = builderMatch[1];
+    return { view: 'module-builder', moduleKey: rawKey, normalizedPath: `/modules/${rawKey}/builder` };
+  }
+
   if (clean === '/modules') {
     return { view: 'modules', normalizedPath: '/modules' };
   }
@@ -161,6 +177,7 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         path: currentPath,
         view: parsed.view,
         tenantId: parsed.tenantId,
+        moduleKey: parsed.moduleKey,
         securityNotice,
         clearSecurityNotice,
         navigate,

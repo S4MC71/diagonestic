@@ -162,6 +162,35 @@ router.post(
   })
 );
 
+// ─── GET /api/superadmin/modules/:key ─────────────────────────
+router.get(
+  '/:key',
+  asyncHandler(async (req: Request, res: Response) => {
+    const key = req.params['key'] as string;
+    const moduleRecord = await prisma.module.findUnique({
+      where: { key },
+    });
+
+    if (!moduleRecord) {
+      throw createError(`Module "${key}" not found`, 404);
+    }
+
+    const activeUsage = await prisma.tenantModule.count({
+      where: { moduleKey: key, isEnabled: true },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        module: {
+          ...moduleRecord,
+          enabledTenantsCount: activeUsage,
+        },
+      },
+    });
+  })
+);
+
 // ─── PATCH /api/superadmin/modules/:key ───────────────────────
 router.patch(
   '/:key',

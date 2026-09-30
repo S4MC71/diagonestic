@@ -28,10 +28,10 @@ export const DashboardView: React.FC = () => {
   }, []);
 
   const statCards = [
-    { label: 'Total Tenants', value: stats?.totalTenants ?? '—', icon: <Building2 size={20} />, color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
-    { label: 'Active', value: stats?.activeTenants ?? '—', icon: <TrendingUp size={20} />, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
-    { label: 'Trial', value: stats?.trialTenants ?? '—', icon: <Users size={20} />, color: '#6366f1', bg: 'rgba(99,102,241,0.1)' },
-    { label: 'Suspended', value: stats?.suspendedTenants ?? '—', icon: <CreditCard size={20} />, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    { label: 'Total Diagnostic Centers', value: stats?.totalTenants ?? '—', icon: <Building2 size={20} />, color: 'var(--accent-light)', bg: 'var(--accent-glow)' },
+    { label: 'Active Subscriptions', value: stats?.activeTenants ?? '—', icon: <TrendingUp size={20} />, color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
+    { label: 'Trial Centers', value: stats?.trialTenants ?? '—', icon: <Users size={20} />, color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
+    { label: 'Suspended Centers', value: stats?.suspendedTenants ?? '—', icon: <CreditCard size={20} />, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
   ];
 
   return (

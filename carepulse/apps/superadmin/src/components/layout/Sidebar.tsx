@@ -8,7 +8,9 @@ import {
   LogOut,
   Shield,
   Boxes,
-  Users2
+  Users2,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from '../../context/RouterContext';
@@ -19,24 +21,78 @@ interface NavItemDef {
   label: string;
   icon: React.ReactNode;
   superAdminOnly?: boolean;
+  matchPrefix?: string;
 }
 
-const navItems: NavItemDef[] = [
-  { key: 'dashboard', path: '/dashboard', label: 'Dashboard',   icon: <LayoutDashboard size={16} /> },
-  { key: 'tenants',   path: '/tenants',   label: 'Tenants',     icon: <Building2 size={16} /> },
-  { key: 'plans',     path: '/plans',     label: 'Plans',       icon: <CreditCard size={16} />, superAdminOnly: true },
-  { key: 'modules',   path: '/modules',   label: 'Modules',     icon: <Boxes size={16} />,      superAdminOnly: true },
-  { key: 'admins',    path: '/admins',    label: 'Admin Team',  icon: <Users2 size={16} />,     superAdminOnly: true },
-  { key: 'support',   path: '/support',   label: 'Support',     icon: <Headphones size={16} /> },
-  { key: 'settings',  path: '/settings',  label: 'Settings',    icon: <Settings size={16} /> },
+interface NavGroup {
+  label: string;
+  items: NavItemDef[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Overview',
+    items: [
+      { key: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    ],
+  },
+  {
+    label: 'Tenants & Growth',
+    items: [
+      {
+        key: 'tenants',
+        path: '/tenants',
+        label: 'Diagnostic Centers',
+        icon: <Building2 size={18} />,
+        matchPrefix: '/tenants',
+      },
+      {
+        key: 'plans',
+        path: '/plans',
+        label: 'Plans & Billing',
+        icon: <CreditCard size={18} />,
+        superAdminOnly: true,
+      },
+    ],
+  },
+  {
+    label: 'Platform Architecture',
+    items: [
+      {
+        key: 'modules',
+        path: '/modules',
+        label: 'Module Registry',
+        icon: <Boxes size={18} />,
+        superAdminOnly: true,
+        matchPrefix: '/modules',
+      },
+      {
+        key: 'admins',
+        path: '/admins',
+        label: 'Admin Team',
+        icon: <Users2 size={18} />,
+        superAdminOnly: true,
+      },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { key: 'support', path: '/support', label: 'Help & Support', icon: <Headphones size={18} /> },
+      { key: 'settings', path: '/settings', label: 'Settings', icon: <Settings size={18} /> },
+    ],
+  },
 ];
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCollapse }) => {
   const { user, logout } = useAuth();
   const { path, navigate } = useRouter();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
-
-  const visibleItems = navItems.filter((item) => !item.superAdminOnly || isSuperAdmin);
 
   const handleLogout = () => {
     logout();
@@ -44,16 +100,15 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="sidebar">
-      {/* Logo */}
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+      {/* Brand Logo Header */}
       <div
         className="sidebar-logo"
         onClick={() => navigate('/dashboard')}
-        style={{ cursor: 'pointer' }}
         title="Go to Dashboard"
       >
         <div className="sidebar-logo-icon">
-          <Shield size={18} color="#fff" />
+          <Shield size={19} color="#ffffff" />
         </div>
         <div className="sidebar-logo-text">
           <span className="sidebar-logo-name">CarePulse</span>
@@ -63,57 +118,110 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* Nav */}
+      {/* Nav Groups */}
       <nav className="sidebar-nav">
-        <span className="sidebar-section-label">Management</span>
-        {visibleItems.map((item) => {
-          const isActive = item.key === 'tenants'
-            ? (path === '/tenants' || path.startsWith('/tenants/'))
-            : path === item.path;
+        {navGroups.map((group) => {
+          const visibleItems = group.items.filter(
+            (item) => !item.superAdminOnly || isSuperAdmin
+          );
+          if (visibleItems.length === 0) return null;
 
           return (
-            <button
-              key={item.key}
-              className={`nav-item ${isActive ? 'active' : ''}`}
-              onClick={() => navigate(item.path)}
-            >
-              {item.icon}
-              {item.label}
-            </button>
+            <div key={group.label} style={{ marginBottom: 4 }}>
+              <div className="sidebar-section-label">{group.label}</div>
+              {visibleItems.map((item) => {
+                const isActive = item.matchPrefix
+                  ? path === item.path || path.startsWith(item.matchPrefix)
+                  : path === item.path;
+
+                return (
+                  <button
+                    key={item.key}
+                    className={`nav-item ${isActive ? 'active' : ''}`}
+                    onClick={() => navigate(item.path)}
+                    data-tooltip={item.label}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    {item.icon}
+                    <span className="nav-item-label">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           );
         })}
       </nav>
 
-      {/* Footer */}
+      {/* Footer Area with Collapse Toggle & User Profile */}
       <div className="sidebar-footer">
-        <div
-          style={{
-            padding: '10px 12px',
-            background: 'var(--bg-elevated)',
-            borderRadius: 'var(--radius-sm)',
-            marginBottom: 8,
-          }}
-        >
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>{user?.name}</span>
-            <span
+        {onToggleCollapse && (
+          <button
+            className="nav-item"
+            onClick={onToggleCollapse}
+            style={{ marginBottom: 6, justifyContent: collapsed ? 'center' : 'flex-start' }}
+            title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            data-tooltip={collapsed ? 'Expand' : 'Collapse'}
+          >
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+            <span className="nav-item-label">Collapse Menu</span>
+          </button>
+        )}
+
+        {!collapsed && (
+          <div
+            style={{
+              padding: '10px 12px',
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)',
+              marginBottom: 4,
+            }}
+          >
+            <div
               style={{
-                fontSize: 10,
-                padding: '1px 5px',
-                borderRadius: 4,
-                background: isSuperAdmin ? 'rgba(245,158,11,0.2)' : 'rgba(59,130,246,0.2)',
-                color: isSuperAdmin ? '#f59e0b' : '#60a5fa',
-                fontWeight: 700,
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}
             >
-              {isSuperAdmin ? 'SUPER' : 'L2'}
-            </span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user?.name || 'Administrator'}
+              </span>
+              <span
+                style={{
+                  fontSize: 9,
+                  padding: '1px 6px',
+                  borderRadius: 99,
+                  background: isSuperAdmin ? 'rgba(16,185,129,0.2)' : 'rgba(56,189,248,0.2)',
+                  color: isSuperAdmin ? 'var(--accent-light)' : 'var(--info)',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {isSuperAdmin ? 'SUPER' : 'L2'}
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+              @{user?.username}
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>@{user?.username}</div>
-        </div>
-        <button className="nav-item" onClick={handleLogout} style={{ width: '100%' }}>
+        )}
+
+        <button
+          className="nav-item"
+          onClick={handleLogout}
+          data-tooltip="Sign Out"
+          title={collapsed ? 'Sign Out' : undefined}
+          style={{
+            color: 'var(--danger)',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+          }}
+        >
           <LogOut size={16} />
-          Sign Out
+          <span className="nav-item-label">Sign Out</span>
         </button>
       </div>
     </aside>
