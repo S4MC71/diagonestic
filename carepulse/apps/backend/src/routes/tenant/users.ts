@@ -97,9 +97,10 @@ router.post(
 
     if (!tenant) throw createError('Tenant not found', 404);
 
-    if (tenant.plan && tenant._count.users >= tenant.plan.maxUsers) {
+    const userLimit = tenant.maxUsers ?? tenant.plan?.maxUsers ?? 5;
+    if (tenant._count.users >= userLimit) {
       throw createError(
-        `User limit reached (${tenant.plan.maxUsers} users max on your current plan). Please upgrade your plan.`,
+        `User limit reached (${userLimit} users max allowed for your center). Please contact system administrator to increase your user limit.`,
         409
       );
     }

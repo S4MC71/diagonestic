@@ -57,7 +57,8 @@ export type ActiveView =
   | 'website-cms'
   | 'online-bookings'
   | 'branding-studio'
-  | 'sms-notifications';
+  | 'sms-notifications'
+  | (string & {});
 
 export type LiveUserRole =
   | 'Doctor'

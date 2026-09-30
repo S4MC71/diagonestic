@@ -32,21 +32,17 @@ interface TenantDetail extends Tenant {
   users: { id: string; name: string; username: string; role: string; isActive: boolean }[];
 }
 
-// ─── Module definitions ───────────────────────────────────────────────────
-const ALL_MODULES = [
-  { key: 'patients',        label: 'Patients' },
-  { key: 'clinical',        label: 'Clinical' },
-  { key: 'lab',             label: 'Laboratory' },
-  { key: 'pharmacy',        label: 'Pharmacy' },
-  { key: 'home_collection', label: 'Home Collection' },
-  { key: 'send_out',        label: 'Send-Out Lab' },
-  { key: 'finance',         label: 'Finance' },
-  { key: 'commissions',     label: 'Commissions' },
-  { key: 'inventory',       label: 'Inventory' },
-  { key: 'accounting',      label: 'Accounting' },
-  { key: 'recall',          label: 'Recall' },
-  { key: 'whatsapp',        label: 'WhatsApp' },
-];
+// ─── Module section metadata ──────────────────────────────────────────────
+export const TENANT_SECTION_METAS: Record<string, { title: string; icon: string; color: string }> = {
+  CLINICAL: { title: 'Clinical & Consultation', icon: '🩺', color: '#10b981' },
+  LAB:      { title: 'Lab & Diagnostics',       icon: '🔬', color: '#6366f1' },
+  PHARMACY: { title: 'Pharmacy & POS',          icon: '💊', color: '#ec4899' },
+  FINANCE:  { title: 'Billing & Finance',       icon: '💰', color: '#f59e0b' },
+  ADMIN:    { title: 'Staff & Administration',  icon: '⚙️', color: '#3b82f6' },
+  GENERAL:  { title: 'Growth & Add-ons',         icon: '🌐', color: '#8b5cf6' },
+};
+
+export const TENANT_SECTION_KEYS = ['CLINICAL', 'LAB', 'PHARMACY', 'FINANCE', 'ADMIN', 'GENERAL'];
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Active', TRIAL: 'Trial', SUSPENDED: 'Suspended', EXPIRED: 'Expired',
@@ -435,13 +431,18 @@ interface DetailModalProps {
 
 const TenantDetailModal: React.FC<DetailModalProps> = ({ tenantId, onClose, onUpdated }) => {
   const [tenant, setTenant] = useState<TenantDetail | null>(null);
+  const [availableModules, setAvailableModules] = useState<DynamicModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get<{ data: { tenant: TenantDetail } }>(`/api/superadmin/tenants/${tenantId}`);
-      setTenant(res.data.tenant);
+      const [resTenant, resModules] = await Promise.all([
+        api.get<{ data: { tenant: TenantDetail } }>(`/api/superadmin/tenants/${tenantId}`),
+        api.get<{ data: { modules: DynamicModule[] } }>('/api/superadmin/modules')
+      ]);
+      setTenant(resTenant.data.tenant);
+      setAvailableModules(resModules.data.modules || []);
     } catch {
       onClose();
     } finally {
@@ -468,6 +469,33 @@ const TenantDetailModal: React.FC<DetailModalProps> = ({ tenantId, onClose, onUp
     }
   };
 
+  const toggleSection = async (sectionKey: string, enable: boolean) => {
+    if (!tenant) return;
+    const sectionMods = availableModules.filter(m => (m.category || 'GENERAL') === sectionKey);
+    if (sectionMods.length === 0) return;
+    setToggling(sectionKey);
+    try {
+      await api.patch(`/api/superadmin/tenants/${tenantId}/modules/bulk`, {
+        moduleKeys: sectionMods.map(m => m.key),
+        isEnabled: enable,
+      });
+      setTenant(t => {
+        if (!t) return t;
+        const map = new Map(t.modules.map(m => [m.moduleKey, m.isEnabled]));
+        sectionMods.forEach(m => map.set(m.key, enable));
+        return {
+          ...t,
+          modules: Array.from(map.entries()).map(([moduleKey, isEnabled]) => ({ moduleKey, isEnabled })),
+        };
+      });
+      onUpdated();
+    } catch (err) {
+      console.error('Failed to bulk toggle section:', err);
+    } finally {
+      setToggling(null);
+    }
+  };
+
   const toggleStatus = async () => {
     if (!tenant) return;
     const newStatus = tenant.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
@@ -482,7 +510,7 @@ const TenantDetailModal: React.FC<DetailModalProps> = ({ tenantId, onClose, onUp
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal" style={{ maxWidth: 680 }}>
+      <div className="modal" style={{ maxWidth: 720, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
         <div className="modal-header">
           <div>
             <div className="modal-title">{tenant?.name ?? '...'}</div>
@@ -502,7 +530,7 @@ const TenantDetailModal: React.FC<DetailModalProps> = ({ tenantId, onClose, onUp
           </div>
         </div>
 
-        <div className="modal-body">
+        <div className="modal-body" style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}>
               <span className="spinner" style={{ borderTopColor: 'var(--accent)', borderColor: 'var(--border)' }} />
@@ -524,31 +552,87 @@ const TenantDetailModal: React.FC<DetailModalProps> = ({ tenantId, onClose, onUp
                 ))}
               </div>
 
-              {/* Module Toggles */}
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 10 }}>Module Configuration</p>
-                <div className="module-grid">
-                  {ALL_MODULES.map(mod => {
-                    const enabled = getModuleState(mod.key);
-                    return (
-                      <div key={mod.key} className={`module-card ${enabled ? 'enabled' : ''}`}>
-                        <div className="module-info">
-                          <span className="module-name">{mod.label}</span>
-                          <span className="module-key">{mod.key}</span>
-                        </div>
-                        <label className="toggle" title={enabled ? 'Click to disable' : 'Click to enable'}>
-                          <input
-                            type="checkbox"
-                            checked={enabled}
-                            disabled={toggling === mod.key}
-                            onChange={(e) => toggleModule(mod.key, e.target.checked)}
-                          />
-                          <span className="toggle-track" />
-                        </label>
-                      </div>
-                    );
-                  })}
+              {/* Section-Wise Module Configuration */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', margin: 0 }}>
+                    Module Configuration ({availableModules.filter(m => getModuleState(m.key)).length} / {availableModules.length} Active)
+                  </p>
                 </div>
+
+                {TENANT_SECTION_KEYS.map(secKey => {
+                  const secMeta = TENANT_SECTION_METAS[secKey] || { title: secKey, icon: '📦', color: '#94a3b8' };
+                  const secModules = availableModules.filter(m => (m.category || 'GENERAL') === secKey);
+                  if (secModules.length === 0) return null;
+                  const activeCount = secModules.filter(m => getModuleState(m.key)).length;
+                  const allActive = activeCount === secModules.length;
+
+                  return (
+                    <div key={secKey} style={{
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '10px 12px',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 15 }}>{secMeta.icon}</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{secMeta.title}</span>
+                          <span style={{
+                            fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 10,
+                            background: activeCount > 0 ? `${secMeta.color}25` : 'rgba(255,255,255,0.06)',
+                            color: activeCount > 0 ? secMeta.color : 'var(--text-muted)'
+                          }}>
+                            {activeCount} / {secModules.length} Active
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            type="button"
+                            className="btn btn-ghost"
+                            style={{ fontSize: 11, color: '#10b981', padding: '2px 8px', height: 'auto', minHeight: 0 }}
+                            disabled={toggling === secKey || allActive}
+                            onClick={() => toggleSection(secKey, true)}
+                          >
+                            Enable Section
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost"
+                            style={{ fontSize: 11, color: '#ef4444', padding: '2px 8px', height: 'auto', minHeight: 0 }}
+                            disabled={toggling === secKey || activeCount === 0}
+                            onClick={() => toggleSection(secKey, false)}
+                          >
+                            Disable Section
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="module-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 6 }}>
+                        {secModules.map(mod => {
+                          const enabled = getModuleState(mod.key);
+                          return (
+                            <div key={mod.key} className={`module-card ${enabled ? 'enabled' : ''}`} style={{ padding: '8px 10px' }}>
+                              <div className="module-info">
+                                <span className="module-name" style={{ fontSize: 12 }}>{mod.label}</span>
+                                <span className="module-key" style={{ fontSize: 10 }}>{mod.key}</span>
+                              </div>
+                              <label className="toggle" title={enabled ? 'Click to disable' : 'Click to enable'}>
+                                <input
+                                  type="checkbox"
+                                  checked={enabled}
+                                  disabled={toggling === mod.key || toggling === secKey}
+                                  onChange={(e) => toggleModule(mod.key, e.target.checked)}
+                                />
+                                <span className="toggle-track" />
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Users */}

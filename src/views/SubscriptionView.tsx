@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { SubscriptionPayment } from '../types';
 import {
   CreditCard,
@@ -94,8 +95,18 @@ const PRICING_TIERS: PricingTier[] = [
   }
 ];
 
+const MODULE_SECTIONS = [
+  { id: 'CLINICAL', title: 'Clinical & Consultations',   icon: '🩺', color: '#10b981' },
+  { id: 'LAB',      title: 'Laboratory & Diagnostics',   icon: '🔬', color: '#6366f1' },
+  { id: 'PHARMACY', title: 'Pharmacy & Drug POS',       icon: '💊', color: '#ec4899' },
+  { id: 'FINANCE',  title: 'Billing & Accounting',       icon: '💰', color: '#f59e0b' },
+  { id: 'ADMIN',    title: 'Staff, HRM & Administration', icon: '⚙️', color: '#3b82f6' },
+  { id: 'GENERAL',  title: 'Growth & Add-on Integrations', icon: '🌐', color: '#8b5cf6' },
+];
+
 export const SubscriptionView: React.FC = () => {
   const { tenantSettings, activeSubscription, updateActiveSubscription, subscriptionPayments, recordSubscriptionPayment, showToast } = useApp();
+  const { modules, moduleDefs } = useAuth();
 
   // Billing Cycle Toggle for Pricing Table
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
@@ -294,6 +305,119 @@ export const SubscriptionView: React.FC = () => {
               {activeSubscription.billingPeriodText.replace('per ', '')}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ====================================================================
+          CARD: ACTIVATED MODULES & FEATURES (SECTION-WISE BREAKDOWN)
+          ==================================================================== */}
+      <div
+        className="card"
+        style={{
+          padding: '24px',
+          borderRadius: '12px',
+          background: '#ffffff',
+          border: '1px solid #e1ece7',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          marginBottom: '28px'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                Activated Modules & Center Capabilities
+              </h2>
+              <span
+                style={{
+                  background: '#dcfce7',
+                  color: '#15803d',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: '12px'
+                }}
+              >
+                {modules.length} Modules Active
+              </span>
+            </div>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0' }}>
+              Section-wise breakdown of operational modules enabled for <strong>{tenantSettings.name || 'your center'}</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          {MODULE_SECTIONS.map((sec) => {
+            const secModules = modules.filter((mKey) => {
+              const def = moduleDefs[mKey];
+              const cat = (def?.category || 'GENERAL').toUpperCase();
+              return cat === sec.id;
+            });
+
+            if (secModules.length === 0) return null;
+
+            return (
+              <div
+                key={sec.id}
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '16px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>{sec.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{sec.title}</span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: '2px 6px',
+                      borderRadius: 10,
+                      background: `${sec.color}18`,
+                      color: sec.color
+                    }}
+                  >
+                    {secModules.length} Active
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {secModules.map((mKey) => {
+                    const def = moduleDefs[mKey];
+                    const label = def?.label || mKey.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+                    return (
+                      <div
+                        key={mKey}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          background: '#ffffff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '6px',
+                          padding: '6px 10px',
+                          fontSize: '12px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <CheckCircle2 size={13} style={{ color: '#10b981', flexShrink: 0 }} />
+                          <span style={{ fontWeight: 600, color: '#1e293b' }}>{label}</span>
+                        </div>
+                        <span style={{ fontSize: '10px', fontFamily: 'monospace', color: '#94a3b8' }}>
+                          {mKey}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

@@ -46,6 +46,7 @@ import { OnlineBookingsView } from './views/OnlineBookingsView';
 import { BrandingStudioView } from './views/BrandingStudioView';
 import { SmsNotificationsView } from './views/SmsNotificationsView';
 import { PublicReportPage } from './views/PublicReportPage';
+import { DynamicModuleView } from './views/DynamicModuleView';
 
 const VIEW_MODULE_MAP: Record<string, string> = {
   patients: 'patients',
@@ -99,7 +100,7 @@ export const App: React.FC = () => {
     currentUser,
     setCurrentUser,
   } = useApp();
-  const { authUser, isAuthLoading, hasModule } = useAuth();
+  const { authUser, isAuthLoading, hasModule, modules } = useAuth();
 
   // Synchronize authenticated tenant user and center metadata into AppContext
   useEffect(() => {
@@ -312,6 +313,9 @@ export const App: React.FC = () => {
       case 'sms-notifications':
         return <SmsNotificationsView />;
       default:
+        if (hasModule(currentView) || (modules && modules.includes(currentView))) {
+          return <DynamicModuleView moduleKey={currentView} />;
+        }
         return <DashboardView />;
     }
   };

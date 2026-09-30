@@ -26,9 +26,18 @@ export interface AuthUser {
   } | null;
 }
 
+export interface ModuleDef {
+  enabled: boolean;
+  label: string;
+  icon?: string;
+  category?: string;
+  config?: unknown;
+}
+
 interface AuthContextType {
   authUser: AuthUser | null;
   modules: string[];
+  moduleDefs: Record<string, ModuleDef>;
   hasModule: (moduleKey?: string) => boolean;
   isAuthLoading: boolean;
   isAuthenticated: boolean;
@@ -66,6 +75,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
+  const [moduleDefs, setModuleDefs] = useState<Record<string, ModuleDef>>(() => {
+    try {
+      const saved = localStorage.getItem('cp_module_defs');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   // Helper to test if a given module is enabled for the logged-in tenant
@@ -92,9 +110,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Query /api/tenant/modules to ensure real-time synced modules
       try {
-        const modRes = await api.get<{ data: { moduleKeys?: string[] } }>('/api/tenant/modules');
+        const modRes = await api.get<{ data: { moduleKeys?: string[]; modules?: Record<string, ModuleDef> } }>('/api/tenant/modules');
         if (modRes.data?.moduleKeys && Array.isArray(modRes.data.moduleKeys)) {
           userModules = modRes.data.moduleKeys;
+        }
+        if (modRes.data?.modules) {
+          setModuleDefs(modRes.data.modules);
+          localStorage.setItem('cp_module_defs', JSON.stringify(modRes.data.modules));
         }
       } catch {
         // Fallback to auth/me modules
@@ -111,9 +133,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearTokens();
       localStorage.removeItem('cp_auth_user');
       localStorage.removeItem('cp_modules');
+      localStorage.removeItem('cp_module_defs');
       localStorage.removeItem('cp_tenant');
       setAuthUser(null);
       setModules([]);
+      setModuleDefs({});
     } finally {
       setIsAuthLoading(false);
     }
@@ -129,10 +153,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const token = getToken();
       if (!token) return;
       try {
-        const res = await api.get<{ data: { moduleKeys?: string[] } }>('/api/tenant/modules');
+        const res = await api.get<{ data: { moduleKeys?: string[]; modules?: Record<string, ModuleDef> } }>('/api/tenant/modules');
         if (res.data?.moduleKeys && Array.isArray(res.data.moduleKeys)) {
           setModules(res.data.moduleKeys);
           localStorage.setItem('cp_modules', JSON.stringify(res.data.moduleKeys));
+        }
+        if (res.data?.modules) {
+          setModuleDefs(res.data.modules);
+          localStorage.setItem('cp_module_defs', JSON.stringify(res.data.modules));
         }
       } catch {
         // Silently catch
@@ -170,7 +198,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Super Admins must use the SuperAdmin panel.');
     }
 
-    const userModules = returnedModules || user.modules || user.tenant?.modules || [];
+    let userModules = returnedModules || user.modules || user.tenant?.modules || [];
+
+    // Query /api/tenant/modules to ensure real-time synced modules
+    try {
+      const modRes = await api.get<{ data: { moduleKeys?: string[]; modules?: Record<string, ModuleDef> } }>('/api/tenant/modules');
+      if (modRes.data?.moduleKeys && Array.isArray(modRes.data.moduleKeys)) {
+        userModules = modRes.data.moduleKeys;
+      }
+      if (modRes.data?.modules) {
+        setModuleDefs(modRes.data.modules);
+        localStorage.setItem('cp_module_defs', JSON.stringify(modRes.data.modules));
+      }
+    } catch {
+      // Continue with default userModules
+    }
 
     setTokens(accessToken, refreshToken);
     setAuthUser(user);
@@ -187,9 +229,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearTokens();
     localStorage.removeItem('cp_auth_user');
     localStorage.removeItem('cp_modules');
+    localStorage.removeItem('cp_module_defs');
     localStorage.removeItem('cp_tenant');
     setAuthUser(null);
     setModules([]);
+    setModuleDefs({});
   };
 
   return (
@@ -197,6 +241,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         authUser,
         modules,
+        moduleDefs,
         hasModule,
         isAuthLoading,
         isAuthenticated: authUser !== null,

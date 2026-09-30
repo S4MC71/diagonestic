@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { asyncHandler, createError } from '../../middleware/errorHandler';
 import { auth } from '../../middleware/auth';
@@ -59,6 +59,11 @@ const toggleModuleSchema = z.object({
   config: z.record(z.unknown()).optional(),
 });
 
+const bulkToggleModuleSchema = z.object({
+  moduleKeys: z.array(z.string().min(1)),
+  isEnabled: z.boolean(),
+});
+
 const assignPlanSchema = z.object({
   planId: z.string().uuid(),
   planExpiresAt: z.string().datetime(),
@@ -66,6 +71,32 @@ const assignPlanSchema = z.object({
   amount: z.number().int().positive(),
   method: z.string().optional(),
   notes: z.string().optional(),
+});
+
+const updateUserLimitSchema = z.object({
+  maxUsers: z.number().int().min(1).nullable(),
+});
+
+const superadminCreateTenantUserSchema = z.object({
+  name: z.string().min(2),
+  username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  role: z.nativeEnum(UserRole),
+  email: z.string().email().optional().or(z.literal('')),
+  isActive: z.boolean().default(true),
+});
+
+const superadminUpdateTenantUserSchema = z.object({
+  name: z.string().min(2).optional(),
+  username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/).optional(),
+  email: z.string().email().optional().nullable().or(z.literal('')),
+  role: z.nativeEnum(UserRole).optional(),
+  isActive: z.boolean().optional(),
+  password: z.string().min(6).optional(),
+});
+
+const resetPasswordSchema = z.object({
+  newPassword: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 // ─── GET /api/superadmin/tenants ──────────────────────────────
@@ -140,20 +171,40 @@ router.get(
         modules: true,
         settings: true,
         users: {
-          select: { id: true, name: true, username: true, role: true, isActive: true, lastLoginAt: true },
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            email: true,
+            role: true,
+            isActive: true,
+            lastLoginAt: true,
+            createdAt: true,
+            updatedAt: true,
+          },
           orderBy: { createdAt: 'asc' },
         },
         subscriptionPayments: {
           orderBy: { paidAt: 'desc' },
           take: 10,
         },
-        _count: { select: { patients: true, invoices: true } },
+        _count: { select: { patients: true, invoices: true, users: true } },
       },
     });
 
     if (!tenant) throw createError('Tenant not found', 404);
 
-    res.json({ success: true, data: { tenant } });
+    const userLimit = tenant.maxUsers ?? tenant.plan?.maxUsers ?? 5;
+
+    res.json({
+      success: true,
+      data: {
+        tenant: {
+          ...tenant,
+          userLimit,
+        },
+      },
+    });
   })
 );
 
@@ -277,6 +328,36 @@ router.patch(
   })
 );
 
+// ─── PATCH /api/superadmin/tenants/:id/modules/bulk ───────────
+router.patch(
+  '/:id/modules/bulk',
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params['id'] as string;
+    const parsed = bulkToggleModuleSchema.safeParse(req.body);
+    if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
+
+    const tenant = await prisma.tenant.findUnique({ where: { id } });
+    if (!tenant) throw createError('Tenant not found', 404);
+
+    const { moduleKeys, isEnabled } = parsed.data;
+
+    await prisma.$transaction(
+      moduleKeys.map((moduleKey) =>
+        prisma.tenantModule.upsert({
+          where: { tenantId_moduleKey: { tenantId: id, moduleKey } },
+          update: { isEnabled },
+          create: { tenantId: id, moduleKey, isEnabled, config: toJson({}) },
+        })
+      )
+    );
+
+    res.json({
+      success: true,
+      message: `${moduleKeys.length} modules ${isEnabled ? 'enabled' : 'disabled'} for ${tenant.name}`,
+    });
+  })
+);
+
 // ─── POST /api/superadmin/tenants/:id/assign-plan ─────────────
 router.post(
   '/:id/assign-plan',
@@ -325,6 +406,263 @@ router.post(
     });
 
     res.json({ success: true, message: `Plan "${plan.name}" assigned successfully` });
+  })
+);
+
+// ─── PATCH /api/superadmin/tenants/:id/user-limit ──────────────
+router.patch(
+  '/:id/user-limit',
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params['id'] as string;
+    const parsed = updateUserLimitSchema.safeParse(req.body);
+    if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id },
+      include: { plan: true },
+    });
+    if (!tenant) throw createError('Tenant not found', 404);
+
+    const { maxUsers } = parsed.data;
+    const updated = await prisma.tenant.update({
+      where: { id },
+      data: { maxUsers },
+      select: { id: true, name: true, maxUsers: true },
+    });
+
+    const effectiveLimit = maxUsers ?? tenant.plan?.maxUsers ?? 5;
+
+    res.json({
+      success: true,
+      message: maxUsers !== null
+        ? `User limit set to ${maxUsers} for ${tenant.name}`
+        : `User limit reset to plan default (${effectiveLimit})`,
+      data: {
+        tenant: updated,
+        userLimit: effectiveLimit,
+      },
+    });
+  })
+);
+
+// ─── GET /api/superadmin/tenants/:id/users ─────────────────────
+router.get(
+  '/:id/users',
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params['id'] as string;
+    const tenant = await prisma.tenant.findUnique({
+      where: { id },
+      include: { plan: true },
+    });
+    if (!tenant) throw createError('Tenant not found', 404);
+
+    const users = await prisma.user.findMany({
+      where: { tenantId: id },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        email: true,
+        role: true,
+        isActive: true,
+        lastLoginAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const userLimit = tenant.maxUsers ?? tenant.plan?.maxUsers ?? 5;
+
+    res.json({
+      success: true,
+      data: {
+        users,
+        total: users.length,
+        userLimit,
+        isAtLimit: users.length >= userLimit,
+      },
+    });
+  })
+);
+
+// ─── POST /api/superadmin/tenants/:id/users ────────────────────
+router.post(
+  '/:id/users',
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params['id'] as string;
+    const parsed = superadminCreateTenantUserSchema.safeParse(req.body);
+    if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id },
+      include: {
+        plan: true,
+        _count: { select: { users: true } },
+      },
+    });
+    if (!tenant) throw createError('Tenant not found', 404);
+
+    const { name, username, password, role, email, isActive } = parsed.data;
+
+    // Check username uniqueness within this tenant
+    const existing = await prisma.user.findFirst({
+      where: { tenantId: id, username: { equals: username, mode: 'insensitive' } },
+    });
+    if (existing) {
+      throw createError(`Username "${username}" is already in use by another user in this center`, 409);
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    const user = await prisma.user.create({
+      data: {
+        tenantId: id,
+        name,
+        username,
+        email: email || null,
+        passwordHash,
+        role,
+        isActive: isActive !== undefined ? isActive : true,
+      },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `User @${username} created successfully for ${tenant.name}`,
+      data: { user },
+    });
+  })
+);
+
+// ─── PATCH /api/superadmin/tenants/:id/users/:userId ───────────
+router.patch(
+  '/:id/users/:userId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params['id'] as string;
+    const userId = req.params['userId'] as string;
+
+    const parsed = superadminUpdateTenantUserSchema.safeParse(req.body);
+    if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
+
+    const existingUser = await prisma.user.findFirst({
+      where: { id: userId, tenantId: id },
+    });
+    if (!existingUser) throw createError('User not found in this diagnostic center', 404);
+
+    const { name, username, email, role, isActive, password } = parsed.data;
+
+    if (username && username.toLowerCase() !== existingUser.username.toLowerCase()) {
+      const duplicate = await prisma.user.findFirst({
+        where: { tenantId: id, username: { equals: username, mode: 'insensitive' } },
+      });
+      if (duplicate) {
+        throw createError(`Username "${username}" is already in use in this center`, 409);
+      }
+    }
+
+    const updateData: Prisma.UserUpdateInput = {};
+    if (name !== undefined) updateData.name = name;
+    if (username !== undefined) updateData.username = username;
+    if (email !== undefined) updateData.email = email || null;
+    if (role !== undefined) updateData.role = role;
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (password && password.trim().length > 0) {
+      updateData.passwordHash = await bcrypt.hash(password, 12);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        email: true,
+        role: true,
+        isActive: true,
+        lastLoginAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: `User @${updated.username} updated successfully`,
+      data: { user: updated },
+    });
+  })
+);
+
+// ─── POST /api/superadmin/tenants/:id/users/:userId/reset-password ──
+router.post(
+  '/:id/users/:userId/reset-password',
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params['id'] as string;
+    const userId = req.params['userId'] as string;
+
+    const parsed = resetPasswordSchema.safeParse(req.body);
+    if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
+
+    const user = await prisma.user.findFirst({
+      where: { id: userId, tenantId: id },
+    });
+    if (!user) throw createError('User not found in this diagnostic center', 404);
+
+    const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+
+    res.json({
+      success: true,
+      message: `Password for @${user.username} has been reset successfully`,
+    });
+  })
+);
+
+// ─── DELETE /api/superadmin/tenants/:id/users/:userId ──────────
+router.delete(
+  '/:id/users/:userId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params['id'] as string;
+    const userId = req.params['userId'] as string;
+
+    const user = await prisma.user.findFirst({
+      where: { id: userId, tenantId: id },
+    });
+    if (!user) throw createError('User not found in this diagnostic center', 404);
+
+    // Safeguard: Do not delete if only 1 user left in the tenant
+    const count = await prisma.user.count({ where: { tenantId: id } });
+    if (count <= 1) {
+      const force = req.query['force'] === 'true';
+      if (!force) {
+        throw createError(
+          `Cannot delete the only user (@${user.username}) of this diagnostic center. Every center must have at least one user.`,
+          400
+        );
+      }
+    }
+
+    await prisma.user.delete({ where: { id: userId } });
+
+    res.json({
+      success: true,
+      message: `User @${user.username} deleted from center`,
+    });
   })
 );
 

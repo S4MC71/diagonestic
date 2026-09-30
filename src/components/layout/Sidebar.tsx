@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { ActiveView } from '../../types';
@@ -30,7 +30,8 @@ import {
   MessageSquare,
   Sparkles,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Boxes
 } from 'lucide-react';
 
 interface NavItem {
@@ -129,12 +130,60 @@ const NAVIGATION_GROUPS: NavCategory[] = [
 
 export const Sidebar: React.FC = () => {
   const { currentView, setCurrentView, isSidebarCollapsed, toggleSidebar } = useApp();
-  const { hasModule } = useAuth();
+  const { hasModule, modules, moduleDefs } = useAuth();
 
-  const filteredGroups = NAVIGATION_GROUPS.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => hasModule(item.moduleKey)),
-  })).filter((group) => group.items.length > 0);
+  const predefinedModuleKeys = useMemo(() => {
+    return new Set(
+      NAVIGATION_GROUPS.flatMap((g) => g.items.map((i) => i.moduleKey).filter(Boolean) as string[])
+    );
+  }, []);
+
+  const filteredGroups = useMemo(() => {
+    // Clone navigation groups
+    const groups: NavCategory[] = NAVIGATION_GROUPS.map((group) => ({
+      ...group,
+      items: group.items.filter((item) => hasModule(item.moduleKey)),
+    }));
+
+    // Find custom dynamic modules enabled for this tenant
+    const customModules = (modules || []).filter((m) => !predefinedModuleKeys.has(m));
+
+    if (customModules.length > 0) {
+      customModules.forEach((modKey) => {
+        const def = moduleDefs[modKey];
+        const categoryRaw = (def?.category || 'GENERAL').toUpperCase();
+
+        // Target category in sidebar matching predefined groups
+        let targetCategoryName = 'GROWTH';
+        if (categoryRaw === 'CLINICAL') targetCategoryName = 'CLINICAL';
+        else if (categoryRaw === 'LAB') targetCategoryName = 'LAB';
+        else if (categoryRaw === 'PHARMACY') targetCategoryName = 'PHARMACY';
+        else if (categoryRaw === 'FINANCE') targetCategoryName = 'FINANCE';
+        else if (categoryRaw === 'ADMIN') targetCategoryName = 'STAFF & HR';
+        else if (categoryRaw === 'GENERAL') targetCategoryName = 'GROWTH';
+
+        const customItem: NavItem = {
+          id: modKey as ActiveView,
+          label: def?.label || modKey.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+          icon: Boxes,
+          moduleKey: modKey,
+          badge: 'Add-on',
+        };
+
+        const targetGroup = groups.find((g) => g.category === targetCategoryName);
+        if (targetGroup) {
+          targetGroup.items.push(customItem);
+        } else {
+          groups.push({
+            category: targetCategoryName,
+            items: [customItem],
+          });
+        }
+      });
+    }
+
+    return groups.filter((group) => group.items.length > 0);
+  }, [modules, moduleDefs, hasModule, predefinedModuleKeys]);
 
   return (
     <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
