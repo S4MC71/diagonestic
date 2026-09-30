@@ -27,6 +27,7 @@ import tenantInventoryRouter from './routes/tenant/inventory';
 import tenantStaffRouter from './routes/tenant/staff';
 import tenantWebsiteRouter from './routes/tenant/website';
 import tenantSmsRouter from './routes/tenant/sms';
+import tenantCustomModulesRouter from './routes/tenant/customModules';
 import publicRouter from './routes/public';
 
 // Middleware
@@ -104,6 +105,7 @@ app.use('/api/tenant/inventory',    tenantInventoryRouter);
 app.use('/api/tenant/staff',        tenantStaffRouter);
 app.use('/api/tenant/website',      tenantWebsiteRouter);
 app.use('/api/tenant/sms',          tenantSmsRouter);
+app.use('/api/tenant/custom-modules', tenantCustomModulesRouter);
 
 // ─── 404 Handler ──────────────────────────────────────────────
 app.use((_req, res) => {

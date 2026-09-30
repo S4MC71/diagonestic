@@ -50,6 +50,7 @@ model Module {
   description String   @default("")
   icon        String   @default("📦")
   category    String   @default("GENERAL")
+  schema      Json     @default("{\"fields\":[],\"tableColumns\":[]}")
   sortOrder   Int      @default(0) @map("sort_order")
   isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
@@ -117,6 +118,7 @@ model Tenant {
   supportTickets       SupportTicket[]
   inventoryItems       InventoryItem[]
   inventoryTxns        InventoryTransaction[]
+  customRecords        TenantCustomRecord[]
 
   @@map("tenants")
 }
@@ -673,4 +675,25 @@ model InventoryTransaction {
   item   InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@map("inventory_transactions")
+}
+
+// ─────────────────────────────────────────────
+//  DYNAMIC TENANT CUSTOM RECORDS
+// ─────────────────────────────────────────────
+model TenantCustomRecord {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  moduleKey String   @map("module_key")
+  recordId  String   @map("record_id")
+  title     String   @default("")
+  status    String   @default("Active")
+  data      Json     @default("{}")
+  createdBy String?  @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, moduleKey])
+  @@map("tenant_custom_records")
 }

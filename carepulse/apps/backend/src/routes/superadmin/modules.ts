@@ -22,6 +22,7 @@ const createModuleSchema = z.object({
   description: z.string().max(250).default(''),
   icon: z.string().min(1).max(30).default('📦'),
   category: z.enum(['CLINICAL', 'LAB', 'PHARMACY', 'FINANCE', 'ADMIN', 'GENERAL']).default('GENERAL'),
+  schema: z.record(z.unknown()).optional(),
   sortOrder: z.number().int().default(0),
   isActive: z.boolean().default(true),
 });
@@ -31,6 +32,7 @@ const updateModuleSchema = z.object({
   description: z.string().max(250).optional(),
   icon: z.string().min(1).max(30).optional(),
   category: z.enum(['CLINICAL', 'LAB', 'PHARMACY', 'FINANCE', 'ADMIN', 'GENERAL']).optional(),
+  schema: z.record(z.unknown()).optional(),
   sortOrder: z.number().int().optional(),
   isActive: z.boolean().optional(),
 });
@@ -132,7 +134,7 @@ router.post(
       throw createError(parsed.error.errors[0].message, 400);
     }
 
-    const { key, label, description, icon, category, sortOrder, isActive } = parsed.data;
+    const { key, label, description, icon, category, schema, sortOrder, isActive } = parsed.data;
 
     const existing = await prisma.module.findUnique({ where: { key } });
     if (existing) {
@@ -146,6 +148,7 @@ router.post(
         description,
         icon,
         category,
+        schema: schema ? (JSON.parse(JSON.stringify(schema)) as any) : undefined,
         sortOrder,
         isActive,
       },
@@ -176,7 +179,10 @@ router.patch(
 
     const updated = await prisma.module.update({
       where: { key },
-      data: parsed.data,
+      data: {
+        ...parsed.data,
+        schema: parsed.data.schema ? (JSON.parse(JSON.stringify(parsed.data.schema)) as any) : undefined,
+      },
     });
 
     res.json({
