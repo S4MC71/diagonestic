@@ -1096,3 +1096,363 @@ tbody tr:hover {
 .empty-state-icon { opacity: 0.35; margin-bottom: 8px; }
 .empty-state-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); }
 .empty-state-sub { font-size: 13px; }
+
+/* ═════════════════════════════════════════════════════════
+   RESPONSIVE DESIGN SYSTEM (DESKTOP-FIRST DEGRADATION)
+   Tablet (<= 1024px) • Mobile (<= 768px) • Compact (<= 480px)
+   ═════════════════════════════════════════════════════════ */
+
+/* ─── Mobile Sidebar Drawer & Backdrop ─────────────────── */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 12, 8, 0.78);
+  backdrop-filter: blur(5px);
+  z-index: 990;
+  animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-mobile-close {
+  display: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.sidebar-mobile-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+/* ─── Studio Mode Switcher (Desktop Hidden, Mobile Visible) ─ */
+.builder-mode-switcher {
+  display: none;
+}
+
+/* ─── Breakpoint: Tablet & Small Laptops (<= 1024px) ───── */
+@media (max-width: 1024px) {
+  /* Sidebar becomes off-canvas drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 270px !important;
+    max-width: 86vw;
+    z-index: 1000;
+    transform: translateX(-100%);
+    box-shadow: none;
+    transition: transform 0.26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.26s ease;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.85);
+  }
+
+  /* Force display of text in mobile drawer */
+  .sidebar-logo-text {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .sidebar-section-label {
+    opacity: 1 !important;
+    height: auto !important;
+    padding: 12px 10px 4px !important;
+  }
+
+  .nav-item-label {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .sidebar-mobile-close {
+    display: flex;
+  }
+
+  .sidebar-collapse-desktop-btn {
+    display: none !important;
+  }
+
+  /* Studio Builder: segmented tab switcher */
+  .builder-mode-switcher {
+    display: flex;
+    align-items: center;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 14px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .builder-mode-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    transition: all var(--transition);
+  }
+
+  .builder-mode-btn.active {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+  }
+
+  /* In mobile/tablet studio, display single panel full-width */
+  .builder-body {
+    position: relative;
+    flex: 1;
+  }
+
+  .builder-left {
+    width: 100% !important;
+    border-right: none;
+  }
+
+  .builder-right {
+    width: 100% !important;
+  }
+
+  .builder-body.mode-editor .builder-right {
+    display: none !important;
+  }
+
+  .builder-body.mode-preview .builder-left {
+    display: none !important;
+  }
+
+  .builder-preview-canvas {
+    padding: 20px 14px;
+  }
+
+  .builder-topbar {
+    height: auto;
+    min-height: var(--topbar-height);
+    padding: 10px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .preview-modal-frame,
+  .preview-table-frame {
+    max-width: 100%;
+  }
+}
+
+/* ─── Breakpoint: Mobile & Handhelds (<= 768px) ────────── */
+@media (max-width: 768px) {
+  /* Layout adjustments */
+  .content-area {
+    padding: 16px 14px;
+  }
+
+  .topbar {
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  /* Clean breadcrumb truncation on mobile */
+  .breadcrumb-item:not(.current) {
+    display: none;
+  }
+
+  .breadcrumb-separator {
+    display: none;
+  }
+
+  .topbar-core-badge {
+    display: none !important;
+  }
+
+  .user-chip-name {
+    display: none;
+  }
+
+  .user-chip {
+    padding: 3px 8px 3px 4px;
+    gap: 5px;
+  }
+
+  /* Stat Cards */
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .stat-card {
+    padding: 14px 16px;
+    gap: 6px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  /* Tables: smooth horizontal scroll with boundary protection */
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 580px;
+  }
+
+  .table-toolbar {
+    padding: 12px 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .table-toolbar > div {
+    width: 100%;
+  }
+
+  /* Form Grids: single column on mobile */
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Modals: touch-friendly layout */
+  .modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .modal {
+    max-height: 90dvh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-header {
+    padding: 16px 18px;
+  }
+
+  .modal-body {
+    padding: 16px 18px;
+    gap: 12px;
+  }
+
+  .modal-footer {
+    padding: 14px 18px;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .modal-footer button {
+    width: 100%;
+  }
+
+  /* Module Registry View */
+  .module-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* Builder Studio Topbar on Mobile */
+  .builder-topbar-stats {
+    display: none !important;
+  }
+
+  .palette-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .palette-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  /* Buttons & Touch Targets */
+  .btn {
+    min-height: 38px;
+  }
+
+  .btn-sm {
+    min-height: 32px;
+  }
+
+  .btn-xs {
+    min-height: 26px;
+  }
+}
+
+/* ─── Breakpoint: Compact Smartphones (<= 480px) ───────── */
+@media (max-width: 480px) {
+  .stat-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .content-area {
+    padding: 12px 10px;
+  }
+
+  .modal-overlay {
+    padding: 0;
+  }
+
+  .modal {
+    max-height: 94dvh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .builder-topbar {
+    padding: 8px 12px;
+  }
+
+  .builder-mode-switcher {
+    padding: 6px 10px;
+  }
+
+  .builder-mode-btn {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  .preview-modal-frame {
+    border-radius: 10px;
+  }
+
+  .login-card {
+    padding: 28px 20px;
+  }
+}
+

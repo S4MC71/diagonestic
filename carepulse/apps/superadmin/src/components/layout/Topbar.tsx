@@ -20,7 +20,7 @@ export const Topbar: React.FC<TopbarProps> = ({ sidebarCollapsed, onToggleSideba
       case 'dashboard':
         return (
           <>
-            <span className="breadcrumb-item current">Overview</span>
+            <span className="breadcrumb-item">Overview</span>
             <span className="breadcrumb-separator">/</span>
             <span className="breadcrumb-item current">Executive Dashboard</span>
           </>
@@ -149,6 +149,7 @@ export const Topbar: React.FC<TopbarProps> = ({ sidebarCollapsed, onToggleSideba
       <div className="topbar-right">
         {/* Environment / Security Badge */}
         <div
+          className="topbar-core-badge"
           style={{
             display: 'flex',
             alignItems: 'center',

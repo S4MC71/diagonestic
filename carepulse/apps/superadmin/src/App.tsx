@@ -31,9 +31,9 @@ const PAGE_TITLES: Record<SuperAdminView, string> = {
 
 const AppInner: React.FC = () => {
   const { user, isLoading } = useAuth();
-  const { view, tenantId, navigate, securityNotice, clearSecurityNotice } = useRouter();
+  const { view, tenantId, path, navigate, securityNotice, clearSecurityNotice } = useRouter();
 
-  // Sidebar collapsible state with localStorage persistence
+  // Desktop collapsible sidebar state (persisted in localStorage)
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     try {
       return localStorage.getItem('cp_sa_sidebar_collapsed') === 'true';
@@ -42,19 +42,32 @@ const AppInner: React.FC = () => {
     }
   });
 
+  // Mobile / Tablet drawer state
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
+
+  // Auto-close mobile drawer whenever route changes
+  useEffect(() => {
+    setMobileDrawerOpen(false);
+  }, [path, view, tenantId]);
+
   const toggleSidebar = () => {
-    setSidebarCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem('cp_sa_sidebar_collapsed', String(next));
-      } catch {}
-      return next;
-    });
+    const isMobile = window.innerWidth <= 1024;
+    if (isMobile) {
+      setMobileDrawerOpen((prev) => !prev);
+    } else {
+      setSidebarCollapsed((prev) => {
+        const next = !prev;
+        try {
+          localStorage.setItem('cp_sa_sidebar_collapsed', String(next));
+        } catch {}
+        return next;
+      });
+    }
   };
 
-  // If in module builder mode, automatically collapse sidebar for maximized workspace width
+  // If in module builder mode on desktop, automatically collapse sidebar for maximized workspace width
   useEffect(() => {
-    if (view === 'module-builder') {
+    if (view === 'module-builder' && window.innerWidth > 1024) {
       setSidebarCollapsed(true);
     }
   }, [view]);
@@ -135,10 +148,25 @@ const AppInner: React.FC = () => {
 
   return (
     <div className="app-shell">
-      <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
+      {/* Mobile Drawer Backdrop */}
+      {mobileDrawerOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setMobileDrawerOpen(false)}
+          title="Click to dismiss menu"
+        />
+      )}
+
+      {/* Responsive Sidebar (collapsible on desktop, drawer on mobile/tablet) */}
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebar}
+        mobileOpen={mobileDrawerOpen}
+        onCloseMobile={() => setMobileDrawerOpen(false)}
+      />
 
       <div className="main-area">
-        {/* Modern Topbar with Breadcrumbs and User Chip */}
+        {/* Modern Topbar with Breadcrumbs, Hamburger Menu, and User Chip */}
         <Topbar sidebarCollapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} />
 
         {/* Dynamic Main Workspace */}

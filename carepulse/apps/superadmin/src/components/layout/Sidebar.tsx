@@ -11,6 +11,7 @@ import {
   Users2,
   ChevronLeft,
   ChevronRight,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from '../../context/RouterContext';
@@ -87,9 +88,16 @@ const navGroups: NavGroup[] = [
 interface SidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCollapse }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  collapsed = false,
+  onToggleCollapse,
+  mobileOpen = false,
+  onCloseMobile,
+}) => {
   const { user, logout } = useAuth();
   const { path, navigate } = useRouter();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
@@ -97,25 +105,45 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
+    if (onCloseMobile) onCloseMobile();
+  };
+
+  const handleNavClick = (targetPath: string) => {
+    navigate(targetPath);
+    if (onCloseMobile) onCloseMobile();
   };
 
   return (
-    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
       {/* Brand Logo Header */}
-      <div
-        className="sidebar-logo"
-        onClick={() => navigate('/dashboard')}
-        title="Go to Dashboard"
-      >
-        <div className="sidebar-logo-icon">
-          <Shield size={19} color="#ffffff" />
+      <div className="sidebar-logo">
+        <div
+          onClick={() => handleNavClick('/dashboard')}
+          title="Go to Dashboard"
+          style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, cursor: 'pointer' }}
+        >
+          <div className="sidebar-logo-icon">
+            <Shield size={19} color="#ffffff" />
+          </div>
+          <div className="sidebar-logo-text">
+            <span className="sidebar-logo-name">CarePulse</span>
+            <span className="sidebar-logo-badge">
+              {isSuperAdmin ? 'SuperAdmin' : 'Admin L2'}
+            </span>
+          </div>
         </div>
-        <div className="sidebar-logo-text">
-          <span className="sidebar-logo-name">CarePulse</span>
-          <span className="sidebar-logo-badge">
-            {isSuperAdmin ? 'SuperAdmin' : 'Admin L2'}
-          </span>
-        </div>
+
+        {/* Mobile Close Button (shown only on mobile/tablet drawer) */}
+        {onCloseMobile && (
+          <button
+            className="sidebar-mobile-close"
+            onClick={onCloseMobile}
+            title="Close Menu"
+            aria-label="Close Navigation"
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* Nav Groups */}
@@ -138,7 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
                   <button
                     key={item.key}
                     className={`nav-item ${isActive ? 'active' : ''}`}
-                    onClick={() => navigate(item.path)}
+                    onClick={() => handleNavClick(item.path)}
                     data-tooltip={item.label}
                     title={collapsed ? item.label : undefined}
                   >
@@ -156,7 +184,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
       <div className="sidebar-footer">
         {onToggleCollapse && (
           <button
-            className="nav-item"
+            className="nav-item sidebar-collapse-desktop-btn"
             onClick={onToggleCollapse}
             style={{ marginBottom: 6, justifyContent: collapsed ? 'center' : 'flex-start' }}
             title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
@@ -169,6 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
 
         {!collapsed && (
           <div
+            className="sidebar-user-card"
             style={{
               padding: '10px 12px',
               background: 'var(--bg-elevated)',

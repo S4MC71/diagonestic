@@ -60,6 +60,9 @@ export const ModuleBuilderView: React.FC = () => {
   // New option buffer for dropdown editing
   const [newOptionBuffers, setNewOptionBuffers] = useState<Record<string, string>>({});
 
+  // Responsive Studio mode switcher for tablet/mobile
+  const [mobileStudioTab, setMobileStudioTab] = useState<'editor' | 'preview'>('editor');
+
   // Interactive form test state for live preview testing
   const [previewFormData, setPreviewFormData] = useState<Record<string, any>>({});
 
@@ -338,7 +341,7 @@ export const ModuleBuilderView: React.FC = () => {
         </div>
 
         {/* Center Stats */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: 'var(--text-secondary)' }}>
+        <div className="builder-topbar-stats" style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: 'var(--text-secondary)' }}>
           <span>
             Fields: <strong style={{ color: 'var(--text-primary)' }}>{schema.fields.length}</strong>
           </span>
@@ -432,8 +435,28 @@ export const ModuleBuilderView: React.FC = () => {
         </div>
       )}
 
-      {/* ── Studio Split Body ── */}
-      <div className="builder-body">
+      {/* Mobile / Tablet Segmented Mode Switcher */}
+      <div className="builder-mode-switcher">
+        <button
+          type="button"
+          className={`builder-mode-btn ${mobileStudioTab === 'editor' ? 'active' : ''}`}
+          onClick={() => setMobileStudioTab('editor')}
+        >
+          <Sliders size={14} />
+          <span>Field Editor ({schema.fields.length})</span>
+        </button>
+        <button
+          type="button"
+          className={`builder-mode-btn ${mobileStudioTab === 'preview' ? 'active' : ''}`}
+          onClick={() => setMobileStudioTab('preview')}
+        >
+          <Eye size={14} />
+          <span>Live Preview Canvas</span>
+        </button>
+      </div>
+
+      {/* ── Studio Split Body (Dual-pane on Desktop, Swappable on Tablet/Mobile) ── */}
+      <div className={`builder-body mode-${mobileStudioTab}`}>
         {/* ── LEFT PANEL: Field Palette & Fields List ── */}
         <div className="builder-left">
           {/* Quick Add Palette */}
