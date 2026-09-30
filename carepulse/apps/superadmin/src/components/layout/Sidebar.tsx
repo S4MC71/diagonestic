@@ -1,43 +1,57 @@
 import React from 'react';
 import {
-  LayoutDashboard, Building2, CreditCard, Headphones, Settings, LogOut, Shield, Boxes, Users2
+  LayoutDashboard,
+  Building2,
+  CreditCard,
+  Headphones,
+  Settings,
+  LogOut,
+  Shield,
+  Boxes,
+  Users2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-
-type View = 'dashboard' | 'tenants' | 'plans' | 'modules' | 'admins' | 'billing' | 'support' | 'settings' | 'tenant-detail';
-
-interface SidebarProps {
-  currentView: View;
-  onNavigate: (view: View) => void;
-}
+import { useRouter } from '../../context/RouterContext';
 
 interface NavItemDef {
-  key: View;
+  key: string;
+  path: string;
   label: string;
   icon: React.ReactNode;
   superAdminOnly?: boolean;
 }
 
 const navItems: NavItemDef[] = [
-  { key: 'dashboard', label: 'Dashboard',   icon: <LayoutDashboard size={16} /> },
-  { key: 'tenants',   label: 'Tenants',     icon: <Building2 size={16} /> },
-  { key: 'plans',     label: 'Plans',       icon: <CreditCard size={16} />, superAdminOnly: true },
-  { key: 'modules',   label: 'Modules',     icon: <Boxes size={16} />,      superAdminOnly: true },
-  { key: 'admins',    label: 'Admin Team',  icon: <Users2 size={16} />,     superAdminOnly: true },
-  { key: 'support',   label: 'Support',     icon: <Headphones size={16} /> },
-  { key: 'settings',  label: 'Settings',    icon: <Settings size={16} /> },
+  { key: 'dashboard', path: '/dashboard', label: 'Dashboard',   icon: <LayoutDashboard size={16} /> },
+  { key: 'tenants',   path: '/tenants',   label: 'Tenants',     icon: <Building2 size={16} /> },
+  { key: 'plans',     path: '/plans',     label: 'Plans',       icon: <CreditCard size={16} />, superAdminOnly: true },
+  { key: 'modules',   path: '/modules',   label: 'Modules',     icon: <Boxes size={16} />,      superAdminOnly: true },
+  { key: 'admins',    path: '/admins',    label: 'Admin Team',  icon: <Users2 size={16} />,     superAdminOnly: true },
+  { key: 'support',   path: '/support',   label: 'Support',     icon: <Headphones size={16} /> },
+  { key: 'settings',  path: '/settings',  label: 'Settings',    icon: <Settings size={16} /> },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
+export const Sidebar: React.FC = () => {
   const { user, logout } = useAuth();
+  const { path, navigate } = useRouter();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const visibleItems = navItems.filter((item) => !item.superAdminOnly || isSuperAdmin);
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
   return (
     <aside className="sidebar">
       {/* Logo */}
-      <div className="sidebar-logo">
+      <div
+        className="sidebar-logo"
+        onClick={() => navigate('/dashboard')}
+        style={{ cursor: 'pointer' }}
+        title="Go to Dashboard"
+      >
         <div className="sidebar-logo-icon">
           <Shield size={18} color="#fff" />
         </div>
@@ -52,16 +66,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => 
       {/* Nav */}
       <nav className="sidebar-nav">
         <span className="sidebar-section-label">Management</span>
-        {visibleItems.map((item) => (
-          <button
-            key={item.key}
-            className={`nav-item ${currentView === item.key ? 'active' : ''}`}
-            onClick={() => onNavigate(item.key)}
-          >
-            {item.icon}
-            {item.label}
-          </button>
-        ))}
+        {visibleItems.map((item) => {
+          const isActive = item.key === 'tenants'
+            ? (path === '/tenants' || path.startsWith('/tenants/'))
+            : path === item.path;
+
+          return (
+            <button
+              key={item.key}
+              className={`nav-item ${isActive ? 'active' : ''}`}
+              onClick={() => navigate(item.path)}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          );
+        })}
       </nav>
 
       {/* Footer */}
@@ -91,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => 
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>@{user?.username}</div>
         </div>
-        <button className="nav-item" onClick={logout} style={{ width: '100%' }}>
+        <button className="nav-item" onClick={handleLogout} style={{ width: '100%' }}>
           <LogOut size={16} />
           Sign Out
         </button>
