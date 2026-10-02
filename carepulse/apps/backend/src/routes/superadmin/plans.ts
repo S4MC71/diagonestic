@@ -4,12 +4,12 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { asyncHandler, createError } from '../../middleware/errorHandler';
 import { auth } from '../../middleware/auth';
-import { roleGuard } from '../../middleware/roleGuard';
+import { requireSuperAdmin, requireAdminL2OrAbove } from '../../middleware/roleGuard';
 
 const router = Router();
 
-// All plan routes are SUPER_ADMIN only
-router.use(auth, roleGuard(['SUPER_ADMIN']));
+// Base router requires authentication
+router.use(auth);
 
 // ─── Validation ───────────────────────────────────────────────
 const planSchema = z.object({
@@ -32,6 +32,7 @@ const planSchema = z.object({
 // ─── GET /api/superadmin/plans ────────────────────────────────
 router.get(
   '/',
+  requireAdminL2OrAbove,
   asyncHandler(async (_req: Request, res: Response) => {
     const plans = await prisma.plan.findMany({
       orderBy: { priceMonthly: 'asc' },
@@ -50,6 +51,7 @@ router.get(
 // ─── GET /api/superadmin/plans/:id ───────────────────────────
 router.get(
   '/:id',
+  requireAdminL2OrAbove,
   asyncHandler(async (req: Request, res: Response) => {
     const id = req.params['id'] as string;
 
@@ -66,6 +68,7 @@ router.get(
 // ─── POST /api/superadmin/plans ───────────────────────────────
 router.post(
   '/',
+  requireSuperAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const parsed = planSchema.safeParse(req.body);
     if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
@@ -88,6 +91,7 @@ router.post(
 // ─── PUT /api/superadmin/plans/:id ───────────────────────────
 router.put(
   '/:id',
+  requireSuperAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const id     = req.params['id'] as string;
     const parsed = planSchema.partial().safeParse(req.body);
@@ -109,6 +113,7 @@ router.put(
 // ─── DELETE /api/superadmin/plans/:id ────────────────────────
 router.delete(
   '/:id',
+  requireSuperAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const id = req.params['id'] as string;
 

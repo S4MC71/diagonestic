@@ -3,13 +3,12 @@ import { z } from 'zod';
 import { prisma } from '../../config/prisma';
 import { asyncHandler, createError } from '../../middleware/errorHandler';
 import { auth } from '../../middleware/auth';
-import { roleGuard } from '../../middleware/roleGuard';
+import { requireSuperAdmin, requireAdminL2OrAbove } from '../../middleware/roleGuard';
 
 const router = Router();
 
-// SuperAdmin and Level 2 Admin permissions:
-// For viewing, both can access. For creating/editing/deleting, only SUPER_ADMIN can perform.
-router.use(auth, roleGuard(['SUPER_ADMIN']));
+// Base router requires authentication
+router.use(auth);
 
 // ─── Validation Schemas ───────────────────────────────────────
 const createModuleSchema = z.object({
@@ -58,6 +57,7 @@ const DEFAULT_MODULE_CATALOG = [
 // ─── GET /api/superadmin/modules ──────────────────────────────
 router.get(
   '/',
+  requireAdminL2OrAbove,
   asyncHandler(async (req: Request, res: Response) => {
     // Ensure default module catalog exists
     const existingCount = await prisma.module.count();
@@ -128,6 +128,7 @@ router.get(
 // ─── POST /api/superadmin/modules ─────────────────────────────
 router.post(
   '/',
+  requireSuperAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const parsed = createModuleSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -165,6 +166,7 @@ router.post(
 // ─── GET /api/superadmin/modules/:key ─────────────────────────
 router.get(
   '/:key',
+  requireAdminL2OrAbove,
   asyncHandler(async (req: Request, res: Response) => {
     const key = req.params['key'] as string;
     const moduleRecord = await prisma.module.findUnique({
@@ -194,6 +196,7 @@ router.get(
 // ─── PATCH /api/superadmin/modules/:key ───────────────────────
 router.patch(
   '/:key',
+  requireSuperAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const key = req.params['key'] as string;
     const parsed = updateModuleSchema.safeParse(req.body);
@@ -225,6 +228,7 @@ router.patch(
 // ─── DELETE /api/superadmin/modules/:key ──────────────────────
 router.delete(
   '/:key',
+  requireSuperAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const key = req.params['key'] as string;
 

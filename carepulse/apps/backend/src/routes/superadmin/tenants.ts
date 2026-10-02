@@ -99,14 +99,25 @@ const resetPasswordSchema = z.object({
   newPassword: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
+// Helper to ensure Level 2 Admin can only access tenants they created
+async function verifyTenantAccess(tenantId: string, user: { userId: string; role: string }) {
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+  if (!tenant) throw createError('Tenant not found', 404);
+  if (user.role === 'ADMIN_L2' && tenant.createdById !== user.userId) {
+    throw createError('Access denied: You can only manage tenants created by you', 403);
+  }
+  return tenant;
+}
+
 // ─── GET /api/superadmin/tenants ──────────────────────────────
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const status   = qs(req.query.status);
-    const search   = qs(req.query.search);
-    const page     = parseInt(qs(req.query.page)  ?? '1',  10);
-    const limit    = parseInt(qs(req.query.limit) ?? '20', 10);
+    const status    = qs(req.query.status);
+    const search    = qs(req.query.search);
+    const creatorId = qs(req.query.creatorId);
+    const page      = parseInt(qs(req.query.page)  ?? '1',  10);
+    const limit     = parseInt(qs(req.query.limit) ?? '20', 10);
 
     const pageNum  = Math.max(1, page);
     const limitNum = Math.min(100, Math.max(1, limit));
@@ -122,7 +133,16 @@ router.get(
       ];
     }
 
-    const [tenants, total] = await Promise.all([
+    // Role-based tenant isolation:
+    // Level 2 Admin only sees tenants they created
+    if (req.user?.role === 'ADMIN_L2') {
+      where.createdById = req.user.userId;
+    } else if (creatorId && creatorId !== 'ALL') {
+      // Super Admin can filter by creator
+      where.createdById = creatorId;
+    }
+
+    const [tenants, total, creators] = await Promise.all([
       prisma.tenant.findMany({
         where,
         skip,
@@ -130,10 +150,27 @@ router.get(
         orderBy: { createdAt: 'desc' },
         include: {
           plan: { select: { id: true, name: true } },
+          createdBy: { select: { id: true, name: true, username: true, role: true } },
           _count: { select: { users: true } },
         },
       }),
       prisma.tenant.count({ where }),
+      req.user?.role === 'SUPER_ADMIN'
+        ? prisma.user.findMany({
+            where: {
+              tenantId: null,
+              role: { in: ['SUPER_ADMIN', 'ADMIN_L2'] },
+            },
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              role: true,
+              _count: { select: { createdTenants: true } },
+            },
+            orderBy: [{ role: 'asc' }, { name: 'asc' }],
+          })
+        : Promise.resolve([]),
     ]);
 
     res.json({
@@ -149,8 +186,17 @@ router.get(
           status:        t.status,
           plan:          t.plan,
           planExpiresAt: t.planExpiresAt,
+          createdById:   t.createdById,
+          createdBy:     t.createdBy,
           userCount:     t._count.users,
           createdAt:     t.createdAt,
+        })),
+        creators: creators.map((c) => ({
+          id:       c.id,
+          name:     c.name,
+          username: c.username,
+          role:     c.role,
+          count:    c._count.createdTenants,
         })),
         pagination: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) },
       },
@@ -168,6 +214,7 @@ router.get(
       where: { id },
       include: {
         plan: true,
+        createdBy: { select: { id: true, name: true, username: true, role: true } },
         modules: true,
         settings: true,
         users: {
@@ -193,6 +240,9 @@ router.get(
     });
 
     if (!tenant) throw createError('Tenant not found', 404);
+    if (req.user?.role === 'ADMIN_L2' && tenant.createdById !== req.user.userId) {
+      throw createError('Access denied: You can only view tenants created by you', 403);
+    }
 
     const userLimit = tenant.maxUsers ?? tenant.plan?.maxUsers ?? 5;
 
@@ -248,6 +298,7 @@ router.post(
           planId:         planId ?? null,
           planExpiresAt:  planExpiresAt ? new Date(planExpiresAt) : null,
           status:         planId ? 'ACTIVE' : 'TRIAL',
+          createdById:    req.user?.userId ?? null,
         },
       });
 
@@ -292,8 +343,7 @@ router.patch(
     const parsed = updateStatusSchema.safeParse(req.body);
     if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
 
-    const tenant = await prisma.tenant.findUnique({ where: { id } });
-    if (!tenant) throw createError('Tenant not found', 404);
+    await verifyTenantAccess(id, req.user!);
 
     await prisma.tenant.update({ where: { id }, data: { status: parsed.data.status } });
 
@@ -309,8 +359,7 @@ router.patch(
     const parsed = toggleModuleSchema.safeParse(req.body);
     if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
 
-    const tenant = await prisma.tenant.findUnique({ where: { id } });
-    if (!tenant) throw createError('Tenant not found', 404);
+    await verifyTenantAccess(id, req.user!);
 
     const { moduleKey, isEnabled, config } = parsed.data;
     const configJson = config ? toJson(config) : toJson({});
@@ -336,8 +385,7 @@ router.patch(
     const parsed = bulkToggleModuleSchema.safeParse(req.body);
     if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
 
-    const tenant = await prisma.tenant.findUnique({ where: { id } });
-    if (!tenant) throw createError('Tenant not found', 404);
+    const tenant = await verifyTenantAccess(id, req.user!);
 
     const { moduleKeys, isEnabled } = parsed.data;
 
@@ -369,12 +417,11 @@ router.post(
     const { planId, planExpiresAt, billingCycle, amount, method, notes } = parsed.data;
 
     const [tenant, plan] = await Promise.all([
-      prisma.tenant.findUnique({ where: { id } }),
+      verifyTenantAccess(id, req.user!),
       prisma.plan.findUnique({ where: { id: planId } }),
     ]);
 
-    if (!tenant) throw createError('Tenant not found', 404);
-    if (!plan)   throw createError('Plan not found',   404);
+    if (!plan) throw createError('Plan not found', 404);
 
     const modules = plan.modules as string[];
 
@@ -417,6 +464,7 @@ router.patch(
     const parsed = updateUserLimitSchema.safeParse(req.body);
     if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
 
+    await verifyTenantAccess(id, req.user!);
     const tenant = await prisma.tenant.findUnique({
       where: { id },
       include: { plan: true },
@@ -450,6 +498,8 @@ router.get(
   '/:id/users',
   asyncHandler(async (req: Request, res: Response) => {
     const id = req.params['id'] as string;
+    await verifyTenantAccess(id, req.user!);
+
     const tenant = await prisma.tenant.findUnique({
       where: { id },
       include: { plan: true },
@@ -493,6 +543,8 @@ router.post(
     const id = req.params['id'] as string;
     const parsed = superadminCreateTenantUserSchema.safeParse(req.body);
     if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
+
+    await verifyTenantAccess(id, req.user!);
 
     const tenant = await prisma.tenant.findUnique({
       where: { id },
@@ -555,6 +607,8 @@ router.patch(
     const parsed = superadminUpdateTenantUserSchema.safeParse(req.body);
     if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
 
+    await verifyTenantAccess(id, req.user!);
+
     const existingUser = await prisma.user.findFirst({
       where: { id: userId, tenantId: id },
     });
@@ -615,6 +669,8 @@ router.post(
     const parsed = resetPasswordSchema.safeParse(req.body);
     if (!parsed.success) throw createError(parsed.error.errors[0].message, 400);
 
+    await verifyTenantAccess(id, req.user!);
+
     const user = await prisma.user.findFirst({
       where: { id: userId, tenantId: id },
     });
@@ -639,6 +695,8 @@ router.delete(
   asyncHandler(async (req: Request, res: Response) => {
     const id = req.params['id'] as string;
     const userId = req.params['userId'] as string;
+
+    await verifyTenantAccess(id, req.user!);
 
     const user = await prisma.user.findFirst({
       where: { id: userId, tenantId: id },

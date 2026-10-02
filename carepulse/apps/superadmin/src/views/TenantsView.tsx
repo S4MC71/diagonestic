@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Search, RefreshCw, X, Building2,
-  ExternalLink, ChevronLeft, ChevronRight
+  ExternalLink, ChevronLeft, ChevronRight,
+  Shield, User, Sparkles
 } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface Tenant {
@@ -18,6 +20,13 @@ interface Tenant {
   planExpiresAt?: string;
   userCount: number;
   createdAt: string;
+  createdById?: string | null;
+  createdBy?: {
+    id: string;
+    name: string;
+    username: string;
+    role: string;
+  } | null;
 }
 
 interface Plan {
@@ -68,26 +77,45 @@ interface DynamicModule {
   isActive: boolean;
 }
 
-const CreateTenantModal: React.FC<CreateModalProps> = ({ plans, onClose, onCreated }) => {
+const CreateTenantModal: React.FC<CreateModalProps> = ({ plans: propPlans, onClose, onCreated }) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState({
     name: '', slug: '', bengaliName: '', phone: '', email: '', address: '',
     planId: '', adminName: '', adminUsername: '', adminPassword: '',
   });
+  const [adminUsernameTouched, setAdminUsernameTouched] = useState(false);
   const [availableModules, setAvailableModules] = useState<DynamicModule[]>([]);
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
+  const [modalPlans, setModalPlans] = useState<Plan[]>(propPlans || []);
   const [loading, setLoading] = useState(false);
   const [fetchingModules, setFetchingModules] = useState(true);
   const [error, setError] = useState('');
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
-  // Auto-generate slug from name
+  // Auto-generate slug and suggested username from name
   useEffect(() => {
     if (form.name && !form.slug) {
-      set('slug', form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+      const generatedSlug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      set('slug', generatedSlug);
+      if (!adminUsernameTouched && !form.adminUsername) {
+        set('adminUsername', generatedSlug ? `${generatedSlug.replace(/-/g, '_')}_admin` : '');
+      }
     }
   }, [form.name]);
+
+  // Ensure plans are loaded even if prop was empty
+  useEffect(() => {
+    if (propPlans && propPlans.length > 0) {
+      setModalPlans(propPlans);
+    } else {
+      api.get<{ data: { plans: Plan[] } }>('/api/superadmin/plans')
+        .then(res => {
+          if (res.data?.plans) setModalPlans(res.data.plans);
+        })
+        .catch(err => console.error('Failed to load plans for modal:', err));
+    }
+  }, [propPlans]);
 
   // Load modules from DB
   useEffect(() => {
@@ -115,7 +143,7 @@ const CreateTenantModal: React.FC<CreateModalProps> = ({ plans, onClose, onCreat
       // Trial: keep all or current selection
       return;
     }
-    const chosenPlan = plans.find(p => p.id === planId);
+    const chosenPlan = modalPlans.find(p => p.id === planId);
     if (chosenPlan && Array.isArray(chosenPlan.modules)) {
       setSelectedModules(chosenPlan.modules);
     }
@@ -130,7 +158,7 @@ const CreateTenantModal: React.FC<CreateModalProps> = ({ plans, onClose, onCreat
   const selectAllModules = () => setSelectedModules(availableModules.map(m => m.key));
   const deselectAllModules = () => setSelectedModules([]);
   const resetToPlanModules = () => {
-    const chosenPlan = plans.find(p => p.id === form.planId);
+    const chosenPlan = modalPlans.find(p => p.id === form.planId);
     if (chosenPlan && Array.isArray(chosenPlan.modules)) {
       setSelectedModules(chosenPlan.modules);
     } else {
@@ -201,7 +229,7 @@ const CreateTenantModal: React.FC<CreateModalProps> = ({ plans, onClose, onCreat
           <button className="btn btn-icon btn-ghost btn-sm" onClick={onClose}><X size={16} /></button>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           <div className="modal-body" style={{ maxHeight: 'calc(80vh - 140px)', overflowY: 'auto' }}>
             {error && <div className="error-alert" style={{ marginBottom: 16 }}>{error}</div>}
 
@@ -236,7 +264,7 @@ const CreateTenantModal: React.FC<CreateModalProps> = ({ plans, onClose, onCreat
                     <label className="form-label">Subscription Plan</label>
                     <select className="select" value={form.planId} onChange={e => handlePlanChange(e.target.value)}>
                       <option value="">-- Trial Plan (Custom) --</option>
-                      {plans.map(p => (
+                      {modalPlans.map(p => (
                         <option key={p.id} value={p.id}>
                           {p.name} (৳{(p.priceMonthly / 100).toLocaleString()}/mo)
                         </option>
@@ -360,18 +388,84 @@ const CreateTenantModal: React.FC<CreateModalProps> = ({ plans, onClose, onCreat
                   </div>
                 </div>
 
+                {/* Hidden dummy fields to neutralize aggressive browser credential autofill */}
+                <input type="text" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+                <input type="password" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+
                 <div className="form-grid">
                   <div className="form-group">
                     <label className="form-label">Administrator Full Name *</label>
-                    <input className="input" placeholder="e.g. Dr. Rafiqul Islam" value={form.adminName} onChange={e => set('adminName', e.target.value)} required />
+                    <input
+                      className="input"
+                      name="center_admin_fullname"
+                      id="center_admin_fullname"
+                      autoComplete="off"
+                      placeholder="e.g. Dr. Rafiqul Islam"
+                      value={form.adminName}
+                      onChange={e => set('adminName', e.target.value)}
+                      required
+                    />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Username *</label>
-                    <input className="input" placeholder="e.g. rafiqul_admin" value={form.adminUsername} onChange={e => set('adminUsername', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} required />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label className="form-label">Username *</label>
+                      {form.slug && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const suggested = `${form.slug.replace(/[^a-z0-9]/g, '_')}_admin`;
+                            set('adminUsername', suggested);
+                            setAdminUsernameTouched(true);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--accent)',
+                            fontSize: 11,
+                            cursor: 'pointer',
+                            padding: 0,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 3,
+                          }}
+                          title="Auto-suggest based on center slug"
+                        >
+                          <Sparkles size={11} /> Suggest
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      className="input"
+                      name="center_admin_login_username"
+                      id="center_admin_login_username"
+                      autoComplete="off"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      placeholder="e.g. rafiqul_admin"
+                      value={form.adminUsername}
+                      onChange={e => {
+                        setAdminUsernameTouched(true);
+                        set('adminUsername', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+                      }}
+                      required
+                    />
                   </div>
                   <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                     <label className="form-label">Initial Password * (min 8 characters)</label>
-                    <input className="input" type="password" placeholder="••••••••••••" value={form.adminPassword} onChange={e => set('adminPassword', e.target.value)} required minLength={8} />
+                    <input
+                      className="input"
+                      type="password"
+                      name="center_admin_login_secret"
+                      id="center_admin_login_secret"
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      placeholder="••••••••••••"
+                      value={form.adminPassword}
+                      onChange={e => set('adminPassword', e.target.value)}
+                      required
+                      minLength={8}
+                    />
                   </div>
                 </div>
               </div>
@@ -541,6 +635,7 @@ const TenantDetailModal: React.FC<DetailModalProps> = ({ tenantId, onClose, onUp
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                 {[
                   { label: 'Status', value: <span className={`badge ${STATUS_CLASS[tenant.status]}`}>{STATUS_LABELS[tenant.status]}</span> },
+                  { label: 'Created By', value: tenant.createdBy?.role === 'SUPER_ADMIN' || !tenant.createdBy ? '🛡️ Super Admin' : `👤 ${tenant.createdBy.name} (@${tenant.createdBy.username})` },
                   { label: 'Plan', value: tenant.plan?.name ?? 'Trial' },
                   { label: 'Users', value: tenant.users.length },
                   { label: 'Phone', value: tenant.phone ?? '—' },
@@ -674,11 +769,16 @@ interface TenantsViewProps {
 }
 
 export const TenantsView: React.FC<TenantsViewProps> = ({ onViewTenant }) => {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [creators, setCreators] = useState<{ id: string; name: string; username: string; role: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [creatorFilter, setCreatorFilter] = useState('ALL');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -691,27 +791,43 @@ export const TenantsView: React.FC<TenantsViewProps> = ({ onViewTenant }) => {
       const params = new URLSearchParams({ page: String(page), limit: '15' });
       if (search) params.set('search', search);
       if (statusFilter !== 'ALL') params.set('status', statusFilter);
+      if (isSuperAdmin && creatorFilter !== 'ALL') params.set('creatorId', creatorFilter);
 
-      const [tenantsRes, plansRes] = await Promise.all([
-        api.get<{ data: { tenants: Tenant[]; pagination: { total: number; totalPages: number } } }>(
-          `/api/superadmin/tenants?${params}`
-        ),
-        api.get<{ data: { plans: Plan[] } }>('/api/superadmin/plans'),
-      ]);
+      // Fetch tenants and plans independently so one failure never blanks the page
+      try {
+        const tenantsRes = await api.get<{
+          data: {
+            tenants: Tenant[];
+            creators?: { id: string; name: string; username: string; role: string; count: number }[];
+            pagination: { total: number; totalPages: number };
+          };
+        }>(`/api/superadmin/tenants?${params}`);
 
-      setTenants(tenantsRes.data.tenants);
-      setTotal(tenantsRes.data.pagination.total);
-      setTotalPages(tenantsRes.data.pagination.totalPages);
-      setPlans(plansRes.data.plans);
+        setTenants(tenantsRes.data?.tenants || []);
+        setTotal(tenantsRes.data?.pagination?.total || 0);
+        setTotalPages(tenantsRes.data?.pagination?.totalPages || 1);
+        if (tenantsRes.data?.creators) {
+          setCreators(tenantsRes.data.creators);
+        }
+      } catch (err) {
+        console.error('Failed to load tenants:', err);
+      }
+
+      try {
+        const plansRes = await api.get<{ data: { plans: Plan[] } }>('/api/superadmin/plans');
+        setPlans(plansRes.data?.plans || []);
+      } catch (err) {
+        console.error('Failed to load plans:', err);
+      }
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter]);
+  }, [page, search, statusFilter, creatorFilter, isSuperAdmin]);
 
   useEffect(() => { load(); }, [load]);
 
-  // Reset page when filter changes
-  useEffect(() => { setPage(1); }, [search, statusFilter]);
+  // Reset page when any filter changes
+  useEffect(() => { setPage(1); }, [search, statusFilter, creatorFilter]);
 
   const formatDate = (s?: string) => s ? new Date(s).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
@@ -720,7 +836,11 @@ export const TenantsView: React.FC<TenantsViewProps> = ({ onViewTenant }) => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Tenants</h1>
-          <p className="page-subtitle">{total} diagnostic centers registered</p>
+          <p className="page-subtitle">
+            {isSuperAdmin
+              ? `${total} diagnostic center${total === 1 ? '' : 's'} registered (All Centers)`
+              : `${total} diagnostic center${total === 1 ? '' : 's'} created by you`}
+          </p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
           <Plus size={15} /> New Tenant
@@ -730,8 +850,8 @@ export const TenantsView: React.FC<TenantsViewProps> = ({ onViewTenant }) => {
       <div className="table-container">
         {/* Toolbar */}
         <div className="table-toolbar">
-          <div style={{ display: 'flex', gap: 10, flex: 1 }}>
-            <div style={{ position: 'relative', flex: 1, maxWidth: 280 }}>
+          <div style={{ display: 'flex', gap: 10, flex: 1, flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: 200, maxWidth: 280 }}>
               <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 className="input input-sm"
@@ -748,6 +868,24 @@ export const TenantsView: React.FC<TenantsViewProps> = ({ onViewTenant }) => {
               <option value="SUSPENDED">Suspended</option>
               <option value="EXPIRED">Expired</option>
             </select>
+
+            {/* Super Admin Creator Category Filter */}
+            {isSuperAdmin && (
+              <select
+                className="select input-sm"
+                style={{ minWidth: 170 }}
+                value={creatorFilter}
+                onChange={(e) => setCreatorFilter(e.target.value)}
+                title="Filter by who created the center"
+              >
+                <option value="ALL">All Creators ({total})</option>
+                {creators.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.role === 'SUPER_ADMIN' ? '🛡️ Super Admin' : `👤 ${c.name} (@${c.username})`} ({c.count})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <button className="btn btn-ghost btn-sm btn-icon" onClick={load} title="Refresh">
             <RefreshCw size={14} />
@@ -763,7 +901,11 @@ export const TenantsView: React.FC<TenantsViewProps> = ({ onViewTenant }) => {
           <div className="empty-state">
             <Building2 size={40} className="empty-state-icon" />
             <p className="empty-state-title">No tenants found</p>
-            <p className="empty-state-sub">Create your first tenant to get started</p>
+            <p className="empty-state-sub">
+              {isSuperAdmin
+                ? 'Create your first tenant to get started'
+                : 'You have not created any diagnostic centers yet'}
+            </p>
           </div>
         ) : (
           <table>
@@ -771,6 +913,7 @@ export const TenantsView: React.FC<TenantsViewProps> = ({ onViewTenant }) => {
               <tr>
                 <th>Tenant</th>
                 <th>Status</th>
+                {isSuperAdmin && <th>Created By</th>}
                 <th>Plan</th>
                 <th>Users</th>
                 <th>Expires</th>
@@ -788,6 +931,42 @@ export const TenantsView: React.FC<TenantsViewProps> = ({ onViewTenant }) => {
                     </div>
                   </td>
                   <td><span className={`badge ${STATUS_CLASS[t.status]}`}>{STATUS_LABELS[t.status]}</span></td>
+                  {isSuperAdmin && (
+                    <td>
+                      {t.createdBy?.role === 'SUPER_ADMIN' || !t.createdBy ? (
+                        <span
+                          className="badge"
+                          style={{
+                            background: 'rgba(139, 92, 246, 0.15)',
+                            color: '#a78bfa',
+                            border: '1px solid rgba(139, 92, 246, 0.3)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                            fontSize: 11,
+                          }}
+                        >
+                          <Shield size={11} /> Super Admin
+                        </span>
+                      ) : (
+                        <span
+                          className="badge"
+                          style={{
+                            background: 'rgba(59, 130, 246, 0.15)',
+                            color: '#60a5fa',
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                            fontSize: 11,
+                          }}
+                          title={`User ID: ${t.createdBy.id}`}
+                        >
+                          <User size={11} /> {t.createdBy.name} (@{t.createdBy.username})
+                        </span>
+                      )}
+                    </td>
+                  )}
                   <td>{t.plan?.name ?? <span style={{ color: 'var(--text-muted)' }}>Trial</span>}</td>
                   <td>{t.userCount}</td>
                   <td style={{ fontSize: 12 }}>{formatDate(t.planExpiresAt)}</td>

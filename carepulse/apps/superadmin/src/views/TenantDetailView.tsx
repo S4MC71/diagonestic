@@ -36,6 +36,8 @@ interface TenantDetail {
   userLimit?: number;
   createdAt: string;
   plan?: { id: string; name: string; priceMonthly: number; maxUsers?: number };
+  createdById?: string | null;
+  createdBy?: { id: string; name: string; username: string; role: string } | null;
   modules: { moduleKey: string; isEnabled: boolean }[];
   users: TenantUser[];
   subscriptionPayments: {
@@ -695,6 +697,13 @@ export const TenantDetailView: React.FC<Props> = ({ tenantId, onBack }) => {
             slug: <code style={{ color: '#94a3b8' }}>{tenant.slug}</code>
             {tenant.plan && <> &nbsp;·&nbsp; Plan: <span style={{ color: '#3b82f6' }}>{tenant.plan.name}</span></>}
             {tenant.planExpiresAt && <> &nbsp;·&nbsp; Expires: {formatDate(tenant.planExpiresAt)}</>}
+            {tenant.createdBy ? (
+              <> &nbsp;·&nbsp; Created by: <span style={{ color: tenant.createdBy.role === 'SUPER_ADMIN' ? '#a78bfa' : '#60a5fa', fontWeight: 600 }}>
+                {tenant.createdBy.role === 'SUPER_ADMIN' ? '🛡️ Super Admin' : `👤 ${tenant.createdBy.name} (@${tenant.createdBy.username})`}
+              </span></>
+            ) : (
+              <> &nbsp;·&nbsp; Created by: <span style={{ color: '#a78bfa', fontWeight: 600 }}>🛡️ Super Admin</span></>
+            )}
           </p>
         </div>
 
