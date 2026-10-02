@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { Patient } from '../types';
 import { TokenSlipModal } from '../components/print/TokenSlipModal';
 import {
   Clock,
@@ -148,10 +149,24 @@ export const ReceptionView: React.FC = () => {
 
     // Look up or auto-sync with Central Patients Database
     const cleanPhone = walkinPhone.trim().replace(/[^0-9]/g, '');
-    const existingPatient = patients.find(
-      p => (selectedPatientId && p.id === selectedPatientId) ||
-           (cleanPhone && p.phone.replace(/[^0-9]/g, '') === cleanPhone)
-    );
+    const cleanName = walkinName.trim().toLowerCase();
+
+    // Check if truly existing patient:
+    // Either explicitly selected from dropdown AND matching current name,
+    // OR exactly matching BOTH name and phone in database
+    let existingPatient: Patient | undefined;
+    if (selectedPatientId) {
+      const selected = patients.find(p => p.id === selectedPatientId);
+      if (selected && selected.name.trim().toLowerCase() === cleanName) {
+        existingPatient = selected;
+      }
+    }
+    if (!existingPatient && cleanPhone && cleanName) {
+      existingPatient = patients.find(
+        p => p.name.trim().toLowerCase() === cleanName &&
+             p.phone.replace(/[^0-9]/g, '') === cleanPhone
+      );
+    }
 
     let finalPatientId = existingPatient ? existingPatient.id : '';
     let finalPatientCode = existingPatient ? (existingPatient.code || existingPatient.patientId) : '';
@@ -1137,7 +1152,16 @@ export const ReceptionView: React.FC = () => {
                   required
                   placeholder="e.g. Mohammad Rahim"
                   value={walkinName}
-                  onChange={e => setWalkinName(e.target.value)}
+                  onChange={e => {
+                    const newName = e.target.value;
+                    setWalkinName(newName);
+                    if (selectedPatientId) {
+                      const selected = patients.find(p => p.id === selectedPatientId);
+                      if (selected && selected.name.trim().toLowerCase() !== newName.trim().toLowerCase()) {
+                        setSelectedPatientId('');
+                      }
+                    }
+                  }}
                   style={{
                     width: '100%',
                     padding: '10px 12px',
@@ -1163,9 +1187,10 @@ export const ReceptionView: React.FC = () => {
                       const val = e.target.value;
                       setWalkinPhone(val);
                       const clean = val.replace(/[^0-9]/g, '');
-                      if (clean.length >= 7) {
+                      // Only auto-fill if name is empty and user hasn't selected another patient
+                      if (clean.length === 11 && !walkinName.trim() && !selectedPatientId) {
                         const matched = patients.find(p => p.phone.replace(/[^0-9]/g, '') === clean);
-                        if (matched && !selectedPatientId) {
+                        if (matched) {
                           setSelectedPatientId(matched.id);
                           setWalkinName(matched.name);
                           setWalkinAge(matched.age);

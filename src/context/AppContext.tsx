@@ -3,7 +3,6 @@ import {
   ActiveView,
   User,
   Patient,
-  PatientVitalRecord,
   PrescriptionRecord,
   DiagnosticTest,
   Invoice,
@@ -302,8 +301,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          const cleaned = parsed.filter((p: Patient) =>
+            !['pat-1', 'pat-2', 'pat-3'].includes(p.id) &&
+            !['Md. Rafiqul Islam', 'Begum Rokeya Akter', 'Master Ayman Hossain'].includes(p.name)
+          );
+          if (cleaned.length === 0) return [];
           let maxSeq = 0;
-          parsed.forEach((p: Patient) => {
+          cleaned.forEach((p: Patient) => {
             const rawCode = p.code || p.patientId || '';
             const match = rawCode.match(/PAT-\d{4}-(\d+)/);
             if (match) {
@@ -312,7 +316,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }
           });
 
-          return parsed.map((p: Patient) => {
+          return cleaned.map((p: Patient) => {
             let code = p.code || p.patientId;
             if (!code || !code.startsWith('PAT-')) {
               maxSeq += 1;
@@ -333,14 +337,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [invoices, setInvoices] = useState<Invoice[]>(() => {
     try {
       const saved = localStorage.getItem('cp_invoices');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(inv =>
+            !['pat-1', 'pat-2', 'pat-3'].includes(inv.patientId) &&
+            !['Md. Rafiqul Islam', 'Begum Rokeya Akter', 'Master Ayman Hossain'].includes(inv.patientName)
+          );
+        }
+      }
     } catch {}
     return initialInvoices;
   });
   const [appointments, setAppointments] = useState<Appointment[]>(() => {
     try {
       const saved = localStorage.getItem('cp_appointments');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(a =>
+            !['pat-1', 'pat-2', 'pat-3'].includes(a.patientId) &&
+            !['Md. Rafiqul Islam', 'Begum Rokeya Akter', 'Master Ayman Hossain'].includes(a.patientName)
+          );
+        }
+      }
     } catch {}
     return initialAppointments;
   });
@@ -392,60 +412,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [prescriptions, setPrescriptions] = useState<PrescriptionRecord[]>(() => {
     try {
       const saved = localStorage.getItem('cp_prescriptions');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [
-      {
-        id: 'rx-1',
-        rxNo: 'RX-2026-0001',
-        date: '2026-09-14',
-        patientId: 'pat-1',
-        patientName: 'Md. Rafiqul Islam',
-        patientCode: 'PAT-2026-0001',
-        age: 48,
-        gender: 'Male',
-        doctorId: 'doc-1',
-        doctorName: 'Prof. Dr. M. A. Rahman',
-        chamber: 'Chamber 101',
-        chiefComplaint: 'Chest tightness on exertion, intermittent cough',
-        diagnosis: 'Essential Hypertension, Type 2 DM',
-        followUp: '21 Sept',
-        drugsCount: 4,
-        vitals: {
-          bp: '130/85',
-          pulse: '78',
-          temp: '98.6',
-          weight: '72',
-          spo2: '98'
-        },
-        createdAt: '2026-09-14'
-      },
-      {
-        id: 'rx-2',
-        rxNo: 'RX-2026-0002',
-        date: '2026-09-15',
-        patientId: 'pat-2',
-        patientName: 'Begum Rokeya Akter',
-        patientCode: 'PAT-2026-0002',
-        age: 34,
-        gender: 'Female',
-        doctorId: 'doc-2',
-        doctorName: 'Dr. Farhana Islam',
-        chamber: 'Chamber 102',
-        chiefComplaint: 'Mild generalized weakness, joint ache',
-        diagnosis: 'Nutritional Deficiency / Iron Deficiency Anaemia',
-        followUp: '28 Sept',
-        drugsCount: 3,
-        vitals: {
-          bp: '115/75',
-          pulse: '72',
-          temp: '98.4',
-          weight: '58',
-          spo2: '99'
-        },
-        createdAt: '2026-09-15'
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(rx => !['rx-1', 'rx-2'].includes(rx.id) && !['pat-1', 'pat-2', 'pat-3'].includes(rx.patientId));
+        }
       }
-    ];
+    } catch {}
+    return [];
   });
 
   useEffect(() => {
@@ -1299,39 +1273,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setPrescriptions(prev => [newRx, ...prev]);
-
-    // If prescription has vitals, automatically record them to patient's clinical vitals history
-    if (newRx.vitals && (newRx.vitals.bp || newRx.vitals.pulse || newRx.vitals.temp || newRx.vitals.weight || newRx.vitals.spo2)) {
-      const vitalEntry: PatientVitalRecord = {
-        id: `vit-${Date.now()}`,
-        patientId: newRx.patientId,
-        date: newRx.date || new Date().toISOString().split('T')[0],
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        doctorName: newRx.doctorName,
-        bp: newRx.vitals.bp,
-        pulse: newRx.vitals.pulse,
-        temp: newRx.vitals.temp,
-        weight: newRx.vitals.weight,
-        spo2: newRx.vitals.spo2,
-        notes: newRx.diagnosis ? `Prescribed for: ${newRx.diagnosis}` : undefined
-      };
-
-      setPatients(prev =>
-        prev.map(p => {
-          if (p.id === newRx.patientId || (p.code && p.code === newRx.patientCode)) {
-            const existingVitals = p.vitals || [];
-            return {
-              ...p,
-              vitals: [vitalEntry, ...existingVitals],
-              latestVitals: vitalEntry
-            };
-          }
-          return p;
-        })
-      );
-    }
-
-    showToast(`Prescription ${newRx.rxNo} created & patient vitals updated!`);
+    showToast(`Prescription ${newRx.rxNo} created successfully!`);
     return newRx;
   };
 

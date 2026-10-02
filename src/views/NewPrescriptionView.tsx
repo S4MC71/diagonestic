@@ -82,18 +82,6 @@ export const NewPrescriptionView: React.FC = () => {
   const [weight, setWeight] = useState('65');
   const [spo2, setSpo2] = useState('99');
 
-  // Load existing vitals of patient if previously recorded
-  useEffect(() => {
-    const pt = patients.find(p => p.id === selectedPatientId);
-    if (pt?.latestVitals) {
-      if (pt.latestVitals.bp) setBp(pt.latestVitals.bp);
-      if (pt.latestVitals.pulse) setPulse(pt.latestVitals.pulse);
-      if (pt.latestVitals.temp) setTemp(pt.latestVitals.temp);
-      if (pt.latestVitals.weight) setWeight(pt.latestVitals.weight);
-      if (pt.latestVitals.spo2) setSpo2(pt.latestVitals.spo2);
-    }
-  }, [selectedPatientId, patients]);
-
   // Complaints
   const [complaintInput, setComplaintInput] = useState('');
   const [complaints, setComplaints] = useState<string[]>([
@@ -363,7 +351,7 @@ export const NewPrescriptionView: React.FC = () => {
     });
 
     window.print();
-    showToast(`Prescription ${generatedRxNo} saved & vitals updated!`);
+    showToast(`Prescription ${generatedRxNo} saved successfully!`);
     setCurrentView('prescriptions');
   };
 

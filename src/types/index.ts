@@ -101,22 +101,6 @@ export interface User {
   avatarUrl?: string;
 }
 
-export interface PatientVitalRecord {
-  id: string;
-  patientId: string;
-  date: string;
-  time?: string;
-  doctorName?: string;
-  bp?: string;
-  pulse?: string;
-  temp?: string;
-  weight?: string;
-  spo2?: string;
-  rbs?: string;
-  bmi?: string;
-  notes?: string;
-}
-
 export interface Patient {
   id: string;
   patientId?: string;
@@ -136,8 +120,6 @@ export interface Patient {
   outstandingDue: number;
   lastVisit?: string;
   createdAt: string;
-  vitals?: PatientVitalRecord[];
-  latestVitals?: PatientVitalRecord;
 }
 
 export interface PrescriptionRecord {
