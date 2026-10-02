@@ -25,6 +25,7 @@ export const OnlineBookingsView: React.FC = () => {
     cancelBookingRequest,
     addAppointment,
     doctors,
+    chambers,
     sendSmsNotification,
     showToast
   } = useApp();
@@ -32,6 +33,13 @@ export const OnlineBookingsView: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [filterType, setFilterType] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Helper to dynamically get doctor's assigned chamber room
+  const getDoctorChamber = (doc?: any) => {
+    if (!doc) return '101';
+    const ch = chambers?.find((c: any) => c.doctorId === doc.id || c.assignedDoctorId === doc.id);
+    return ch ? ch.roomNo : (doc.chamberRoom || doc.chamberNo || '101');
+  };
 
   // Confirm modal state
   const [confirmModalBooking, setConfirmModalBooking] = useState<PublicBookingRequest | null>(null);
@@ -79,8 +87,8 @@ export const OnlineBookingsView: React.FC = () => {
         status: 'Booked',
         fee: 1000,
         paymentStatus: 'Unpaid',
-        chamberRoom: doc?.chamberRoom || doc?.chamberNo || 'Chamber-101',
-        chamberNo: doc?.chamberRoom || doc?.chamberNo || 'Chamber-101'
+        chamberRoom: `Chamber ${getDoctorChamber(doc)}`,
+        chamberNo: String(getDoctorChamber(doc))
       });
     }
 
@@ -428,7 +436,7 @@ export const OnlineBookingsView: React.FC = () => {
                     style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none', background: '#fff' }}
                   >
                     {doctors.map(d => (
-                      <option key={d.id} value={d.id}>{d.name} ({d.specialty} · Chamber: {d.chamberRoom || d.chamberNo || '101'})</option>
+                      <option key={d.id} value={d.id}>{d.name} ({d.specialty} · Chamber: {getDoctorChamber(d)})</option>
                     ))}
                   </select>
                 </div>

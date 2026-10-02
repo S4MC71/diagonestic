@@ -71,7 +71,8 @@ export const AppointmentsView: React.FC = () => {
       patientGender: bookPatientGender,
       date: selectedDate,
       timeSlot: bookTimeSlot,
-      chamberRoom: doc?.chamberRoom || 'Room 101',
+      chamberRoom: doc?.chamberRoom ? `Chamber ${doc.chamberRoom}` : 'Chamber 101',
+      chamberNo: doc?.chamberNo || '101',
       fee: bookFee,
       paymentStatus: 'Paid',
       status: 'Waiting'

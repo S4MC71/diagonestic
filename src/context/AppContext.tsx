@@ -7,6 +7,7 @@ import {
   Invoice,
   Sample,
   Doctor,
+  Chamber,
   Appointment,
   WeeklySitting,
   PharmacyProduct,
@@ -109,7 +110,12 @@ interface AppContextType {
   toggleSidebar: () => void;
   showToast: (msg: string) => void;
   addChamber: (chamber: any) => void;
+  updateChamber: (id: string, updates: Partial<Chamber>) => void;
+  deleteChamber: (id: string) => void;
   addDoctor: (doctor: any) => void;
+  updateDoctor: (id: string, updates: Partial<Doctor>) => void;
+  deleteDoctor: (id: string) => void;
+  clearMockDoctorsAndChambers: () => void;
   recordPayment: (payment: any) => void;
 
   // Business Operations
@@ -283,9 +289,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
   const [diagnosticTests, setDiagnosticTests] = useState<DiagnosticTest[]>(initialTests);
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
-  const [doctors, setDoctors] = useState<Doctor[]>(initialDoctors);
-  const [chambers, setChambers] = useState<any[]>(initialChambers);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
+  const [doctors, setDoctors] = useState<Doctor[]>(() => {
+    try {
+      const saved = localStorage.getItem('cp_doctors');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return initialDoctors;
+  });
+  const [chambers, setChambers] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('cp_chambers');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return initialChambers;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_doctors', JSON.stringify(doctors));
+    } catch {}
+  }, [doctors]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_chambers', JSON.stringify(chambers));
+    } catch {}
+  }, [chambers]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(initialInventory);
   const [pharmacyProducts, setPharmacyProducts] = useState<PharmacyProduct[]>(initialPharmacyProducts);
   const [pharmacySales, setPharmacySales] = useState<PharmacySale[]>([]);
@@ -1135,13 +1165,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addChamber = (c: any) => {
-    setChambers(prev => [...prev, { ...c, id: `ch-${Date.now()}` }]);
+    const newChamber = { ...c, id: c.id || `ch-${Date.now()}` };
+    setChambers(prev => [...prev, newChamber]);
     showToast(`Chamber ${c.name || c.roomNo} added`);
   };
 
+  const updateChamber = (id: string, updates: Partial<Chamber>) => {
+    setChambers(prev => prev.map(ch => (ch.id === id ? { ...ch, ...updates } : ch)));
+    showToast('Chamber updated');
+  };
+
+  const deleteChamber = (id: string) => {
+    setChambers(prev => prev.filter(ch => ch.id !== id));
+    showToast('Chamber deleted');
+  };
+
   const addDoctor = (d: any) => {
-    setDoctors(prev => [...prev, { ...d, id: `doc-${Date.now()}` }]);
+    const newDoc = { ...d, id: d.id || `doc-${Date.now()}` };
+    setDoctors(prev => [...prev, newDoc]);
     showToast(`Doctor ${d.name} added`);
+  };
+
+  const updateDoctor = (id: string, updates: Partial<Doctor>) => {
+    setDoctors(prev => prev.map(doc => (doc.id === id ? { ...doc, ...updates } : doc)));
+    showToast('Doctor profile updated');
+  };
+
+  const deleteDoctor = (id: string) => {
+    setDoctors(prev => prev.filter(doc => doc.id !== id));
+    showToast('Doctor removed');
+  };
+
+  const clearMockDoctorsAndChambers = () => {
+    setDoctors([]);
+    setChambers([]);
+    try {
+      localStorage.setItem('cp_doctors', JSON.stringify([]));
+      localStorage.setItem('cp_chambers', JSON.stringify([]));
+    } catch {}
+    showToast('Cleared all doctors and chambers for clean entry');
   };
 
   const recordPayment = (p: any) => {
@@ -1558,7 +1620,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updatePatient,
         deletePatient,
         addDoctor,
+        updateDoctor,
+        deleteDoctor,
         addChamber,
+        updateChamber,
+        deleteChamber,
+        clearMockDoctorsAndChambers,
         recordPayment,
         updateTestPrice,
         updateTestStockCapacity,

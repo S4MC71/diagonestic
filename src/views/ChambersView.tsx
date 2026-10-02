@@ -15,6 +15,7 @@ import {
   CheckCircle,
   CalendarCheck,
   Edit2,
+  Trash2,
   Stethoscope,
   ChevronRight
 } from 'lucide-react';
@@ -22,7 +23,7 @@ import {
 const WEEKDAYS = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 export const ChambersView: React.FC = () => {
-  const { chambers, addChamber, doctors, appointments, addAppointment, showToast } = useApp();
+  const { chambers, addChamber, updateChamber, deleteChamber, doctors, appointments, addAppointment, showToast } = useApp();
   const [search, setSearch] = useState('');
   const [doctorFilter, setDoctorFilter] = useState('ALL');
 
@@ -373,6 +374,19 @@ export const ChambersView: React.FC = () => {
                 >
                   <Edit2 size={13} /> Edit
                 </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  style={{ color: '#dc2626', borderColor: '#fecaca', padding: '6px 8px' }}
+                  title="Delete Chamber Room"
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to delete chamber room "${ch.roomNo}" (${ch.name})?`)) {
+                      deleteChamber(ch.id);
+                    }
+                  }}
+                >
+                  <Trash2 size={13} />
+                </button>
               </div>
             </div>
           );
@@ -660,7 +674,7 @@ export const ChambersView: React.FC = () => {
             <form
               onSubmit={e => {
                 e.preventDefault();
-                showToast(`Updated chamber ${editingChamber.name}`);
+                updateChamber(editingChamber.id, editingChamber);
                 setEditingChamber(null);
               }}
             >

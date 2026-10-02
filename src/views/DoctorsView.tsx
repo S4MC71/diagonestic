@@ -22,7 +22,16 @@ import {
 } from 'lucide-react';
 
 export const DoctorsView: React.FC = () => {
-  const { doctors, addDoctor, showToast } = useApp();
+  const {
+    doctors,
+    addDoctor,
+    updateDoctor,
+    deleteDoctor,
+    chambers,
+    addChamber,
+    clearMockDoctorsAndChambers,
+    showToast
+  } = useApp();
   const [search, setSearch] = useState('');
   const [commissionFilter, setCommissionFilter] = useState('ALL');
 
@@ -42,6 +51,8 @@ export const DoctorsView: React.FC = () => {
   const [specialty, setSpecialty] = useState('General Medicine');
   const [hospital, setHospital] = useState('');
   const [phone, setPhone] = useState('');
+  const [chamberRoom, setChamberRoom] = useState('');
+  const [consultationFee, setConsultationFee] = useState<number>(800);
   const [commissionType, setCommissionType] = useState<'percentage' | 'fixed'>('percentage');
   const [commissionValue, setCommissionValue] = useState<number>(25);
   const [allowLogin, setAllowLogin] = useState(false);
@@ -66,8 +77,9 @@ export const DoctorsView: React.FC = () => {
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone) return;
+    const docId = `doc-${Date.now()}`;
     const newDoc: Doctor = {
-      id: `doc-${Date.now()}`,
+      id: docId,
       name,
       degrees,
       bmdcReg: bmdcReg || `A-${Math.floor(10000 + Math.random() * 90000)}`,
@@ -75,6 +87,9 @@ export const DoctorsView: React.FC = () => {
       designation: 'Consultant Specialist',
       hospital: hospital || 'District General Hospital',
       phone,
+      chamberRoom: chamberRoom.trim() || undefined,
+      chamberNo: chamberRoom.trim() || undefined,
+      consultationFee: consultationFee || 800,
       commissionType,
       commissionValue,
       active: true,
@@ -85,9 +100,31 @@ export const DoctorsView: React.FC = () => {
       totalCommissionPaid: 0
     };
     addDoctor(newDoc);
+
+    // If chamber room is provided, auto-create a Chamber in chambers list if not present
+    if (chamberRoom.trim()) {
+      const room = chamberRoom.trim();
+      const existingCh = chambers?.find(ch => ch.roomNo === room);
+      if (!existingCh) {
+        addChamber({
+          name: `Chamber ${room} (${specialty})`,
+          roomNo: room,
+          doctorId: docId,
+          doctorName: name,
+          visitingDays: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'],
+          startTime: '04:00 PM',
+          endTime: '08:00 PM',
+          maxPatients: 30,
+          consultationFee: consultationFee || 800,
+          followUpFee: (consultationFee || 800) / 2,
+          phone: phone
+        });
+      }
+    }
+
     setShowAddModal(false);
     resetAddForm();
-    showToast(`Added referring doctor: ${name}`);
+    showToast(`Added doctor: ${name}`);
   };
 
   const resetAddForm = () => {
@@ -97,6 +134,8 @@ export const DoctorsView: React.FC = () => {
     setSpecialty('General Medicine');
     setHospital('');
     setPhone('');
+    setChamberRoom('');
+    setConsultationFee(800);
     setCommissionType('percentage');
     setCommissionValue(25);
     setAllowLogin(false);
@@ -132,7 +171,21 @@ export const DoctorsView: React.FC = () => {
           </p>
         </div>
 
-        <div className="page-actions">
+        <div className="page-actions" style={{ display: 'flex', gap: '8px' }}>
+          {doctors.length > 0 && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ color: '#dc2626', borderColor: '#fca5a5' }}
+              onClick={() => {
+                if (window.confirm('Are you sure you want to clear all doctors and chambers to start with completely fresh data?')) {
+                  clearMockDoctorsAndChambers();
+                }
+              }}
+            >
+              <Trash2 size={15} /> Clear Demo Data
+            </button>
+          )}
           <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
             <UserPlus size={16} /> + Add Doctor
           </button>
@@ -317,7 +370,9 @@ export const DoctorsView: React.FC = () => {
                         style={{ color: '#dc2626' }}
                         title="Delete Doctor"
                         onClick={() => {
-                          showToast(`Deactivated doctor: ${d.name}`);
+                          if (window.confirm(`Are you sure you want to remove doctor "${d.name}"?`)) {
+                            deleteDoctor(d.id);
+                          }
                         }}
                       >
                         <Trash2 size={14} />
@@ -413,13 +468,36 @@ export const DoctorsView: React.FC = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Hospital / Chamber</label>
+                    <label className="form-label">Hospital / Clinic</label>
                     <input
                       type="text"
                       className="form-control"
                       placeholder="e.g. Central Medical College"
                       value={hospital}
                       onChange={e => setHospital(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Consultation Chamber Room # (Optional)</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. 101, 102, 201"
+                      value={chamberRoom}
+                      onChange={e => setChamberRoom(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Consultation Fee (৳)</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="e.g. 800"
+                      value={consultationFee}
+                      onChange={e => setConsultationFee(Number(e.target.value) || 0)}
                     />
                   </div>
                 </div>
@@ -671,8 +749,10 @@ export const DoctorsView: React.FC = () => {
             <form
               onSubmit={e => {
                 e.preventDefault();
-                showToast(`Updated doctor profile for ${editingDoctor.name}`);
-                setEditingDoctor(null);
+                if (editingDoctor) {
+                  updateDoctor(editingDoctor.id, editingDoctor);
+                  setEditingDoctor(null);
+                }
               }}
             >
               <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -706,6 +786,39 @@ export const DoctorsView: React.FC = () => {
                       value={editingDoctor.phone}
                       onChange={e =>
                         setEditingDoctor({ ...editingDoctor, phone: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Chamber Room #</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. 101, 102"
+                      value={editingDoctor.chamberRoom || editingDoctor.chamberNo || ''}
+                      onChange={e =>
+                        setEditingDoctor({
+                          ...editingDoctor,
+                          chamberRoom: e.target.value,
+                          chamberNo: e.target.value
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Consultation Fee (৳)</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={editingDoctor.consultationFee || 800}
+                      onChange={e =>
+                        setEditingDoctor({
+                          ...editingDoctor,
+                          consultationFee: Number(e.target.value) || 0
+                        })
                       }
                     />
                   </div>

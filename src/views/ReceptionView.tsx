@@ -21,6 +21,9 @@ export const ReceptionView: React.FC = () => {
   const {
     appointments,
     doctors,
+    chambers,
+    patients,
+    addPatient,
     updateAppointmentStatus,
     addAppointment,
     showToast
@@ -34,7 +37,15 @@ export const ReceptionView: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showWalkinModal, setShowWalkinModal] = useState(false);
 
+  // Helper to dynamically get doctor's assigned chamber room
+  const getDoctorChamber = (doc?: any) => {
+    if (!doc) return '101';
+    const ch = chambers?.find((c: any) => c.doctorId === doc.id || c.assignedDoctorId === doc.id);
+    return ch ? ch.roomNo : (doc.chamberRoom || doc.chamberNo || '101');
+  };
+
   // Walk-in form state
+  const [selectedPatientId, setSelectedPatientId] = useState<string>('');
   const [walkinName, setWalkinName] = useState('');
   const [walkinPhone, setWalkinPhone] = useState('');
   const [walkinAge, setWalkinAge] = useState<number>(30);
@@ -119,10 +130,37 @@ export const ReceptionView: React.FC = () => {
     }
 
     const doc = doctors.find(d => d.id === walkinDoctorId) || doctors[0];
+    const chamberRoom = getDoctorChamber(doc);
+
+    // Look up or auto-sync with Central Patients Database
+    const cleanPhone = walkinPhone.trim().replace(/[^0-9]/g, '');
+    const existingPatient = patients.find(
+      p => (selectedPatientId && p.id === selectedPatientId) ||
+           (cleanPhone && p.phone.replace(/[^0-9]/g, '') === cleanPhone)
+    );
+
+    let finalPatientId = existingPatient ? existingPatient.id : '';
+
+    if (!existingPatient) {
+      // Auto-register new patient to central database
+      const newP = addPatient({
+        name: walkinName.trim(),
+        phone: walkinPhone.trim(),
+        whatsApp: walkinPhone.trim(),
+        age: walkinAge,
+        ageUnit: 'yrs',
+        gender: walkinGender,
+        bloodGroup: 'B+',
+        address: 'Walk-in (Reception)',
+        nid: ''
+      });
+      finalPatientId = newP.id;
+    }
+
     addAppointment({
       doctorId: doc?.id || 'doc-1',
       doctorName: doc?.name || 'Consultant Doctor',
-      patientId: `pat-${Date.now()}`,
+      patientId: finalPatientId || `pat-${Date.now()}`,
       patientName: walkinName.trim(),
       patientPhone: walkinPhone.trim(),
       patientAge: walkinAge,
@@ -130,16 +168,17 @@ export const ReceptionView: React.FC = () => {
       date: todayDate,
       timeSlot: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'Waiting',
-      fee: 800,
+      fee: doc?.consultationFee || 800,
       paymentStatus: 'Paid',
-      chamberRoom: doc?.chamberRoom || doc?.chamberNo || 'Chamber-101',
-      chamberNo: doc?.chamberRoom || doc?.chamberNo || 'Chamber-101'
+      chamberRoom: `Chamber ${chamberRoom}`,
+      chamberNo: String(chamberRoom)
     });
 
     setWalkinName('');
     setWalkinPhone('');
+    setSelectedPatientId('');
     setShowWalkinModal(false);
-    showToast('Walk-in token registered successfully!');
+    showToast(`Token registered for ${walkinName.trim()} (Chamber: ${chamberRoom})`);
   };
 
   return (
@@ -843,6 +882,44 @@ export const ReceptionView: React.FC = () => {
             </div>
 
             <form onSubmit={handleWalkinSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Existing Patient Quick Selector */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Existing Patient Quick Select <span style={{ fontWeight: 400, color: '#64748b' }}>(Optional)</span>
+                </label>
+                <select
+                  value={selectedPatientId}
+                  onChange={e => {
+                    const pid = e.target.value;
+                    setSelectedPatientId(pid);
+                    const found = patients.find(p => p.id === pid);
+                    if (found) {
+                      setWalkinName(found.name);
+                      setWalkinPhone(found.phone);
+                      setWalkinAge(found.age);
+                      setWalkinGender(found.gender as any);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    outline: 'none',
+                    background: '#f8fafc',
+                    color: '#334155'
+                  }}
+                >
+                  <option value="">-- New Walk-in Patient (or type details below) --</option>
+                  {patients.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} · {p.phone} ({p.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                   Patient Full Name *
@@ -874,7 +951,20 @@ export const ReceptionView: React.FC = () => {
                     required
                     placeholder="017XXXXXXXX"
                     value={walkinPhone}
-                    onChange={e => setWalkinPhone(e.target.value)}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setWalkinPhone(val);
+                      const clean = val.replace(/[^0-9]/g, '');
+                      if (clean.length >= 7) {
+                        const matched = patients.find(p => p.phone.replace(/[^0-9]/g, '') === clean);
+                        if (matched && !selectedPatientId) {
+                          setSelectedPatientId(matched.id);
+                          setWalkinName(matched.name);
+                          setWalkinAge(matched.age);
+                          setWalkinGender(matched.gender as any);
+                        }
+                      }
+                    }}
                     style={{
                       width: '100%',
                       padding: '10px 12px',
@@ -973,7 +1063,7 @@ export const ReceptionView: React.FC = () => {
                 >
                   {doctors.map(d => (
                     <option key={d.id} value={d.id}>
-                      {d.name} ({d.specialty} · Chamber: {d.chamberRoom || d.chamberNo || '101'})
+                      {d.name} ({d.specialty} · Chamber: {getDoctorChamber(d)})
                     </option>
                   ))}
                 </select>
