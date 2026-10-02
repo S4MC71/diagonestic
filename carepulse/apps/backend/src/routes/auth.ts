@@ -29,9 +29,9 @@ router.post(
 
     const { username, password } = parsed.data;
 
-    // Find user — SUPER_ADMIN has tenantId = null
-    const user = await prisma.user.findFirst({
-      where: { username },
+    // Find user candidates — case-insensitive lookup
+    const candidates = await prisma.user.findMany({
+      where: { username: { equals: username, mode: 'insensitive' } },
       include: {
         tenant: {
           select: { id: true, name: true, slug: true, status: true, planExpiresAt: true },
@@ -39,17 +39,32 @@ router.post(
       },
     });
 
-    if (!user) {
+    if (candidates.length === 0) {
       throw createError('Invalid username or password', 401);
     }
 
-    if (!user.isActive) {
-      throw createError('Your account has been deactivated. Contact your administrator.', 403);
+    // Prioritize platform admins (SUPER_ADMIN, ADMIN_L2)
+    candidates.sort((a, b) => {
+      const aIsPlatform = a.role === 'SUPER_ADMIN' || a.role === 'ADMIN_L2' ? 0 : 1;
+      const bIsPlatform = b.role === 'SUPER_ADMIN' || b.role === 'ADMIN_L2' ? 0 : 1;
+      return aIsPlatform - bIsPlatform;
+    });
+
+    // Match candidate by password
+    let user = null;
+    for (const candidate of candidates) {
+      if (candidate.isActive && (await bcrypt.compare(password, candidate.passwordHash))) {
+        user = candidate;
+        break;
+      }
     }
 
-    // Verify password
-    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!passwordMatch) {
+    if (!user) {
+      // Check if any candidate was deactivated
+      const anyDeactivated = candidates.some((c) => !c.isActive);
+      if (anyDeactivated) {
+        throw createError('Your account has been deactivated. Contact your administrator.', 403);
+      }
       throw createError('Invalid username or password', 401);
     }
 
