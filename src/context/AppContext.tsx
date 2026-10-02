@@ -379,11 +379,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const stored = localStorage.getItem('cp_tenant');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed?.name) {
+        if (parsed) {
           return {
             ...initialSettings,
-            name: parsed.name,
-            slug: parsed.slug || initialSettings.slug,
+            ...parsed,
           };
         }
       }
@@ -392,6 +391,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     return initialSettings;
   });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_tenant', JSON.stringify(tenantSettings));
+    } catch {}
+  }, [tenantSettings]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(initialSupportTickets);
   const [activeSubscription, setActiveSubscription] = useState<ActiveSubscription>(initialActiveSubscription);
   const [subscriptionPayments, setSubscriptionPayments] = useState<SubscriptionPayment[]>(initialSubscriptionPayments);
@@ -481,10 +486,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [smsConfig, setSmsConfig] = useState<SmsConfig>(() => {
     try {
       const s = localStorage.getItem('cp_sms_config');
-      return s ? JSON.parse(s) : INITIAL_SMS_CONFIG;
+      if (s) {
+        const parsed = JSON.parse(s);
+        return {
+          ...INITIAL_SMS_CONFIG,
+          ...parsed,
+        };
+      }
     } catch {
       return INITIAL_SMS_CONFIG;
     }
+    return INITIAL_SMS_CONFIG;
   });
 
   const [smsLogs, setSmsLogs] = useState<SmsLog[]>(() => {
@@ -1269,7 +1281,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateTenantSettings = (updates: Partial<TenantSettings>) => {
-    setTenantSettings(prev => ({ ...prev, ...updates }));
+    setTenantSettings(prev => {
+      const next = { ...prev, ...updates };
+      try {
+        localStorage.setItem('cp_tenant', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
     showToast('Settings saved successfully');
   };
 
@@ -1603,7 +1621,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // ── SMS NOTIFICATIONS ──
   const updateSmsConfig = (updates: Partial<SmsConfig>) => {
-    setSmsConfig(prev => ({ ...prev, ...updates }));
+    setSmsConfig(prev => {
+      const next = { ...prev, ...updates };
+      try {
+        localStorage.setItem('cp_sms_config', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
     showToast('SMS Gateway settings updated.');
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { SmsConfig, SmsLog } from '../types';
 import {
@@ -27,6 +27,7 @@ export const SmsNotificationsView: React.FC = () => {
     smsLogs,
     sendSmsNotification,
     tenantSettings,
+    updateTenantSettings,
     showToast
   } = useApp();
 
@@ -40,7 +41,21 @@ export const SmsNotificationsView: React.FC = () => {
   const [customMessage, setCustomMessage] = useState('');
 
   // Config states
-  const [enabled, setEnabled] = useState(smsConfig.enabled ?? true);
+  const [enabled, setEnabled] = useState(
+    smsConfig.enabled !== false && tenantSettings.enableSmsNotifications !== false
+  );
+
+  useEffect(() => {
+    setEnabled(smsConfig.enabled !== false && tenantSettings.enableSmsNotifications !== false);
+  }, [smsConfig.enabled, tenantSettings.enableSmsNotifications]);
+
+  const handleToggleService = () => {
+    const nextState = !enabled;
+    setEnabled(nextState);
+    updateSmsConfig({ enabled: nextState });
+    updateTenantSettings({ enableSmsNotifications: nextState });
+    showToast(`Center SMS service ${nextState ? 'ACTIVATED (চালু)' : 'DISABLED (বন্ধ)'}`);
+  };
   const [provider, setProvider] = useState(smsConfig.provider);
   const [apiKey, setApiKey] = useState(smsConfig.apiKey);
   const [senderId, setSenderId] = useState(smsConfig.senderId);
@@ -472,7 +487,7 @@ export const SmsNotificationsView: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => setEnabled(!enabled)}
+              onClick={handleToggleService}
               style={{
                 padding: '9px 18px',
                 borderRadius: '8px',

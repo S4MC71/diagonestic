@@ -4,8 +4,9 @@ import { ReportsSettingsTab } from './ReportsSettingsTab';
 import { ReportFooterSettingsTab } from './ReportFooterSettingsTab';
 import { PharmacySettingsTab } from './PharmacySettingsTab';
 import { WhatsAppSettingsTab } from './WhatsAppSettingsTab';
+import { SmsNotificationsView } from '../SmsNotificationsView';
 
-export type SettingsTab = 'profile' | 'reports' | 'report-footer' | 'pharmacy' | 'whatsapp';
+export type SettingsTab = 'profile' | 'reports' | 'report-footer' | 'pharmacy' | 'whatsapp' | 'sms';
 
 export const SettingsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
@@ -16,7 +17,7 @@ export const SettingsView: React.FC = () => {
       <div className="settings-header">
         <h1 className="settings-header-title">Diagnostic Center Settings</h1>
         <p className="settings-header-sub">
-          Configure your center profile, contact, legal registration, and report preferences.
+          Configure your center profile, contact, legal registration, SMS gateway, and report preferences.
         </p>
       </div>
 
@@ -57,6 +58,13 @@ export const SettingsView: React.FC = () => {
         >
           WhatsApp
         </button>
+        <button
+          type="button"
+          className={`settings-pill-btn ${activeTab === 'sms' ? 'active' : ''}`}
+          onClick={() => setActiveTab('sms')}
+        >
+          SMS Gateway
+        </button>
       </div>
 
       {/* Active Tab Content */}
@@ -65,6 +73,11 @@ export const SettingsView: React.FC = () => {
       {activeTab === 'report-footer' && <ReportFooterSettingsTab />}
       {activeTab === 'pharmacy' && <PharmacySettingsTab />}
       {activeTab === 'whatsapp' && <WhatsAppSettingsTab />}
+      {activeTab === 'sms' && (
+        <div style={{ marginTop: '20px' }}>
+          <SmsNotificationsView />
+        </div>
+      )}
     </div>
   );
 };

@@ -40,7 +40,7 @@ export const ReceptionView: React.FC = () => {
     showToast
   } = useApp();
 
-  const isSmsActive = tenantSettings.enableSmsNotifications !== false && smsConfig.enabled !== false;
+  const isSmsActive = smsConfig.enabled !== false && tenantSettings.enableSmsNotifications !== false;
   const [sendSms, setSendSms] = useState(true);
 
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>('ALL');
@@ -1276,31 +1276,29 @@ export const ReceptionView: React.FC = () => {
                 </select>
               </div>
 
-              {/* SMS Notification Option per Diagnostic Center */}
-              <div style={{
-                background: isSmsActive ? '#f0fdf4' : '#f8fafc',
-                border: `1px solid ${isSmsActive ? '#bbf7d0' : '#e2e8f0'}`,
-                borderRadius: '8px',
-                padding: '10px 14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '12px'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <MessageSquare size={16} color={isSmsActive ? '#16a34a' : '#94a3b8'} />
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: isSmsActive ? '#166534' : '#64748b' }}>
-                      SMS Token Notification
-                    </div>
-                    <div style={{ fontSize: '11px', color: isSmsActive ? '#15803d' : '#94a3b8' }}>
-                      {isSmsActive
-                        ? `Send instant Token # & Chamber room SMS to ${walkinPhone || 'patient'}`
-                        : 'SMS Module is disabled for this diagnostic center (SuperAdmin controlled)'}
+              {/* SMS Notification Option: ONLY VISIBLE IF SMS SERVICE IS ACTIVE */}
+              {isSmsActive && (
+                <div style={{
+                  background: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <MessageSquare size={16} color="#16a34a" />
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#166534' }}>
+                        SMS Token Notification
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#15803d' }}>
+                        Send instant Token # & Chamber room SMS to {walkinPhone || 'patient'}
+                      </div>
                     </div>
                   </div>
-                </div>
-                {isSmsActive && (
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#166534' }}>
                     <input
                       type="checkbox"
@@ -1310,8 +1308,8 @@ export const ReceptionView: React.FC = () => {
                     />
                     Send SMS
                   </label>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Action Buttons: Optional Print vs Issue Token Only */}
               <div style={{ display: 'flex', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
