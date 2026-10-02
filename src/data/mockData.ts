@@ -788,11 +788,38 @@ export const INITIAL_PATIENTS: Patient[] = [
     gender: 'Male',
     bloodGroup: 'B+',
     address: 'Medical College Road, Central Square',
-    nid: '19784912839281',
     createdAt: '2026-08-28',
     visitCount: 3,
     totalBilled: 3450,
-    outstandingDue: 0
+    outstandingDue: 0,
+    vitals: [
+      {
+        id: 'vit-1',
+        patientId: 'pat-1',
+        date: '2026-09-14',
+        time: '10:30 AM',
+        doctorName: 'Prof. Dr. M. A. Rahman',
+        bp: '130/85',
+        pulse: '78',
+        temp: '98.6',
+        weight: '72',
+        spo2: '98',
+        notes: 'Mild hypertension'
+      }
+    ],
+    latestVitals: {
+      id: 'vit-1',
+      patientId: 'pat-1',
+      date: '2026-09-14',
+      time: '10:30 AM',
+      doctorName: 'Prof. Dr. M. A. Rahman',
+      bp: '130/85',
+      pulse: '78',
+      temp: '98.6',
+      weight: '72',
+      spo2: '98',
+      notes: 'Mild hypertension'
+    }
   },
   {
     id: 'pat-2',
@@ -808,7 +835,35 @@ export const INITIAL_PATIENTS: Patient[] = [
     createdAt: '2026-08-30',
     visitCount: 2,
     totalBilled: 1850,
-    outstandingDue: 450
+    outstandingDue: 450,
+    vitals: [
+      {
+        id: 'vit-2',
+        patientId: 'pat-2',
+        date: '2026-09-15',
+        time: '04:15 PM',
+        doctorName: 'Dr. Farhana Islam',
+        bp: '115/75',
+        pulse: '72',
+        temp: '98.4',
+        weight: '58',
+        spo2: '99',
+        notes: 'Normal vitals'
+      }
+    ],
+    latestVitals: {
+      id: 'vit-2',
+      patientId: 'pat-2',
+      date: '2026-09-15',
+      time: '04:15 PM',
+      doctorName: 'Dr. Farhana Islam',
+      bp: '115/75',
+      pulse: '72',
+      temp: '98.4',
+      weight: '58',
+      spo2: '99',
+      notes: 'Normal vitals'
+    }
   },
   {
     id: 'pat-3',

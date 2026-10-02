@@ -15,7 +15,8 @@ import {
   X,
   Check,
   Building,
-  UserCheck
+  UserCheck,
+  Stethoscope
 } from 'lucide-react';
 
 export const PatientsView: React.FC = () => {
@@ -34,15 +35,14 @@ export const PatientsView: React.FC = () => {
   const [gender, setGender] = useState<'Male' | 'Female' | 'Other'>('Male');
   const [nationality, setNationality] = useState('Bangladeshi');
   const [address, setAddress] = useState('');
-  const [nid, setNid] = useState('');
   const [isWholesale, setIsWholesale] = useState(false);
+  const [vitalsPatient, setVitalsPatient] = useState<Patient | null>(null);
 
   // Edit form fields
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editWhatsApp, setEditWhatsApp] = useState('');
   const [editAddress, setEditAddress] = useState('');
-  const [editNid, setEditNid] = useState('');
 
   const filtered = patients.filter(
     p =>
@@ -66,8 +66,7 @@ export const PatientsView: React.FC = () => {
       ageUnit,
       gender,
       bloodGroup: 'B+',
-      address: address.trim(),
-      nid: nid.trim()
+      address: address.trim()
     });
 
     setShowAddModal(false);
@@ -75,7 +74,6 @@ export const PatientsView: React.FC = () => {
     setPhone('');
     setWhatsApp('');
     setAddress('');
-    setNid('');
     setIsWholesale(false);
     showToast(`Patient ${name.trim()} registered successfully`);
   };
@@ -86,7 +84,6 @@ export const PatientsView: React.FC = () => {
     setEditPhone(p.phone);
     setEditWhatsApp(p.whatsApp || p.phone);
     setEditAddress(p.address || '');
-    setEditNid(p.nid || '');
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
@@ -97,8 +94,7 @@ export const PatientsView: React.FC = () => {
       name: editName.trim(),
       phone: editPhone.trim(),
       whatsApp: editWhatsApp.trim(),
-      address: editAddress.trim(),
-      nid: editNid.trim()
+      address: editAddress.trim()
     });
 
     setEditingPatient(null);
@@ -370,9 +366,9 @@ export const PatientsView: React.FC = () => {
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
-                          onClick={() => setSelectedPatient(p)}
+                          onClick={() => setVitalsPatient(p)}
                           style={{ padding: '5px 7px', borderRadius: '6px', background: '#fff', border: '1px solid #cbd5e1', color: '#e11d48' }}
-                          title="Record vitals"
+                          title="Patient vitals & clinical history"
                         >
                           <Heart size={13} />
                         </button>
@@ -583,21 +579,6 @@ export const PatientsView: React.FC = () => {
                   />
                 </div>
 
-                {/* Government ID */}
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                    Government ID (NID / Passport / SSN)
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Government ID"
-                    value={nid}
-                    onChange={e => setNid(e.target.value)}
-                    style={{ height: '40px', borderRadius: '8px' }}
-                  />
-                </div>
-
                 {/* Wholesale Account Checkbox */}
                 <div
                   style={{
@@ -774,7 +755,6 @@ export const PatientsView: React.FC = () => {
                 <div><strong>Age & Gender:</strong> {selectedPatient.age} {selectedPatient.ageUnit}, {selectedPatient.gender}</div>
                 <div><strong>Blood Group:</strong> {selectedPatient.bloodGroup || 'Not Specified'}</div>
                 <div style={{ gridColumn: 'span 2' }}><strong>Address:</strong> {selectedPatient.address || '—'}</div>
-                {selectedPatient.nid && <div style={{ gridColumn: 'span 2' }}><strong>NID / Govt ID:</strong> {selectedPatient.nid}</div>}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: '#ecfdf5', borderRadius: '10px', color: '#065f46' }}>
@@ -811,6 +791,226 @@ export const PatientsView: React.FC = () => {
                 }}
               >
                 <FilePlus size={15} /> Create New Bill
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL 4: PATIENT VITALS & CLINICAL HISTORY (RECORDED FROM PRESCRIPTIONS)
+          ==================================================================== */}
+      {vitalsPatient && (
+        <div className="modal-backdrop" onClick={() => setVitalsPatient(null)}>
+          <div
+            className="modal-content"
+            style={{ maxWidth: '640px', width: '94%', borderRadius: '16px', overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: '#f8fafc'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: '#ffe4e6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#e11d48'
+                  }}
+                >
+                  <Heart size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    {vitalsPatient.name} — Vitals History
+                  </h3>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>
+                    Code: <strong style={{ color: '#059669', fontFamily: 'monospace' }}>{vitalsPatient.code || vitalsPatient.patientId}</strong> · {vitalsPatient.gender}, {vitalsPatient.age} {vitalsPatient.ageUnit || 'yrs'} · {vitalsPatient.phone}
+                  </div>
+                </div>
+              </div>
+              <button className="icon-btn" onClick={() => setVitalsPatient(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '78vh', overflowY: 'auto' }}>
+              {/* Informational Banner */}
+              <div
+                style={{
+                  background: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  fontSize: '12px',
+                  color: '#166534',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Activity size={16} color="#16a34a" />
+                <span>
+                  রোগীর ভাইটাল সাইন (BP, Pulse, Temp, Weight) ডাক্তারের প্রেসক্রিপশন তৈরির সময় স্বয়ংক্রিয়ভাবে সংগৃহীত ও সংরক্ষিত হয়।
+                </span>
+              </div>
+
+              {/* Latest Vitals Highlight Cards */}
+              {vitalsPatient.latestVitals ? (
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Latest Recorded Vitals ({vitalsPatient.latestVitals.date || 'Recent'})
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px' }}>
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>BLOOD PRESSURE</div>
+                      <div style={{ fontSize: '16px', fontWeight: 800, color: '#e11d48', marginTop: '2px' }}>
+                        {vitalsPatient.latestVitals.bp || '—'}
+                      </div>
+                      <div style={{ fontSize: '9px', color: '#94a3b8' }}>mmHg</div>
+                    </div>
+
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>PULSE RATE</div>
+                      <div style={{ fontSize: '16px', fontWeight: 800, color: '#0284c7', marginTop: '2px' }}>
+                        {vitalsPatient.latestVitals.pulse || '—'}
+                      </div>
+                      <div style={{ fontSize: '9px', color: '#94a3b8' }}>bpm</div>
+                    </div>
+
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>BODY TEMP</div>
+                      <div style={{ fontSize: '16px', fontWeight: 800, color: '#d97706', marginTop: '2px' }}>
+                        {vitalsPatient.latestVitals.temp || '—'}
+                      </div>
+                      <div style={{ fontSize: '9px', color: '#94a3b8' }}>°F</div>
+                    </div>
+
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>WEIGHT</div>
+                      <div style={{ fontSize: '16px', fontWeight: 800, color: '#059669', marginTop: '2px' }}>
+                        {vitalsPatient.latestVitals.weight || '—'}
+                      </div>
+                      <div style={{ fontSize: '9px', color: '#94a3b8' }}>kg</div>
+                    </div>
+
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>SpO₂ OXYGEN</div>
+                      <div style={{ fontSize: '16px', fontWeight: 800, color: '#7c3aed', marginTop: '2px' }}>
+                        {vitalsPatient.latestVitals.spo2 ? `${vitalsPatient.latestVitals.spo2}%` : '—'}
+                      </div>
+                      <div style={{ fontSize: '9px', color: '#94a3b8' }}>Saturation</div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Vitals History Timeline / Table */}
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  All Recorded Consultations & Vitals
+                </div>
+
+                {vitalsPatient.vitals && vitalsPatient.vitals.length > 0 ? (
+                  <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left', color: '#475569' }}>
+                          <th style={{ padding: '8px 12px' }}>Date</th>
+                          <th style={{ padding: '8px 12px' }}>Consultant</th>
+                          <th style={{ padding: '8px 12px' }}>BP</th>
+                          <th style={{ padding: '8px 12px' }}>Pulse</th>
+                          <th style={{ padding: '8px 12px' }}>Temp</th>
+                          <th style={{ padding: '8px 12px' }}>Weight</th>
+                          <th style={{ padding: '8px 12px' }}>SpO₂</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vitalsPatient.vitals.map((v, i) => (
+                          <tr key={v.id || i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '8px 12px', fontWeight: 600, color: '#0f172a' }}>
+                              {v.date} <span style={{ fontSize: '10px', color: '#64748b' }}>{v.time || ''}</span>
+                            </td>
+                            <td style={{ padding: '8px 12px', color: '#334155' }}>
+                              {v.doctorName || 'Consultant'}
+                            </td>
+                            <td style={{ padding: '8px 12px', fontWeight: 700, color: '#e11d48' }}>
+                              {v.bp || '—'}
+                            </td>
+                            <td style={{ padding: '8px 12px' }}>{v.pulse ? `${v.pulse} bpm` : '—'}</td>
+                            <td style={{ padding: '8px 12px' }}>{v.temp ? `${v.temp}°F` : '—'}</td>
+                            <td style={{ padding: '8px 12px' }}>{v.weight ? `${v.weight} kg` : '—'}</td>
+                            <td style={{ padding: '8px 12px' }}>{v.spo2 ? `${v.spo2}%` : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      padding: '30px 20px',
+                      textAlign: 'center',
+                      background: '#f8fafc',
+                      borderRadius: '12px',
+                      border: '1px dashed #cbd5e1'
+                    }}
+                  >
+                    <Heart size={32} color="#94a3b8" style={{ margin: '0 auto 10px', display: 'block' }} />
+                    <div style={{ fontWeight: 700, color: '#334155', fontSize: '13px' }}>
+                      কোনো ভাইটাল রেকর্ড পাওয়া যায়নি
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', maxWidth: '380px', margin: '4px auto 0' }}>
+                      এই রোগীর জন্য এখনো কোনো প্রেসক্রিপশন তৈরি হয়নি। ডাক্তার প্রেসক্রিপশন প্রদান করলে রোগীর ব্লাড প্রেশার, পালস এবং ওজন স্বয়ংক্রিয়ভাবে এখানে তালিকাভুক্ত হবে।
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              style={{
+                padding: '14px 20px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <button className="btn btn-secondary" onClick={() => setVitalsPatient(null)}>
+                Close
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setVitalsPatient(null);
+                  setCurrentView('new-prescription');
+                }}
+                style={{
+                  background: '#059669',
+                  color: '#fff',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Stethoscope size={15} /> Create Prescription for this Patient
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { PrescriptionDrug } from '../types';
 import {
@@ -30,7 +30,18 @@ interface ExpandableSection {
 }
 
 export const NewPrescriptionView: React.FC = () => {
-  const { tenantSettings, doctors, chambers, patients, tests, setCurrentView, showToast, addPatient } = useApp();
+  const {
+    tenantSettings,
+    doctors,
+    chambers,
+    patients,
+    tests,
+    prescriptions,
+    savePrescription,
+    setCurrentView,
+    showToast,
+    addPatient
+  } = useApp();
 
   // Top Selectors
   const [selectedDoctorId, setSelectedDoctorId] = useState(doctors[0]?.id || '');
@@ -70,6 +81,18 @@ export const NewPrescriptionView: React.FC = () => {
   const [temp, setTemp] = useState('98.4');
   const [weight, setWeight] = useState('65');
   const [spo2, setSpo2] = useState('99');
+
+  // Load existing vitals of patient if previously recorded
+  useEffect(() => {
+    const pt = patients.find(p => p.id === selectedPatientId);
+    if (pt?.latestVitals) {
+      if (pt.latestVitals.bp) setBp(pt.latestVitals.bp);
+      if (pt.latestVitals.pulse) setPulse(pt.latestVitals.pulse);
+      if (pt.latestVitals.temp) setTemp(pt.latestVitals.temp);
+      if (pt.latestVitals.weight) setWeight(pt.latestVitals.weight);
+      if (pt.latestVitals.spo2) setSpo2(pt.latestVitals.spo2);
+    }
+  }, [selectedPatientId, patients]);
 
   // Complaints
   const [complaintInput, setComplaintInput] = useState('');
@@ -306,8 +329,42 @@ export const NewPrescriptionView: React.FC = () => {
   };
 
   const handleSaveAndPrint = () => {
+    const pt = patients.find(p => p.id === selectedPatientId);
+    const doc = doctors.find(d => d.id === selectedDoctorId);
+    const ch = chambers.find(c => c.id === selectedChamberId);
+
+    const generatedRxNo = `RX-${new Date().getFullYear()}-${String(prescriptions.length + 1).padStart(4, '0')}`;
+
+    savePrescription({
+      rxNo: generatedRxNo,
+      date: visitDate,
+      patientId: selectedPatientId,
+      patientName: pt?.name || 'Consultation Patient',
+      patientCode: pt?.code || pt?.patientId || 'PAT',
+      age: pt?.age || 30,
+      gender: pt?.gender || 'Male',
+      doctorId: selectedDoctorId,
+      doctorName: doc?.name || 'Consultant Doctor',
+      chamber: ch ? `Room #${ch.roomNo} - ${ch.name}` : 'Chamber 101',
+      chiefComplaint: complaints.join(', '),
+      diagnosis: diagnosis || 'Clinical Evaluation',
+      followUp: `${followUpDays} ${followUpUnit}`,
+      drugsCount: drugs.length,
+      drugs,
+      vitals: {
+        bp,
+        pulse,
+        temp,
+        weight,
+        spo2
+      },
+      advice: [adviceText],
+      createdAt: new Date().toISOString()
+    });
+
     window.print();
-    showToast('Prescription saved & sent to printer!');
+    showToast(`Prescription ${generatedRxNo} saved & vitals updated!`);
+    setCurrentView('prescriptions');
   };
 
   return (
@@ -1339,7 +1396,37 @@ export const NewPrescriptionView: React.FC = () => {
               <button
                 className="btn btn-secondary"
                 onClick={() => {
-                  showToast('Prescription draft saved successfully');
+                  const pt = patients.find(p => p.id === selectedPatientId);
+                  const doc = doctors.find(d => d.id === selectedDoctorId);
+                  const ch = chambers.find(c => c.id === selectedChamberId);
+                  const generatedRxNo = `RX-${new Date().getFullYear()}-${String(prescriptions.length + 1).padStart(4, '0')}`;
+                  savePrescription({
+                    rxNo: generatedRxNo,
+                    date: visitDate,
+                    patientId: selectedPatientId,
+                    patientName: pt?.name || 'Consultation Patient',
+                    patientCode: pt?.code || pt?.patientId || 'PAT',
+                    age: pt?.age || 30,
+                    gender: pt?.gender || 'Male',
+                    doctorId: selectedDoctorId,
+                    doctorName: doc?.name || 'Consultant Doctor',
+                    chamber: ch ? `Room #${ch.roomNo} - ${ch.name}` : 'Chamber 101',
+                    chiefComplaint: complaints.join(', '),
+                    diagnosis: diagnosis || 'Clinical Evaluation',
+                    followUp: `${followUpDays} ${followUpUnit}`,
+                    drugsCount: drugs.length,
+                    drugs,
+                    vitals: {
+                      bp,
+                      pulse,
+                      temp,
+                      weight,
+                      spo2
+                    },
+                    advice: [adviceText],
+                    createdAt: new Date().toISOString()
+                  });
+                  showToast(`Prescription ${generatedRxNo} saved as draft!`);
                   setCurrentView('prescriptions');
                 }}
               >

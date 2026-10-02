@@ -166,8 +166,7 @@ export const ReceptionView: React.FC = () => {
         ageUnit: 'yrs',
         gender: walkinGender,
         bloodGroup: 'B+',
-        address: 'Walk-in (Reception)',
-        nid: ''
+        address: 'Walk-in (Reception)'
       });
       finalPatientId = newP.id;
       finalPatientCode = newP.code || newP.patientId || '';

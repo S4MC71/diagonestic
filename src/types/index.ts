@@ -101,6 +101,22 @@ export interface User {
   avatarUrl?: string;
 }
 
+export interface PatientVitalRecord {
+  id: string;
+  patientId: string;
+  date: string;
+  time?: string;
+  doctorName?: string;
+  bp?: string;
+  pulse?: string;
+  temp?: string;
+  weight?: string;
+  spo2?: string;
+  rbs?: string;
+  bmi?: string;
+  notes?: string;
+}
+
 export interface Patient {
   id: string;
   patientId?: string;
@@ -113,13 +129,42 @@ export interface Patient {
   gender: 'Male' | 'Female' | 'Other';
   bloodGroup?: string;
   address: string;
-  nid?: string;
   totalVisits?: number;
   visitCount?: number;
   totalSpent?: number;
   totalBilled?: number;
   outstandingDue: number;
   lastVisit?: string;
+  createdAt: string;
+  vitals?: PatientVitalRecord[];
+  latestVitals?: PatientVitalRecord;
+}
+
+export interface PrescriptionRecord {
+  id: string;
+  rxNo: string;
+  date: string;
+  patientId: string;
+  patientName: string;
+  patientCode: string;
+  age: number;
+  gender: string;
+  doctorId: string;
+  doctorName: string;
+  chamber: string;
+  chiefComplaint?: string;
+  diagnosis?: string;
+  followUp?: string;
+  drugsCount: number;
+  drugs?: any[];
+  vitals?: {
+    bp?: string;
+    pulse?: string;
+    temp?: string;
+    weight?: string;
+    spo2?: string;
+  };
+  advice?: string[];
   createdAt: string;
 }
 

@@ -13,61 +13,13 @@ import {
   UserCheck
 } from 'lucide-react';
 
-interface PrescriptionItem {
-  id: string;
-  rxNo: string;
-  date: string;
-  patientName: string;
-  patientCode: string;
-  age: number;
-  gender: string;
-  doctorName: string;
-  chamber: string;
-  chiefComplaint: string;
-  diagnosis: string;
-  followUp: string;
-  drugsCount: number;
-}
-
-const INITIAL_PRESCRIPTIONS: PrescriptionItem[] = [
-  {
-    id: 'rx-1',
-    rxNo: 'RX-2026-0001',
-    date: '14 Sept 2026',
-    patientName: 'Md. Rafiqul Islam',
-    patientCode: 'P0000001',
-    age: 48,
-    gender: 'Male',
-    doctorName: 'Prof. Dr. M. A. Rahman',
-    chamber: 'Consultation Room 1',
-    chiefComplaint: 'Chest tightness on exertion, intermittent cough',
-    diagnosis: 'Essential Hypertension, Type 2 DM',
-    followUp: '21 Sept',
-    drugsCount: 4
-  },
-  {
-    id: 'rx-2',
-    rxNo: 'RX-2026-0002',
-    date: '15 Sept 2026',
-    patientName: 'TEST Rahim Uddin',
-    patientCode: 'P0000002',
-    age: 35,
-    gender: 'Male',
-    doctorName: 'Dr. Farhana Islam',
-    chamber: 'Consultation Room 2',
-    chiefComplaint: 'Mild generalized weakness, joint ache',
-    diagnosis: 'Nutritional Deficiency / Iron Deficiency Anaemia',
-    followUp: '28 Sept',
-    drugsCount: 3
-  }
-];
+import { PrescriptionRecord } from '../types';
 
 export const PrescriptionsView: React.FC = () => {
-  const { setCurrentView, showToast } = useApp();
-  const [prescriptions, setPrescriptions] = useState<PrescriptionItem[]>(INITIAL_PRESCRIPTIONS);
+  const { prescriptions, deletePrescription, setCurrentView, showToast } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [chamberFilter, setChamberFilter] = useState('ALL');
-  const [selectedRx, setSelectedRx] = useState<PrescriptionItem | null>(null);
+  const [selectedRx, setSelectedRx] = useState<PrescriptionRecord | null>(null);
 
   const filtered = prescriptions.filter(rx => {
     const matchesSearch =
@@ -79,14 +31,13 @@ export const PrescriptionsView: React.FC = () => {
     return matchesSearch && matchesChamber;
   });
 
-  const handleDelete = (rx: PrescriptionItem) => {
+  const handleDelete = (rx: PrescriptionRecord) => {
     if (window.confirm(`Are you sure you want to delete prescription record "${rx.rxNo}" for ${rx.patientName}?`)) {
-      setPrescriptions(prev => prev.filter(r => r.id !== rx.id));
-      showToast(`Prescription ${rx.rxNo} removed`);
+      deletePrescription(rx.id);
     }
   };
 
-  const handleAddToCart = (rx: PrescriptionItem) => {
+  const handleAddToCart = (rx: PrescriptionRecord) => {
     showToast(`Transferred ${rx.drugsCount} prescribed medicines to Pharmacy POS counter`);
     setCurrentView('pharmacy-pos');
   };
