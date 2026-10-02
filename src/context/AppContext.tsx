@@ -138,7 +138,10 @@ interface AppContextType {
 
   // Appointments
   updateAppointmentStatus: (id: string, status: Appointment['status']) => void;
-  addAppointment: (app: Omit<Appointment, 'id' | 'serialNo'>) => void;
+  addAppointment: (app: Omit<Appointment, 'id' | 'serialNo'>) => Appointment;
+  deleteAppointment: (id: string) => void;
+  clearCompletedAppointments: () => void;
+  resetTodayQueue: () => void;
   addWeeklySitting: (sitting: Omit<WeeklySitting, 'id'>) => void;
 
   // Inventory & Requisitions
@@ -286,10 +289,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Core Data
   const [users, setUsers] = useState<User[]>(initialUsers);
-  const [patients, setPatients] = useState<Patient[]>(initialPatients);
+  const [patients, setPatients] = useState<Patient[]>(() => {
+    try {
+      const saved = localStorage.getItem('cp_patients');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return initialPatients;
+  });
   const [diagnosticTests, setDiagnosticTests] = useState<DiagnosticTest[]>(initialTests);
-  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
-  const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
+  const [invoices, setInvoices] = useState<Invoice[]>(() => {
+    try {
+      const saved = localStorage.getItem('cp_invoices');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return initialInvoices;
+  });
+  const [appointments, setAppointments] = useState<Appointment[]>(() => {
+    try {
+      const saved = localStorage.getItem('cp_appointments');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return initialAppointments;
+  });
   const [doctors, setDoctors] = useState<Doctor[]>(() => {
     try {
       const saved = localStorage.getItem('cp_doctors');
@@ -316,6 +337,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('cp_chambers', JSON.stringify(chambers));
     } catch {}
   }, [chambers]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_patients', JSON.stringify(patients));
+    } catch {}
+  }, [patients]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_invoices', JSON.stringify(invoices));
+    } catch {}
+  }, [invoices]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_appointments', JSON.stringify(appointments));
+    } catch {}
+  }, [appointments]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(initialInventory);
   const [pharmacyProducts, setPharmacyProducts] = useState<PharmacyProduct[]>(initialPharmacyProducts);
   const [pharmacySales, setPharmacySales] = useState<PharmacySale[]>([]);
@@ -1015,6 +1054,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setAppointments(prev => [...prev, newApp]);
     showToast(`Serial #${newApp.serialNo} booked for ${newApp.patientName}`);
+    return newApp;
+  };
+
+  const deleteAppointment = (id: string) => {
+    setAppointments(prev => prev.filter(a => a.id !== id));
+    showToast('Token / Appointment removed successfully');
+  };
+
+  const clearCompletedAppointments = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setAppointments(prev => prev.filter(a => !(a.status === 'Completed' && (a.date === today || !a.date))));
+    showToast('Cleared completed appointments for today');
+  };
+
+  const resetTodayQueue = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setAppointments(prev => prev.filter(a => a.date && a.date !== today));
+    showToast("Today's queue has been reset");
   };
 
   const addWeeklySitting = (sitting: Omit<WeeklySitting, 'id'>) => {
@@ -1551,6 +1608,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const sendSmsNotification = (phone: string, message: string, type: SmsLog['type'] = 'GENERAL'): boolean => {
+    if (tenantSettings.enableSmsNotifications === false || smsConfig.enabled === false) {
+      showToast('SMS notifications are disabled for this center.');
+      return false;
+    }
     if (smsConfig.balance < 0.50) {
       showToast('SMS balance low! Please recharge.');
       return false;
@@ -1635,6 +1696,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         verifyLabReport,
         updateAppointmentStatus,
         addAppointment,
+        deleteAppointment,
+        clearCompletedAppointments,
+        resetTodayQueue,
         addWeeklySitting,
         createRequisition,
         updateRequisitionStatus,

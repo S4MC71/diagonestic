@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Appointment, WeeklySitting } from '../types';
+import { TokenSlipModal } from '../components/print/TokenSlipModal';
 import {
   Calendar,
   Clock,
@@ -23,8 +24,11 @@ export const AppointmentsView: React.FC = () => {
     updateAppointmentStatus,
     addAppointment,
     addWeeklySitting,
+    tenantSettings,
     showToast
   } = useApp();
+
+  const [selectedSlipAppointment, setSelectedSlipAppointment] = useState<Appointment | null>(null);
 
   const [activeTab, setActiveTab] = useState<'daily' | 'waiting-room' | 'schedule' | 'report'>('daily');
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -62,7 +66,7 @@ export const AppointmentsView: React.FC = () => {
     e.preventDefault();
     if (!bookPatientName || !bookPatientPhone) return;
     const doc = doctors.find(d => d.id === bookDoctorId);
-    addAppointment({
+    const newApp = addAppointment({
       doctorId: bookDoctorId,
       doctorName: doc?.name || 'Consultant Specialist',
       patientName: bookPatientName,
@@ -80,6 +84,9 @@ export const AppointmentsView: React.FC = () => {
     setShowBookingModal(false);
     setBookPatientName('');
     setBookPatientPhone('');
+    if (newApp) {
+      setSelectedSlipAppointment(newApp);
+    }
   };
 
   const handleCreateSitting = (e: React.FormEvent) => {
@@ -242,7 +249,15 @@ export const AppointmentsView: React.FC = () => {
                     </span>
                   </td>
                   <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', alignItems: 'center' }}>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: '11px', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '3px' }}
+                        onClick={() => setSelectedSlipAppointment(app)}
+                        title="Print Token Slip"
+                      >
+                        <Printer size={11} /> Slip
+                      </button>
                       {app.status === 'Waiting' && (
                         <button
                           className="btn btn-secondary btn-sm"
@@ -340,13 +355,23 @@ export const AppointmentsView: React.FC = () => {
                           <div>
                             <strong>#{w.serialNo}</strong> — {w.patientName}
                           </div>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            style={{ fontSize: '10px', padding: '2px 8px' }}
-                            onClick={() => updateAppointmentStatus(w.id, 'With Doctor')}
-                          >
-                            Call Next
-                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              style={{ fontSize: '10px', padding: '3px 6px' }}
+                              onClick={() => setSelectedSlipAppointment(w)}
+                              title="Print Token Slip"
+                            >
+                              <Printer size={11} />
+                            </button>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              style={{ fontSize: '10px', padding: '2px 8px' }}
+                              onClick={() => updateAppointmentStatus(w.id, 'With Doctor')}
+                            >
+                              Call Next
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -666,6 +691,15 @@ export const AppointmentsView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Token Slip Print Preview Modal */}
+      {selectedSlipAppointment && (
+        <TokenSlipModal
+          appointment={selectedSlipAppointment}
+          settings={tenantSettings}
+          onClose={() => setSelectedSlipAppointment(null)}
+        />
       )}
     </div>
   );

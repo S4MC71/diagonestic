@@ -542,6 +542,7 @@ export interface TenantSettings {
   showQrOnReport?: boolean;
   vatRate?: number;
   smsCreditBalance: number;
+  enableSmsNotifications?: boolean;
   enableWhatsAppNotifications?: boolean;
   reportDisclaimer?: string;
   pharmacyExpiryWarningDays?: number;
@@ -800,6 +801,7 @@ export interface ReportShareLink {
 
 // ── SMS NOTIFICATIONS ─────────────────────────────────
 export interface SmsConfig {
+  enabled?: boolean;
   provider: 'ssl_wireless' | 'greenweb' | 'twilio' | 'mock';
   apiKey: string;
   senderId: string;

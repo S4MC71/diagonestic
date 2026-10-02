@@ -49,6 +49,7 @@ export const INITIAL_TENANT_SETTINGS: TenantSettings = {
   thermalWidth: '80mm',
   defaultPrintFormat: 'thermal',
   enableWhatsAppNotifications: true,
+  enableSmsNotifications: true,
   smsCreditBalance: 840,
   reportDisclaimer: 'All clinical reports are verified by authorized consultant pathologists. In case of any discrepancy, please contact within 7 days.',
   departmentSignatures: [
@@ -1915,6 +1916,7 @@ export const INITIAL_REPORT_SHARE_LINKS: ReportShareLink[] = [
 ];
 
 export const INITIAL_SMS_CONFIG: SmsConfig = {
+  enabled: true,
   provider: 'ssl_wireless',
   apiKey: 'ssl_live_9f82d1c470e9b6a1',
   senderId: 'JHALAKATHI',

@@ -40,6 +40,7 @@ export const SmsNotificationsView: React.FC = () => {
   const [customMessage, setCustomMessage] = useState('');
 
   // Config states
+  const [enabled, setEnabled] = useState(smsConfig.enabled ?? true);
   const [provider, setProvider] = useState(smsConfig.provider);
   const [apiKey, setApiKey] = useState(smsConfig.apiKey);
   const [senderId, setSenderId] = useState(smsConfig.senderId);
@@ -58,6 +59,7 @@ export const SmsNotificationsView: React.FC = () => {
 
   const handleSaveConfig = () => {
     updateSmsConfig({
+      enabled,
       provider,
       apiKey,
       senderId,
@@ -431,6 +433,61 @@ export const SmsNotificationsView: React.FC = () => {
       {/* TAB 3: CONFIGURATION */}
       {activeTab === 'config' && (
         <div style={{ background: '#fff', borderRadius: '16px', padding: '24px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Master Center SMS Service Activation Banner */}
+          <div style={{
+            background: enabled ? '#ecfdf5' : '#fef2f2',
+            border: `1px solid ${enabled ? '#a7f3d0' : '#fecaca'}`,
+            borderRadius: '12px',
+            padding: '16px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '8px',
+                background: enabled ? '#059669' : '#dc2626',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <MessageSquare size={20} />
+              </div>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: enabled ? '#065f46' : '#991b1b' }}>
+                  Center SMS Service: {enabled ? 'ACTIVE (চালু)' : 'DISABLED (বন্ধ)'}
+                </div>
+                <div style={{ fontSize: '12px', color: enabled ? '#047857' : '#b91c1c', marginTop: '2px' }}>
+                  {enabled
+                    ? 'All patient notifications (Token slip SMS, report alerts, reminders) are actively operational.'
+                    : 'SMS sending is disabled for this center. Reception walk-in won\'t trigger SMS charges.'}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setEnabled(!enabled)}
+              style={{
+                padding: '9px 18px',
+                borderRadius: '8px',
+                border: 'none',
+                background: enabled ? '#dc2626' : '#059669',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: 'pointer'
+              }}
+            >
+              {enabled ? 'Disable SMS Service' : 'Enable SMS Service'}
+            </button>
+          </div>
+
           <div>
             <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px 0' }}>
               SMS Gateway Integration

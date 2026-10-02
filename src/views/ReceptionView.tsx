@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { TokenSlipModal } from '../components/print/TokenSlipModal';
 import {
   Clock,
   Tv,
@@ -14,6 +15,10 @@ import {
   Minimize2,
   Search,
   Filter,
+  Printer,
+  Trash2,
+  MessageSquare,
+  AlertTriangle,
   X
 } from 'lucide-react';
 
@@ -26,8 +31,17 @@ export const ReceptionView: React.FC = () => {
     addPatient,
     updateAppointmentStatus,
     addAppointment,
+    deleteAppointment,
+    clearCompletedAppointments,
+    resetTodayQueue,
+    smsConfig,
+    sendSmsNotification,
+    tenantSettings,
     showToast
   } = useApp();
+
+  const isSmsActive = tenantSettings.enableSmsNotifications !== false && smsConfig.enabled !== false;
+  const [sendSms, setSendSms] = useState(true);
 
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,6 +50,7 @@ export const ReceptionView: React.FC = () => {
   const [tvMode, setTvMode] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showWalkinModal, setShowWalkinModal] = useState(false);
+  const [activeSlipAppointment, setActiveSlipAppointment] = useState<any | null>(null);
 
   // Helper to dynamically get doctor's assigned chamber room
   const getDoctorChamber = (doc?: any) => {
@@ -122,8 +137,7 @@ export const ReceptionView: React.FC = () => {
     showToast(`Token #${serial} returned to Waiting.`);
   };
 
-  const handleWalkinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleWalkinSubmit = (printSlip: boolean) => {
     if (!walkinName.trim() || !walkinPhone.trim()) {
       showToast('Please enter patient name and phone number');
       return;
@@ -157,7 +171,10 @@ export const ReceptionView: React.FC = () => {
       finalPatientId = newP.id;
     }
 
-    addAppointment({
+    const todayDocApps = appointments.filter(a => a.doctorId === (doc?.id || 'doc-1') && (a.date === todayDate || !a.date));
+    const tokenSerial = todayDocApps.length + 1;
+
+    const appointmentPayload = {
       doctorId: doc?.id || 'doc-1',
       doctorName: doc?.name || 'Consultant Doctor',
       patientId: finalPatientId || `pat-${Date.now()}`,
@@ -167,18 +184,38 @@ export const ReceptionView: React.FC = () => {
       patientGender: walkinGender,
       date: todayDate,
       timeSlot: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'Waiting',
+      status: 'Waiting' as const,
       fee: doc?.consultationFee || 800,
-      paymentStatus: 'Paid',
+      paymentStatus: 'Paid' as const,
       chamberRoom: `Chamber ${chamberRoom}`,
       chamberNo: String(chamberRoom)
-    });
+    };
+
+    const newApp = addAppointment(appointmentPayload);
+
+    // Send SMS if enabled and requested
+    if (sendSms && isSmsActive && walkinPhone.trim()) {
+      const smsMsg = `প্রিয় ${walkinName.trim()}, ${doc?.name || 'ডাক্তার'}-এর সাথে আপনার সিরিয়াল #${tokenSerial}। চেম্বার: ${chamberRoom}। সিরিয়াল অনুযায়ী অপেক্ষা করুন। - ${tenantSettings.name || 'CarePulse'}`;
+      sendSmsNotification(walkinPhone.trim(), smsMsg, 'APPOINTMENT_REMINDER');
+    }
+
+    const slipObj: any = {
+      ...appointmentPayload,
+      id: newApp?.id || `app-${Date.now()}`,
+      serialNo: tokenSerial
+    };
 
     setWalkinName('');
     setWalkinPhone('');
     setSelectedPatientId('');
     setShowWalkinModal(false);
-    showToast(`Token registered for ${walkinName.trim()} (Chamber: ${chamberRoom})`);
+
+    if (printSlip) {
+      setActiveSlipAppointment(slipObj);
+      showToast(`Token #${tokenSerial} issued! Ready to print slip.`);
+    } else {
+      showToast(`Token #${tokenSerial} issued! Assigned to Chamber ${chamberRoom}.`);
+    }
   };
 
   return (
@@ -254,6 +291,56 @@ export const ReceptionView: React.FC = () => {
             <Tv size={16} />
             <span>TV Display Mode</span>
           </button>
+
+          {completedList.length > 0 && (
+            <button
+              onClick={clearCompletedAppointments}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '9px 14px',
+                borderRadius: '8px',
+                background: '#fff',
+                color: '#64748b',
+                border: '1px solid #cbd5e1',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+              title="Clear completed tokens for today from queue board"
+            >
+              <CheckCircle2 size={15} color="#059669" />
+              <span>Clear Done ({completedList.length})</span>
+            </button>
+          )}
+
+          {todayAppointments.length > 0 && (
+            <button
+              onClick={() => {
+                if (window.confirm("Are you sure you want to reset today's live queue? All tokens for today will be cleared.")) {
+                  resetTodayQueue();
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                background: '#fff',
+                color: '#ef4444',
+                border: '1px solid #fecaca',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+              title="Reset queue for today"
+            >
+              <RotateCcw size={14} />
+              <span>Reset Queue</span>
+            </button>
+          )}
 
           <button
             onClick={() => setShowWalkinModal(true)}
@@ -478,6 +565,24 @@ export const ReceptionView: React.FC = () => {
                       <span>Mark Done</span>
                     </button>
                     <button
+                      onClick={() => setActiveSlipAppointment(item)}
+                      style={{
+                        padding: '8px 12px',
+                        background: '#fff',
+                        color: '#0284c7',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Print Token Slip"
+                    >
+                      <Printer size={14} />
+                    </button>
+                    <button
                       onClick={() => handleResetToWaiting(item.id, item.serialNo)}
                       style={{
                         padding: '8px 12px',
@@ -491,6 +596,28 @@ export const ReceptionView: React.FC = () => {
                       title="Return back to waiting"
                     >
                       <RotateCcw size={14} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Delete Token #${item.serialNo} (${item.patientName})?`)) {
+                          deleteAppointment(item.id);
+                        }
+                      }}
+                      style={{
+                        padding: '8px 10px',
+                        background: '#fff',
+                        color: '#ef4444',
+                        border: '1px solid #fecaca',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Cancel / Delete Token"
+                    >
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 </div>
@@ -577,26 +704,70 @@ export const ReceptionView: React.FC = () => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleCallToken(item.id, item.serialNo, item.patientName)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      padding: '7px 12px',
-                      background: index === 0 ? '#0284c7' : '#f8fafc',
-                      color: index === 0 ? '#fff' : '#0284c7',
-                      border: '1px solid #0284c7',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    <Play size={12} fill={index === 0 ? '#fff' : '#0284c7'} />
-                    <span>Call In</span>
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      onClick={() => setActiveSlipAppointment(item)}
+                      style={{
+                        padding: '7px 10px',
+                        background: '#f8fafc',
+                        color: '#64748b',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Print Token Slip"
+                    >
+                      <Printer size={13} />
+                    </button>
+
+                    <button
+                      onClick={() => handleCallToken(item.id, item.serialNo, item.patientName)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '7px 12px',
+                        background: index === 0 ? '#0284c7' : '#f8fafc',
+                        color: index === 0 ? '#fff' : '#0284c7',
+                        border: '1px solid #0284c7',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      <Play size={12} fill={index === 0 ? '#fff' : '#0284c7'} />
+                      <span>Call In</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Delete Token #${item.serialNo} (${item.patientName})?`)) {
+                          deleteAppointment(item.id);
+                        }
+                      }}
+                      style={{
+                        padding: '7px 8px',
+                        background: '#fff',
+                        color: '#94a3b8',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Cancel / Delete Token"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -664,9 +835,45 @@ export const ReceptionView: React.FC = () => {
                       <div style={{ fontSize: '11px', color: '#94a3b8' }}>{item.doctorName}</div>
                     </div>
                   </div>
-                  <span style={{ fontSize: '11px', color: '#059669', fontWeight: 700, background: '#ecfdf5', padding: '2px 6px', borderRadius: '4px' }}>
-                    Done ✓
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      onClick={() => setActiveSlipAppointment(item)}
+                      style={{
+                        padding: '4px 8px',
+                        background: '#fff',
+                        color: '#64748b',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                      title="Print Token Slip"
+                    >
+                      <Printer size={12} />
+                    </button>
+                    <span style={{ fontSize: '11px', color: '#059669', fontWeight: 700, background: '#ecfdf5', padding: '2px 6px', borderRadius: '4px' }}>
+                      Done ✓
+                    </span>
+                    <button
+                      onClick={() => deleteAppointment(item.id)}
+                      style={{
+                        padding: '3px 6px',
+                        background: 'transparent',
+                        color: '#94a3b8',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                      title="Remove record"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -881,7 +1088,7 @@ export const ReceptionView: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleWalkinSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form onSubmit={e => { e.preventDefault(); handleWalkinSubmit(false); }} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Existing Patient Quick Selector */}
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
@@ -1069,44 +1276,124 @@ export const ReceptionView: React.FC = () => {
                 </select>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+              {/* SMS Notification Option per Diagnostic Center */}
+              <div style={{
+                background: isSmsActive ? '#f0fdf4' : '#f8fafc',
+                border: `1px solid ${isSmsActive ? '#bbf7d0' : '#e2e8f0'}`,
+                borderRadius: '8px',
+                padding: '10px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MessageSquare size={16} color={isSmsActive ? '#16a34a' : '#94a3b8'} />
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: isSmsActive ? '#166534' : '#64748b' }}>
+                      SMS Token Notification
+                    </div>
+                    <div style={{ fontSize: '11px', color: isSmsActive ? '#15803d' : '#94a3b8' }}>
+                      {isSmsActive
+                        ? `Send instant Token # & Chamber room SMS to ${walkinPhone || 'patient'}`
+                        : 'SMS Module is disabled for this diagnostic center (SuperAdmin controlled)'}
+                    </div>
+                  </div>
+                </div>
+                {isSmsActive && (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#166534' }}>
+                    <input
+                      type="checkbox"
+                      checked={sendSms}
+                      onChange={e => setSendSms(e.target.checked)}
+                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    Send SMS
+                  </label>
+                )}
+              </div>
+
+              {/* Action Buttons: Optional Print vs Issue Token Only */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   onClick={() => setShowWalkinModal(false)}
                   style={{
-                    flex: 1,
-                    padding: '11px',
+                    padding: '11px 16px',
                     borderRadius: '8px',
                     border: '1px solid #cbd5e1',
                     background: '#fff',
                     color: '#64748b',
                     fontWeight: 600,
-                    fontSize: '14px',
+                    fontSize: '13px',
                     cursor: 'pointer'
                   }}
                 >
                   Cancel
                 </button>
+
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={() => handleWalkinSubmit(false)}
                   style={{
-                    flex: 2,
-                    padding: '11px',
+                    flex: 1,
+                    minWidth: '150px',
+                    padding: '11px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #059669',
+                    background: '#ecfdf5',
+                    color: '#059669',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                  title="Issue token without opening print dialog (inform orally or via SMS)"
+                >
+                  <CheckCircle2 size={16} />
+                  <span>Issue Token Only</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleWalkinSubmit(true)}
+                  style={{
+                    flex: 1,
+                    minWidth: '160px',
+                    padding: '11px 14px',
                     borderRadius: '8px',
                     border: 'none',
                     background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                     color: '#fff',
                     fontWeight: 700,
-                    fontSize: '14px',
-                    cursor: 'pointer'
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 6px rgba(5,150,105,0.25)'
                   }}
+                  title="Issue token and open 80mm thermal receipt print preview"
                 >
-                  Issue Token & Print Slip
+                  <Printer size={16} />
+                  <span>Issue & Print Slip</span>
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+      {/* Token Slip Print Preview Modal */}
+      {activeSlipAppointment && (
+        <TokenSlipModal
+          appointment={activeSlipAppointment}
+          settings={tenantSettings}
+          onClose={() => setActiveSlipAppointment(null)}
+        />
       )}
     </div>
   );
