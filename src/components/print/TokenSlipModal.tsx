@@ -211,7 +211,7 @@ export const TokenSlipModal: React.FC<Props> = ({ appointment, settings, onClose
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>AGE/SEX: {appointment.patientAge} Yrs / {appointment.patientGender}</span>
-                <span>ID: {appointment.patientId ? appointment.patientId.replace('pat-', 'P-') : 'OPD'}</span>
+                <span>ID: {appointment.patientId ? (appointment.patientId.startsWith('PAT-') ? appointment.patientId : appointment.patientId.replace('pat-', 'P-')) : 'OPD'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>DATE &nbsp;&nbsp;: {appointment.date || currentDate}</span>

@@ -381,7 +381,7 @@ export const NewPrescriptionView: React.FC = () => {
             >
               {patients.map(p => (
                 <option key={p.id} value={p.id}>
-                  {p.name} ({p.code}) — {p.gender}, {p.age}y
+                  {p.name} ({p.code || p.patientId}) — {p.gender}, {p.age}y
                 </option>
               ))}
             </select>

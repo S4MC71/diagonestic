@@ -154,6 +154,7 @@ export const ReceptionView: React.FC = () => {
     );
 
     let finalPatientId = existingPatient ? existingPatient.id : '';
+    let finalPatientCode = existingPatient ? (existingPatient.code || existingPatient.patientId) : '';
 
     if (!existingPatient) {
       // Auto-register new patient to central database
@@ -169,6 +170,7 @@ export const ReceptionView: React.FC = () => {
         nid: ''
       });
       finalPatientId = newP.id;
+      finalPatientCode = newP.code || newP.patientId || '';
     }
 
     const todayDocApps = appointments.filter(a => a.doctorId === (doc?.id || 'doc-1') && (a.date === todayDate || !a.date));
@@ -177,7 +179,7 @@ export const ReceptionView: React.FC = () => {
     const appointmentPayload = {
       doctorId: doc?.id || 'doc-1',
       doctorName: doc?.name || 'Consultant Doctor',
-      patientId: finalPatientId || `pat-${Date.now()}`,
+      patientId: finalPatientCode || finalPatientId || `pat-${Date.now()}`,
       patientName: walkinName.trim(),
       patientPhone: walkinPhone.trim(),
       patientAge: walkinAge,
@@ -1121,7 +1123,7 @@ export const ReceptionView: React.FC = () => {
                   <option value="">-- New Walk-in Patient (or type details below) --</option>
                   {patients.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.name} · {p.phone} ({p.code})
+                      {p.name} · {p.phone} ({p.code || p.patientId})
                     </option>
                   ))}
                 </select>

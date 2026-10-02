@@ -48,7 +48,7 @@ export const PatientsView: React.FC = () => {
     p =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.phone.includes(searchTerm) ||
-      p.code.toLowerCase().includes(searchTerm.toLowerCase())
+      (p.code || p.patientId || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreate = (e: React.FormEvent) => {
@@ -106,9 +106,10 @@ export const PatientsView: React.FC = () => {
   };
 
   const handleDelete = (p: Patient) => {
-    if (window.confirm(`Are you sure you want to delete patient record "${p.name}" (${p.code})?`)) {
+    const codeDisplay = p.code || p.patientId || 'PAT';
+    if (window.confirm(`Are you sure you want to delete patient record "${p.name}" (${codeDisplay})?`)) {
       deletePatient(p.id);
-      showToast(`Patient ${p.code} removed`);
+      showToast(`Patient ${codeDisplay} removed`);
     }
   };
 
@@ -266,7 +267,7 @@ export const PatientsView: React.FC = () => {
                     {/* CODE */}
                     <td style={{ padding: '12px 14px' }}>
                       <strong style={{ color: '#059669', fontFamily: 'monospace', fontSize: '12.5px' }}>
-                        {p.code}
+                        {p.code || p.patientId || `PAT-${p.id.slice(-4)}`}
                       </strong>
                     </td>
 
@@ -662,7 +663,7 @@ export const PatientsView: React.FC = () => {
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px', width: '92%' }}>
             <div className="modal-header" style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
               <h3 className="modal-title" style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                Edit Patient: {editingPatient.code}
+                Edit Patient: {editingPatient.code || editingPatient.patientId}
               </h3>
               <button className="icon-btn" onClick={() => setEditingPatient(null)}><X size={18} /></button>
             </div>
@@ -761,7 +762,7 @@ export const PatientsView: React.FC = () => {
                 <h3 className="modal-title" style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   {selectedPatient.name}
                 </h3>
-                <span style={{ fontSize: '12px', color: '#059669', fontWeight: 700 }}>{selectedPatient.code}</span>
+                <span style={{ fontSize: '12px', color: '#059669', fontWeight: 700 }}>{selectedPatient.code || selectedPatient.patientId}</span>
               </div>
               <button className="icon-btn" onClick={() => setSelectedPatient(null)}><X size={18} /></button>
             </div>

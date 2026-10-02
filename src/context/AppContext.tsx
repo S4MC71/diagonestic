@@ -126,7 +126,7 @@ interface AppContextType {
   setActivePrintFormat: (format: 'thermal' | 'a4' | 'a5') => void;
   setActivePrintColor: (color: 'Color' | 'B&W') => void;
 
-  addPatient: (patient: Omit<Patient, 'id' | 'patientId' | 'totalVisits' | 'totalSpent' | 'outstandingDue' | 'lastVisit' | 'createdAt'>) => Patient;
+  addPatient: (patient: Omit<Patient, 'id' | 'patientId' | 'code' | 'totalVisits' | 'totalSpent' | 'outstandingDue' | 'lastVisit' | 'createdAt'> & { code?: string }) => Patient;
   updatePatient: (id: string, updates: Partial<Patient>) => void;
   deletePatient: (id: string) => void;
   updateTestPrice: (id: string, price: number) => void;
@@ -292,7 +292,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [patients, setPatients] = useState<Patient[]>(() => {
     try {
       const saved = localStorage.getItem('cp_patients');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          let maxSeq = 0;
+          parsed.forEach((p: Patient) => {
+            const rawCode = p.code || p.patientId || '';
+            const match = rawCode.match(/PAT-\d{4}-(\d+)/);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              if (!isNaN(num) && num > maxSeq) maxSeq = num;
+            }
+          });
+
+          return parsed.map((p: Patient) => {
+            let code = p.code || p.patientId;
+            if (!code || !code.startsWith('PAT-')) {
+              maxSeq += 1;
+              code = `PAT-2026-${String(maxSeq).padStart(4, '0')}`;
+            }
+            return {
+              ...p,
+              code,
+              patientId: p.patientId || code
+            };
+          });
+        }
+      }
     } catch {}
     return initialPatients;
   });
@@ -944,11 +970,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(`Collected ৳${amount} due payment successfully`);
   };
 
-  const addPatient = (p: Omit<Patient, 'id' | 'patientId' | 'totalVisits' | 'totalSpent' | 'outstandingDue' | 'lastVisit' | 'createdAt'>): Patient => {
+  const addPatient = (p: Omit<Patient, 'id' | 'patientId' | 'code' | 'totalVisits' | 'totalSpent' | 'outstandingDue' | 'lastVisit' | 'createdAt'> & { code?: string }): Patient => {
+    const year = new Date().getFullYear();
+    let maxSeq = 0;
+    patients.forEach(pat => {
+      const codeStr = pat.code || pat.patientId || '';
+      const match = codeStr.match(/PAT-\d{4}-(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxSeq) {
+          maxSeq = num;
+        }
+      }
+    });
+
+    const nextSeq = Math.max(maxSeq + 1, patients.length + 1);
+    const generatedCode = p.code || `PAT-${year}-${String(nextSeq).padStart(4, '0')}`;
+
     const newPatient: Patient = {
       ...p,
       id: `pat-${Date.now()}`,
-      patientId: `PAT-${new Date().getFullYear()}-${String(patients.length + 1).padStart(4, '0')}`,
+      code: generatedCode,
+      patientId: generatedCode,
       totalVisits: 1,
       totalSpent: 0,
       outstandingDue: 0,
@@ -956,7 +999,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString().split('T')[0]
     };
     setPatients(prev => [newPatient, ...prev]);
-    showToast(`Patient ${newPatient.name} registered`);
+    showToast(`Patient ${newPatient.name} registered (${generatedCode})`);
     return newPatient;
   };
 
